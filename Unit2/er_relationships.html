@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ER Relationships — العلاقات في ER | Database Mastery</title>
+    <meta name="description" content="تعلم أنواع العلاقات: One-to-One, One-to-Many, Many-to-Many, Cardinality, و Participation.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="../css/global-db.css" rel="stylesheet">
+    <style>
+        body { background: #020617; color: #E2E8F0; font-family: 'Inter', sans-serif; }
+        .lesson-nav-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(2,6,23,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.06); height: 64px; display: flex; align-items: center; padding: 0 1.5rem; }
+        .nav-inner { max-width: 1280px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+        .nav-brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; }
+        .nav-brand .back-btn { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #3B82F6, #1D4ED8); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; transition: transform 0.3s; }
+        .nav-brand .back-btn:hover { transform: scale(1.1); }
+        .nav-links { display: flex; gap: 2rem; font-size: 0.85rem; font-family: 'Cairo', sans-serif; color: var(--text-faint); }
+        .nav-links a { transition: color 0.3s; direction: rtl; }
+        .nav-links a:hover { color: #60A5FA; }
+        @media (max-width: 768px) { .nav-links { display: none; } }
+        .lesson-hero { position: relative; padding: 8rem 1.5rem 5rem; text-align: center; overflow: hidden; }
+        .lesson-hero .glow-orb { position: absolute; width: 500px; height: 500px; border-radius: 50%; filter: blur(128px); pointer-events: none; }
+        .glow-orb-1 { top: -10%; right: -5%; background: rgba(59,130,246,0.12); }
+        .glow-orb-2 { bottom: -20%; left: -10%; background: rgba(245,158,11,0.1); }
+        .lesson-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 1rem; border-radius: 50px; background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08); font-family: 'Fira Code', monospace; font-size: 0.78rem; color: #60A5FA; margin-bottom: 1.5rem; }
+        .lesson-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #3B82F6; animation: pulse-dot 2s ease infinite; }
+        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .lesson-hero h1 { font-size: clamp(2.5rem,5vw,4rem); font-weight: 800; margin-bottom: 1rem; }
+        .lesson-hero h1 .text-gradient { background: linear-gradient(135deg, #3B82F6, #F59E0B); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .lesson-hero .subtitle { font-family: 'Cairo', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1.5rem; direction: rtl; unicode-bidi: isolate; }
+        .lesson-hero .desc { color: var(--text-faint); max-width: 600px; margin: 0 auto; font-size: 1rem; line-height: 1.8; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
+        .lesson-section { padding: 5rem 1.5rem; max-width: 960px; margin: 0 auto; }
+        .lesson-section.alt-bg { background: rgba(15,23,42,0.3); max-width: 100%; }
+        .lesson-section.alt-bg > .section-inner { max-width: 960px; margin: 0 auto; }
+        .section-header { text-align: center; margin-bottom: 3rem; }
+        .section-header h2 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
+        .section-header .en-sub { font-family: 'Inter', sans-serif; color: var(--text-faint); font-size: 0.9rem; direction: ltr; unicode-bidi: isolate; display: block; }
+        .progress-bar-container { position: fixed; top: 64px; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.05); z-index: 99; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #3B82F6, #F59E0B); width: 0%; transition: width 0.1s ease-out; }
+
+        /* Cardinality Cards */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 1.5rem; margin: 2rem 0; }
+        .rel-card { background: rgba(15,23,42,0.6); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 2rem; transition: all 0.4s; }
+        .rel-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-4px); }
+        .rel-card .rel-visual { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; font-family: 'Inter', sans-serif; font-size: 0.85rem; }
+        .rel-card .entity-box { padding: 0.4rem 0.8rem; border: 2px solid; border-radius: 4px; font-weight: 700; }
+        .rel-card .diamond-box { width: 35px; height: 35px; border: 2px solid #FBBF24; transform: rotate(45deg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .rel-card .diamond-box span { transform: rotate(-45deg); font-size: 0.55rem; font-weight: 700; color: #FBBF24; }
+        .rel-card .ratio { font-weight: 800; font-size: 1rem; }
+        .rel-card h3 { font-size: 1.1rem; margin-bottom: 0.3rem; }
+        .rel-card .rel-ar { font-family: 'Cairo', sans-serif; font-size: 0.85rem; color: var(--text-faint); direction: rtl; unicode-bidi: isolate; margin-bottom: 0.8rem; }
+        .rel-card .rel-desc { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.9rem; color: var(--text-muted); line-height: 2; }
+        .rel-card .rel-example { margin-top: 0.8rem; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.82rem; color: var(--text-faint); }
+
+        /* Participation */
+        .part-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2rem 0; }
+        @media (max-width: 768px) { .part-grid { grid-template-columns: 1fr; } }
+        .part-card { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1.8rem; transition: all 0.3s; }
+        .part-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.15); }
+        .part-card h4 { font-size: 1rem; margin-bottom: 0.5rem; }
+        .part-card p { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.9rem; color: var(--text-muted); line-height: 2; }
+
+        .quiz-question { background: rgba(15,23,42,0.7); backdrop-filter: blur(12px); border: 1px solid var(--border-light); border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem; }
+        .quiz-question h4 { margin-bottom: 1rem; color: var(--text-primary); font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; }
+        .quiz-options { display: flex; flex-direction: column; gap: 0.6rem; }
+        .quiz-option { padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.3s; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; font-size: 0.92rem; color: var(--text-body); unicode-bidi: isolate; }
+        .quiz-option:hover { background: rgba(255,255,255,0.06); border-color: var(--border-hover); }
+        .quiz-option.correct { background: rgba(16,185,129,0.15); border-color: #10B981; color: #34D399; }
+        .quiz-option.wrong { background: rgba(239,68,68,0.15); border-color: #EF4444; color: #F87171; }
+        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: 10px; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; display: none; font-size: 0.92rem; line-height: 2; }
+        .quiz-feedback.show { display: block; }
+        .quiz-feedback.correct-fb { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #34D399; }
+        .quiz-feedback.wrong-fb { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #F87171; }
+        .lesson-bottom-nav { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 2rem 0; border-top: 1px solid var(--border-subtle); margin-top: 3rem; }
+        .lesson-bottom-nav a { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); transition: all 0.3s; font-weight: 600; font-size: 0.9rem; }
+        .lesson-bottom-nav a:hover { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <nav class="lesson-nav-bar"><div class="nav-inner"><a href="../index.html" class="nav-brand"><div class="back-btn"><i class="fas fa-arrow-left"></i></div><span><span style="color:#3B82F6;">ER</span>Rels</span></a><div class="nav-links"><a href="#cardinality">النسب</a><a href="#participation">المشاركة</a><a href="#quiz">اختبر نفسك</a></div></div></nav>
+    <div class="progress-bar-container"><div class="progress-bar-fill" id="reading-progress"></div></div>
+
+    <header class="lesson-hero">
+        <div class="glow-orb glow-orb-1"></div><div class="glow-orb glow-orb-2"></div>
+        <div style="position:relative;z-index:1;">
+            <div class="lesson-badge" data-aos="fade-down"><span class="dot"></span> UNIT 2 • Lesson 2</div>
+            <h1 data-aos="fade-up" data-aos-delay="150">ER <span class="text-gradient">Relationships</span></h1>
+            <div class="subtitle" data-aos="fade-up" data-aos-delay="300">العلاقات في الـ ER Diagram</div>
+            <p class="desc" data-aos="fade-up" data-aos-delay="450">إزاي الكيانات بتترابط مع بعض — ده اللي بيخلي الـ Database قوية! 🔗</p>
+        </div>
+    </header>
+
+    <!-- Cardinality -->
+    <section class="lesson-section" id="cardinality">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-link" style="color:#FBBF24;margin-left:0.5rem;"></i> نسب العلاقات — Cardinality Ratios</h2>
+            <p class="en-sub">How Many of Each Side?</p>
+        </div>
+        <div class="glass-card" style="padding:2rem;border-radius:20px;margin-bottom:2rem;" data-aos="fade-up">
+            <div class="rtl-block" style="font-size:1.05rem;">
+                <p style="color:#E2E8F0;margin-bottom:1rem;">الـ <span class="english">Cardinality Ratio</span> بيقولنا: <span class="hl-amber">كام entity من الجانب ده ممكن يرتبط بكام entity من الجانب التاني؟</span></p>
+                <p style="color:#94A3B8;">فيه 3 أنواع أساسية:</p>
+            </div>
+        </div>
+
+        <div class="card-grid">
+            <div class="rel-card" data-aos="fade-up" data-aos-delay="0">
+                <div class="rel-visual">
+                    <div class="entity-box" style="border-color:#60A5FA;color:#60A5FA;">EMPLOYEE</div>
+                    <span class="ratio" style="color:#FBBF24;">1 : 1</span>
+                    <div class="entity-box" style="border-color:#34D399;color:#34D399;">PASSPORT</div>
+                </div>
+                <h3 style="color:#60A5FA;">One-to-One (1:1)</h3>
+                <div class="rel-ar">علاقة واحد لواحد</div>
+                <div class="rel-desc">كل <span class="english">Entity</span> من الجانب الأول مرتبط بـ <span class="english">Entity واحد بس</span> من الجانب التاني — والعكس.</div>
+                <div class="rel-example">📌 مثال: كل موظف ليه جواز سفر واحد بس. وكل جواز سفر لموظف واحد بس.</div>
+            </div>
+            <div class="rel-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="rel-visual">
+                    <div class="entity-box" style="border-color:#60A5FA;color:#60A5FA;">DEPARTMENT</div>
+                    <span class="ratio" style="color:#FBBF24;">1 : N</span>
+                    <div class="entity-box" style="border-color:#34D399;color:#34D399;">EMPLOYEE</div>
+                </div>
+                <h3 style="color:#34D399;">One-to-Many (1:N)</h3>
+                <div class="rel-ar">علاقة واحد لكثير</div>
+                <div class="rel-desc"><span class="hl-emerald">أشهر نوع علاقة!</span> واحد من الجانب الأول يقدر يرتبط بكتير من الجانب التاني — بس كل واحد من التاني مرتبط بواحد بس من الأول.</div>
+                <div class="rel-example">📌 قسم واحد فيه كذا موظف — بس كل موظف في قسم واحد بس.</div>
+            </div>
+            <div class="rel-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="rel-visual">
+                    <div class="entity-box" style="border-color:#60A5FA;color:#60A5FA;">STUDENT</div>
+                    <span class="ratio" style="color:#FBBF24;">M : N</span>
+                    <div class="entity-box" style="border-color:#34D399;color:#34D399;">COURSE</div>
+                </div>
+                <h3 style="color:#FBBF24;">Many-to-Many (M:N)</h3>
+                <div class="rel-ar">علاقة كثير لكثير</div>
+                <div class="rel-desc">كتير من الجانب الأول يقدروا يرتبطوا بكتير من التاني. <span class="hl-red">مهم!</span> لما نحولها لجداول هنحتاج <span class="english">Junction Table</span> (جدول وسيط).</div>
+                <div class="rel-example">📌 طالب يسجل في كذا مادة — ومادة فيها كذا طالب.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Participation -->
+    <section class="lesson-section alt-bg" id="participation">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-circle-half-stroke" style="color:#A78BFA;margin-left:0.5rem;"></i> المشاركة — Participation</h2>
+                <p class="en-sub">Total vs Partial Participation</p>
+            </div>
+            <div class="glass-card" style="padding:2rem;border-radius:20px;margin-bottom:2rem;" data-aos="fade-up">
+                <div class="rtl-block" style="font-size:1.05rem;">
+                    <p style="color:#E2E8F0;margin-bottom:1rem;">الـ <span class="english">Participation Constraint</span> بيقولنا: <span class="hl-purple">هل كل entity لازم يشارك في العلاقة ولا ممكن لأ؟</span></p>
+                </div>
+            </div>
+            <div class="part-grid" data-aos="fade-up" data-aos-delay="100">
+                <div class="part-card" style="border-top: 3px solid #34D399;">
+                    <h4 style="color:#34D399;">Total Participation (══)</h4>
+                    <p><span class="hl-emerald">كل</span> <span class="english">entity</span> لازم تشارك في العلاقة — مفيش استثناء. بترسم بخط مزدوج (══) بين الكيان والعلاقة.</p>
+                    <p style="margin-top:0.5rem;color:#94A3B8;font-size:0.85rem;">📌 مثال: كل موظف <span class="hl-emerald">لازم</span> يبقى في قسم. مينفعش موظف من غير قسم.</p>
+                </div>
+                <div class="part-card" style="border-top: 3px solid #64748B;">
+                    <h4 style="color:#94A3B8;">Partial Participation (—)</h4>
+                    <p>بعض الـ <span class="english">entities</span> ممكن <span class="hl-amber">تشارك أو لأ</span> — مش إجباري. بترسم بخط واحد عادي (—).</p>
+                    <p style="margin-top:0.5rem;color:#94A3B8;font-size:0.85rem;">📌 مثال: موظف <span class="hl-amber">ممكن</span> يدير قسم أو لأ. مش كل موظف مدير.</p>
+                </div>
+            </div>
+
+            <!-- Min-Max Notation -->
+            <div class="glass-card" style="padding:2rem;border-radius:20px;margin-top:2rem;" data-aos="fade-up" data-aos-delay="200">
+                <div class="rtl-block" style="font-size:1.05rem;">
+                    <h3 style="color:#FBBF24;margin-bottom:1rem;">📐 طريقة (min, max) — أدق طريقة</h3>
+                    <p style="color:#CBD5E1;margin-bottom:1rem;">بدل ما نقول بس <span class="english">1:N</span>، ممكن نحدد بالظبط:</p>
+                    <div class="code-box" style="font-size:0.95rem;">
+EMPLOYEE —(1,1)— works_for —(1,N)— DEPARTMENT
+
+يعني:
+• كل موظف يشتغل في قسم واحد بالظبط (min=1, max=1)
+• كل قسم فيه من 1 لـ N موظف (min=1, max=N)
+                    </div>
+                    <div class="note" style="margin-top:1rem;">💡 <span class="hl-amber">(0, N)</span> = مشاركة جزئية (ممكن صفر). <span class="hl-emerald">(1, N)</span> = مشاركة كلية (لازم واحد على الأقل).</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Real Example -->
+    <section class="lesson-section">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-university" style="color:#22D3EE;margin-left:0.5rem;"></i> مثال كامل: جامعة</h2>
+            <p class="en-sub">Full University Example</p>
+        </div>
+        <div class="glass-card" style="padding:2rem;border-radius:20px;" data-aos="fade-up">
+            <div class="rtl-block" style="font-size:1.05rem;">
+                <div class="step-box" style="border-color:#60A5FA;margin-bottom:1rem;">
+                    <p style="color:#60A5FA;"><span class="english">STUDENT</span> —(0,N)— <span class="hl-amber">enrolls_in</span> —(1,N)— <span class="english">COURSE</span></p>
+                    <p style="color:#94A3B8;font-size:0.85rem;margin-top:0.3rem;">طالب ممكن يسجل في 0 أو أكتر مادة. كل مادة لازم يكون فيها طالب واحد على الأقل.</p>
+                </div>
+                <div class="step-box" style="border-color:#34D399;margin-bottom:1rem;">
+                    <p style="color:#34D399;"><span class="english">PROFESSOR</span> —(0,N)— <span class="hl-amber">teaches</span> —(1,1)— <span class="english">COURSE</span></p>
+                    <p style="color:#94A3B8;font-size:0.85rem;margin-top:0.3rem;">أستاذ ممكن يدرّس 0 أو أكتر مادة. كل مادة ليها أستاذ واحد بالظبط.</p>
+                </div>
+                <div class="step-box" style="border-color:#FBBF24;margin-bottom:1rem;">
+                    <p style="color:#FBBF24;"><span class="english">DEPARTMENT</span> —(1,N)— <span class="hl-amber">has</span> —(1,1)— <span class="english">EMPLOYEE</span></p>
+                    <p style="color:#94A3B8;font-size:0.85rem;margin-top:0.3rem;">كل قسم فيه موظف واحد على الأقل. كل موظف في قسم واحد بالظبط.</p>
+                </div>
+                <div class="step-box" style="border-color:#A78BFA;">
+                    <p style="color:#A78BFA;"><span class="english">EMPLOYEE</span> —(0,1)— <span class="hl-amber">manages</span> —(1,1)— <span class="english">DEPARTMENT</span></p>
+                    <p style="color:#94A3B8;font-size:0.85rem;margin-top:0.3rem;">موظف ممكن يدير قسم أو لأ. كل قسم ليه مدير واحد بالظبط.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quiz -->
+    <section class="lesson-section alt-bg" id="quiz">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up"><h2><i class="fas fa-brain" style="color:#D946EF;margin-left:0.5rem;"></i> اختبر نفسك!</h2><p class="en-sub">Quick Knowledge Check</p></div>
+            <div data-aos="fade-up" data-aos-delay="100">
+                <div class="quiz-question" id="q1">
+                    <h4>❓ سؤال ١: علاقة "طالب يسجل في مادة" — نسبتها إيه؟</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" onclick="checkAnswer(1,this,false)">1:1 — One to One</div>
+                        <div class="quiz-option" onclick="checkAnswer(1,this,false)">1:N — One to Many</div>
+                        <div class="quiz-option" onclick="checkAnswer(1,this,true)">M:N — Many to Many</div>
+                    </div>
+                    <div class="quiz-feedback" id="q1-feedback"></div>
+                </div>
+                <div class="quiz-question" id="q2">
+                    <h4>❓ سؤال ٢: لو كل موظف لازم يبقى في قسم (مفيش استثناء) — ده نوع إيه من المشاركة؟</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" onclick="checkAnswer(2,this,true)">Total Participation</div>
+                        <div class="quiz-option" onclick="checkAnswer(2,this,false)">Partial Participation</div>
+                    </div>
+                    <div class="quiz-feedback" id="q2-feedback"></div>
+                </div>
+                <div class="quiz-question" id="q3">
+                    <h4>❓ سؤال ٣: لو عندنا (0,N) بجانب Entity — ده معناه إيه؟</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" onclick="checkAnswer(3,this,false)">لازم يشارك في العلاقة</div>
+                        <div class="quiz-option" onclick="checkAnswer(3,this,true)">مشاركة جزئية — ممكن يشارك 0 مرة أو أكتر</div>
+                        <div class="quiz-option" onclick="checkAnswer(3,this,false)">ممكن يشارك مرة واحدة بس</div>
+                    </div>
+                    <div class="quiz-feedback" id="q3-feedback"></div>
+                </div>
+            </div>
+            <div id="quiz-score" style="text-align:center;margin-top:2rem;display:none;"><div class="glass-card" style="padding:2rem;border-radius:20px;display:inline-block;"><div class="rtl-block"><h3 style="color:#34D399;margin-bottom:0.5rem;" id="score-text"></h3><p style="color:#94A3B8;" id="score-msg"></p></div></div></div>
+        </div>
+    </section>
+
+    <div style="max-width:960px;margin:0 auto;padding:0 1.5rem;">
+        <div class="lesson-bottom-nav">
+            <a href="er_basics.html"><i class="fas fa-arrow-right"></i><span>الدرس السابق</span></a>
+            <a href="eer_diagrams.html" style="color:#60A5FA;"><span>الدرس التالي: EER المتقدم</span><i class="fas fa-arrow-left"></i></a>
+        </div>
+    </div>
+    <footer style="text-align:center;padding:3rem 1.5rem;color:var(--text-ghost);font-size:0.85rem;border-top:1px solid var(--border-subtle);"><p>Database Mastery — Unit 2: Data Modeling & ER</p></footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true, offset: 100 });
+        window.addEventListener('scroll', () => { const p = (document.documentElement.scrollTop / (document.documentElement.scrollHeight - document.documentElement.clientHeight)) * 100; document.getElementById('reading-progress').style.width = p + '%'; });
+        let quizScore=0, answered=0; const total=3;
+        const fb = { 1:{correct:'🎉 M:N — طالب في كذا مادة ومادة فيها كذا طالب!',wrong:'❌ طلاب كتير ومواد كتير = Many-to-Many (M:N).'}, 2:{correct:'✅ Total Participation — كل موظف لازم يكون في قسم!',wrong:'❌ لو الكل لازم يشارك = Total Participation.'}, 3:{correct:'💪 (0,N) = الـ min هو 0 — يعني مشاركة جزئية!',wrong:'❌ (0,N) = الحد الأدنى 0 = مشاركة جزئية (مش إجبارية).'} };
+        function checkAnswer(q,el,correct){const qEl=document.getElementById('q'+q);if(qEl.classList.contains('answered'))return;qEl.classList.add('answered');answered++;qEl.querySelectorAll('.quiz-option').forEach(o=>o.style.pointerEvents='none');const f=document.getElementById('q'+q+'-feedback');if(correct){el.classList.add('correct');f.className='quiz-feedback show correct-fb';f.textContent=fb[q].correct;quizScore++;}else{el.classList.add('wrong');f.className='quiz-feedback show wrong-fb';f.textContent=fb[q].wrong;qEl.querySelectorAll('.quiz-option').forEach(o=>{if(o.getAttribute('onclick').includes('true'))o.classList.add('correct');});}if(answered===total){const sd=document.getElementById('quiz-score');sd.style.display='block';document.getElementById('score-text').textContent=`🏆 النتيجة: ${quizScore} / ${total}`;const msg=document.getElementById('score-msg');if(quizScore===total){msg.textContent='🎉 ممتاز!';msg.style.color='#34D399';}else{msg.textContent='💪 راجع وحاول تاني!';msg.style.color='#FBBF24';}}}
+    </script>
+</body>
+</html>

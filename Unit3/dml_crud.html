@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Operations — DML | Database Mastery</title>
+    <meta name="description"
+        content="تعلم عمليات INSERT, SELECT, UPDATE, DELETE مع WHERE, ORDER BY, LIMIT وفلاتر متقدمة.">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="../css/global-db.css" rel="stylesheet">
+    <style>
+        body {
+            background: #020617;
+            color: #E2E8F0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .lesson-nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(2, 6, 23, .85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, .06);
+            height: 64px;
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+        }
+
+        .nav-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            font-weight: 700;
+        }
+
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #06B6D4, #0891B2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: .85rem;
+            transition: transform .3s;
+        }
+
+        .back-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            font-size: .85rem;
+            font-family: 'Cairo', sans-serif;
+            color: var(--text-faint);
+        }
+
+        .nav-links a {
+            transition: color .3s;
+            direction: rtl;
+        }
+
+        .nav-links a:hover {
+            color: #22D3EE;
+        }
+
+        @media(max-width:768px) {
+            .nav-links {
+                display: none;
+            }
+        }
+
+        .lesson-hero {
+            position: relative;
+            padding: 8rem 1.5rem 5rem;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .glow-orb {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(128px);
+            pointer-events: none;
+        }
+
+        .glow-orb-1 {
+            top: -10%;
+            right: -5%;
+            background: rgba(6, 182, 212, .15);
+        }
+
+        .glow-orb-2 {
+            bottom: -20%;
+            left: -10%;
+            background: rgba(16, 185, 129, .08);
+        }
+
+        .lesson-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .35rem 1rem;
+            border-radius: 50px;
+            background: rgba(30, 41, 59, .6);
+            border: 1px solid rgba(255, 255, 255, .08);
+            font-family: 'Fira Code', monospace;
+            font-size: .78rem;
+            color: #22D3EE;
+            margin-bottom: 1.5rem;
+        }
+
+        .lesson-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #06B6D4;
+            animation: pulse-dot 2s ease infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .3
+            }
+        }
+
+        .lesson-hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #06B6D4, #10B981);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .lesson-hero .subtitle {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            direction: rtl;
+            unicode-bidi: isolate;
+        }
+
+        .lesson-hero .desc {
+            color: var(--text-faint);
+            max-width: 600px;
+            margin: 0 auto;
+            font-size: 1rem;
+            line-height: 1.8;
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            unicode-bidi: isolate;
+        }
+
+        .lesson-section {
+            padding: 5rem 1.5rem;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .lesson-section.alt-bg {
+            background: rgba(15, 23, 42, .3);
+            max-width: 100%;
+        }
+
+        .lesson-section.alt-bg>.section-inner {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: .5rem;
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            unicode-bidi: isolate;
+        }
+
+        .section-header .en-sub {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-faint);
+            font-size: .9rem;
+            direction: ltr;
+            unicode-bidi: isolate;
+            display: block;
+        }
+
+        .progress-bar-container {
+            position: fixed;
+            top: 64px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: rgba(255, 255, 255, .05);
+            z-index: 99;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #06B6D4, #10B981);
+            width: 0%;
+            transition: width .1s ease-out;
+        }
+
+        .sql-block {
+            background: #0a0a0f;
+            border-radius: 14px;
+            overflow: hidden;
+            margin: 1.2rem 0;
+            border: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .sql-bar {
+            background: #111118;
+            padding: .6rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, .04);
+        }
+
+        .sql-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .sql-dot.r {
+            background: #FF5F57
+        }
+
+        .sql-dot.y {
+            background: #FDBC40
+        }
+
+        .sql-dot.g {
+            background: #27C93F
+        }
+
+        .sql-label {
+            color: #475569;
+            font-size: .72rem;
+            margin-right: auto;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .sql-body {
+            padding: 1.2rem 1.4rem;
+            font-family: 'Fira Code', monospace;
+            font-size: .84rem;
+            line-height: 1.9;
+            direction: ltr;
+            overflow-x: auto;
+        }
+
+        .kw {
+            color: #C084FC;
+            font-weight: 600
+        }
+
+        .tb {
+            color: #34D399
+        }
+
+        .col {
+            color: #60A5FA
+        }
+
+        .str {
+            color: #FB923C
+        }
+
+        .num {
+            color: #FBBF24
+        }
+
+        .cmt {
+            color: #475569
+        }
+
+        .pk {
+            color: #F472B6;
+            font-weight: 600
+        }
+
+        .cn {
+            color: #A5B4FC
+        }
+
+        .op {
+            color: #F97316
+        }
+
+        .crud-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        @media(max-width:768px) {
+            .crud-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .crud-card {
+            background: rgba(15, 23, 42, .6);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, .08);
+            transition: all .3s;
+            cursor: pointer;
+        }
+
+        .crud-card:hover {
+            border-color: rgba(255, 255, 255, .15);
+            transform: translateY(-4px);
+        }
+
+        .crud-card .crud-letter {
+            font-family: 'Inter', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: .3rem;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .crud-card h3 {
+            font-size: 1rem;
+            margin-bottom: .5rem;
+        }
+
+        .crud-card p {
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            unicode-bidi: isolate;
+            font-size: .88rem;
+            color: var(--text-muted);
+            line-height: 1.9;
+        }
+
+        .where-ops {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: .8rem;
+            margin: 1.5rem 0;
+        }
+
+        .where-op {
+            background: rgba(15, 23, 42, .5);
+            border: 1px solid rgba(255, 255, 255, .06);
+            border-radius: 10px;
+            padding: .8rem 1rem;
+            font-family: 'Fira Code', monospace;
+            font-size: .82rem;
+        }
+
+        .where-op .op-sym {
+            color: #F97316;
+            font-weight: 700;
+        }
+
+        .where-op .op-desc {
+            color: #64748B;
+            font-family: 'Cairo', sans-serif;
+            font-size: .78rem;
+            direction: rtl;
+            margin-top: .2rem;
+        }
+
+        .quiz-question {
+            background: rgba(15, 23, 42, .7);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-question h4 {
+            margin-bottom: 1rem;
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: .6rem;
+        }
+
+        .quiz-option {
+            padding: .75rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-subtle);
+            background: rgba(255, 255, 255, .02);
+            cursor: pointer;
+            transition: all .3s;
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            text-align: right;
+            font-size: .9rem;
+            color: var(--text-body);
+            unicode-bidi: isolate;
+        }
+
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, .06);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, .15);
+            border-color: #10B981;
+            color: #34D399;
+        }
+
+        .quiz-option.wrong {
+            background: rgba(239, 68, 68, .15);
+            border-color: #EF4444;
+            color: #F87171;
+        }
+
+        .quiz-feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            text-align: right;
+            display: none;
+            font-size: .9rem;
+            line-height: 2;
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        .quiz-feedback.correct-fb {
+            background: rgba(16, 185, 129, .1);
+            border: 1px solid rgba(16, 185, 129, .2);
+            color: #34D399;
+        }
+
+        .quiz-feedback.wrong-fb {
+            background: rgba(239, 68, 68, .1);
+            border: 1px solid rgba(239, 68, 68, .2);
+            color: #F87171;
+        }
+
+        .bottom-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 2rem 0;
+            border-top: 1px solid var(--border-subtle);
+            margin-top: 3rem;
+        }
+
+        .bottom-nav a {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .75rem 1.5rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid var(--border-subtle);
+            transition: all .3s;
+            font-weight: 600;
+            font-size: .9rem;
+        }
+
+        .bottom-nav a:hover {
+            background: rgba(6, 182, 212, .1);
+            border-color: rgba(6, 182, 212, .3);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="lesson-nav-bar">
+        <div class="nav-inner"><a href="../index.html" class="nav-brand">
+                <div class="back-btn"><i class="fas fa-arrow-left"></i></div><span><span
+                        style="color:#06B6D4;">CRUD</span></span>
+            </a>
+            <div class="nav-links"><a href="#crud">العمليات</a><a href="#select">SELECT</a><a href="#where">WHERE</a><a
+                    href="#quiz">اختبر نفسك</a></div>
+        </div>
+    </nav>
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="reading-progress"></div>
+    </div>
+
+    <header class="lesson-hero">
+        <div class="glow-orb glow-orb-1"></div>
+        <div class="glow-orb glow-orb-2"></div>
+        <div style="position:relative;z-index:1;">
+            <div class="lesson-badge" data-aos="fade-down"><span class="dot"></span> UNIT 3 • Lesson 2</div>
+            <h1 data-aos="fade-up" data-aos-delay="150"><span class="text-gradient">CRUD</span> Operations</h1>
+            <div class="subtitle" data-aos="fade-up" data-aos-delay="300">عمليات إضافة وقراءة وتعديل وحذف البيانات</div>
+            <p class="desc" data-aos="fade-up" data-aos-delay="450">الـ <span class="english">CRUD</span> هو قلب كل
+                تطبيق — كل حاجة بتتعمل هي في الآخر Insert أو Select أو Update أو Delete! 🎯</p>
+        </div>
+    </header>
+
+    <!-- CRUD Overview -->
+    <section class="lesson-section" id="crud">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-recycle" style="color:#22D3EE;margin-left:.5rem;"></i> CRUD — الأربع عمليات الأساسية
+            </h2>
+            <p class="en-sub">Create Read Update Delete</p>
+        </div>
+        <div class="crud-grid" data-aos="fade-up">
+            <div class="crud-card" style="border-top:3px solid #34D399;">
+                <div class="crud-letter" style="background:linear-gradient(135deg,#34D399,#059669);">C</div>
+                <h3 style="color:#34D399;">CREATE → INSERT</h3>
+                <p>إضافة بيانات جديدة للجدول. دايماً بنحدد الأعمدة والقيم.</p>
+            </div>
+            <div class="crud-card" style="border-top:3px solid #60A5FA;">
+                <div class="crud-letter" style="background:linear-gradient(135deg,#60A5FA,#1D4ED8);">R</div>
+                <h3 style="color:#60A5FA;">READ → SELECT</h3>
+                <p>قراءة وعرض البيانات. الأمر الأكتر استخداماً في حياتك كلها!</p>
+            </div>
+            <div class="crud-card" style="border-top:3px solid #FBBF24;">
+                <div class="crud-letter" style="background:linear-gradient(135deg,#FBBF24,#D97706);">U</div>
+                <h3 style="color:#FBBF24;">UPDATE → UPDATE</h3>
+                <p>تعديل بيانات موجودة. <span style="color:#F87171;">تحذير: لو نسيت الـ WHERE — هتعدّل كل الجدول!</span>
+                </p>
+            </div>
+            <div class="crud-card" style="border-top:3px solid #F87171;">
+                <div class="crud-letter" style="background:linear-gradient(135deg,#F87171,#DC2626);">D</div>
+                <h3 style="color:#F87171;">DELETE → DELETE</h3>
+                <p>حذف بيانات. <span style="color:#F87171;">تحذير: تاني! لو نسيت الـ WHERE — هتحذف كل الجدول!</span></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- INSERT -->
+    <section class="lesson-section alt-bg">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-plus-circle" style="color:#34D399;margin-left:.5rem;"></i> INSERT — إضافة بيانات
+                </h2>
+                <p class="en-sub">Adding New Records</p>
+            </div>
+            <div class="sql-block" data-aos="fade-up">
+                <div class="sql-bar"><span class="sql-dot r"></span><span class="sql-dot y"></span><span
+                        class="sql-dot g"></span><span class="sql-label">INSERT Examples</span></div>
+                <div class="sql-body"><span class="cmt">-- إضافة صف واحد</span>
+                    <span class="kw">INSERT INTO</span> <span class="tb">employee</span> (<span
+                        class="col">first_name</span>, <span class="col">last_name</span>, <span
+                        class="col">email</span>, <span class="col">salary</span>, <span class="col">dept_id</span>)
+                    <span class="kw">VALUES</span> (<span class="str">'أحمد'</span>, <span class="str">'محمد'</span>,
+                    <span class="str">'ahmed@company.eg'</span>, <span class="num">8500.00</span>, <span
+                        class="num">1</span>);
+
+                    <span class="cmt">-- إضافة كذا صف مرة واحدة</span>
+                    <span class="kw">INSERT INTO</span> <span class="tb">employee</span> (<span
+                        class="col">first_name</span>, <span class="col">last_name</span>, <span
+                        class="col">email</span>, <span class="col">salary</span>, <span class="col">dept_id</span>)
+                    <span class="kw">VALUES</span>
+                    (<span class="str">'فاطمة'</span>, <span class="str">'علي'</span>, <span
+                        class="str">'fatma@company.eg'</span>, <span class="num">9200.00</span>, <span
+                        class="num">1</span>),
+                    (<span class="str">'عمر'</span>, <span class="str">'حسن'</span>, <span
+                        class="str">'omar@company.eg'</span>, <span class="num">7800.00</span>, <span
+                        class="num">2</span>),
+                    (<span class="str">'نور'</span>, <span class="str">'سالم'</span>, <span
+                        class="str">'nour@company.eg'</span>, <span class="num">11000.00</span>, <span
+                        class="num">2</span>);
+
+                    <span class="cmt">-- INSERT من SELECT (نسخ بيانات)</span>
+                    <span class="kw">INSERT INTO</span> <span class="tb">archive_employee</span>
+                    <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">employee</span>
+                    <span class="kw">WHERE</span> <span class="col">is_active</span> = <span class="cn">FALSE</span>;
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SELECT -->
+    <section class="lesson-section" id="select">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-search" style="color:#60A5FA;margin-left:.5rem;"></i> SELECT — قراءة البيانات</h2>
+            <p class="en-sub">Reading & Filtering Data</p>
+        </div>
+        <div class="sql-block" data-aos="fade-up">
+            <div class="sql-bar"><span class="sql-dot r"></span><span class="sql-dot y"></span><span
+                    class="sql-dot g"></span><span class="sql-label">SELECT — From Basic to Advanced</span></div>
+            <div class="sql-body"><span class="cmt">-- كل الأعمدة</span>
+                <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">employee</span>;
+
+                <span class="cmt">-- أعمدة محددة</span>
+                <span class="kw">SELECT</span> <span class="col">first_name</span>, <span class="col">last_name</span>,
+                <span class="col">salary</span>
+                <span class="kw">FROM</span> <span class="tb">employee</span>;
+
+                <span class="cmt">-- مع Alias (اسم مستعار)</span>
+                <span class="kw">SELECT</span>
+                <span class="col">first_name</span> <span class="op">||</span> <span class="str">' '</span> <span
+                    class="op">||</span> <span class="col">last_name</span> <span class="kw">AS</span> <span
+                    class="col">full_name</span>,
+                <span class="col">salary</span> * <span class="num">12</span> <span class="kw">AS</span> <span
+                    class="col">annual_salary</span>
+                <span class="kw">FROM</span> <span class="tb">employee</span>;
+
+                <span class="cmt">-- مرتب تنازلياً بالراتب</span>
+                <span class="kw">SELECT</span> <span class="col">first_name</span>, <span class="col">salary</span>
+                <span class="kw">FROM</span> <span class="tb">employee</span>
+                <span class="kw">ORDER BY</span> <span class="col">salary</span> <span class="cn">DESC</span>;
+
+                <span class="cmt">-- أول 5 موظفين بأعلى راتب</span>
+                <span class="kw">SELECT</span> <span class="col">first_name</span>, <span class="col">salary</span>
+                <span class="kw">FROM</span> <span class="tb">employee</span>
+                <span class="kw">ORDER BY</span> <span class="col">salary</span> <span class="cn">DESC</span>
+                <span class="kw">LIMIT</span> <span class="num">5</span>;
+
+                <span class="cmt">-- من row 11 لـ 20 (Pagination)</span>
+                <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">employee</span>
+                <span class="kw">ORDER BY</span> <span class="col">emp_id</span>
+                <span class="kw">LIMIT</span> <span class="num">10</span> <span class="kw">OFFSET</span> <span
+                    class="num">10</span>;
+
+                <span class="cmt">-- بدون تكرار</span>
+                <span class="kw">SELECT DISTINCT</span> <span class="col">dept_id</span> <span class="kw">FROM</span>
+                <span class="tb">employee</span>;
+            </div>
+        </div>
+    </section>
+
+    <!-- WHERE -->
+    <section class="lesson-section alt-bg" id="where">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-filter" style="color:#FBBF24;margin-left:.5rem;"></i> WHERE — التصفية</h2>
+                <p class="en-sub">Filtering with Conditions</p>
+            </div>
+            <div class="where-ops" data-aos="fade-up">
+                <div class="where-op"><span class="op-sym">=, !=, &lt;&gt;</span>
+                    <div class="op-desc">مساواة / عدم مساواة</div>
+                </div>
+                <div class="where-op"><span class="op-sym">&lt;, &gt;, &lt;=, &gt;=</span>
+                    <div class="op-desc">مقارنة الأرقام</div>
+                </div>
+                <div class="where-op"><span class="op-sym">BETWEEN a AND b</span>
+                    <div class="op-desc">في نطاق معين</div>
+                </div>
+                <div class="where-op"><span class="op-sym">IN (v1, v2, ...)</span>
+                    <div class="op-desc">في قائمة قيم</div>
+                </div>
+                <div class="where-op"><span class="op-sym">LIKE '%pattern%'</span>
+                    <div class="op-desc">بحث بنمط — % أي عدد حروف</div>
+                </div>
+                <div class="where-op"><span class="op-sym">IS NULL / IS NOT NULL</span>
+                    <div class="op-desc">فاضي / مش فاضي</div>
+                </div>
+                <div class="where-op"><span class="op-sym">AND, OR, NOT</span>
+                    <div class="op-desc">دمج الشروط</div>
+                </div>
+                <div class="where-op"><span class="op-sym">EXISTS (subquery)</span>
+                    <div class="op-desc">لو الاستعلام الفرعي بيرجع نتايج</div>
+                </div>
+            </div>
+            <div class="sql-block" data-aos="fade-up" data-aos-delay="100">
+                <div class="sql-bar"><span class="sql-dot r"></span><span class="sql-dot y"></span><span
+                        class="sql-dot g"></span><span class="sql-label">WHERE Examples</span></div>
+                <div class="sql-body"><span class="cmt">-- راتب بين 5000 و 10000</span>
+                    <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">employee</span>
+                    <span class="kw">WHERE</span> <span class="col">salary</span> <span class="kw">BETWEEN</span> <span
+                        class="num">5000</span> <span class="kw">AND</span> <span class="num">10000</span>;
+
+                    <span class="cmt">-- اسمه بيبدأ بـ 'أحمد'</span>
+                    <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">employee</span>
+                    <span class="kw">WHERE</span> <span class="col">first_name</span> <span class="kw">LIKE</span> <span
+                        class="str">'أحمد%'</span>;
+
+                    <span class="cmt">-- في قسم 1 أو 3</span>
+                    <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">employee</span>
+                    <span class="kw">WHERE</span> <span class="col">dept_id</span> <span class="kw">IN</span> (<span
+                        class="num">1</span>, <span class="num">3</span>);
+
+                    <span class="cmt">-- شروط متعددة</span>
+                    <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">employee</span>
+                    <span class="kw">WHERE</span> <span class="col">salary</span> > <span class="num">8000</span>
+                    <span class="kw">AND</span> <span class="col">is_active</span> = <span class="cn">TRUE</span>
+                    <span class="kw">AND</span> <span class="col">dept_id</span> = <span class="num">2</span>;
+                </div>
+            </div>
+
+            <!-- UPDATE + DELETE -->
+            <div class="sql-block" data-aos="fade-up" data-aos-delay="200">
+                <div class="sql-bar"><span class="sql-dot r"></span><span class="sql-dot y"></span><span
+                        class="sql-dot g"></span><span class="sql-label">UPDATE & DELETE</span></div>
+                <div class="sql-body"><span class="cmt">-- تعديل راتب موظف معين</span>
+                    <span class="kw">UPDATE</span> <span class="tb">employee</span>
+                    <span class="kw">SET</span> <span class="col">salary</span> = <span class="num">10000</span>,
+                    <span class="col">is_active</span> = <span class="cn">TRUE</span>
+                    <span class="kw">WHERE</span> <span class="col">emp_id</span> = <span class="num">5</span>;
+
+                    <span class="cmt">-- زيادة 10% لكل موظفين قسم 2</span>
+                    <span class="kw">UPDATE</span> <span class="tb">employee</span>
+                    <span class="kw">SET</span> <span class="col">salary</span> = <span class="col">salary</span> *
+                    <span class="num">1.10</span>
+                    <span class="kw">WHERE</span> <span class="col">dept_id</span> = <span class="num">2</span>;
+
+                    <span class="cmt">-- حذف موظف معين</span>
+                    <span class="kw">DELETE FROM</span> <span class="tb">employee</span>
+                    <span class="kw">WHERE</span> <span class="col">emp_id</span> = <span class="num">7</span>;
+
+                    <span class="cmt">-- حذف الموظفين غير النشطين</span>
+                    <span class="kw">DELETE FROM</span> <span class="tb">employee</span>
+                    <span class="kw">WHERE</span> <span class="col">is_active</span> = <span class="cn">FALSE</span>
+                    <span class="kw">AND</span> <span class="col">hire_date</span>
+                    < <span class="str">'2020-01-01'</span>;
+                </div>
+            </div>
+            <div class="note" data-aos="fade-up" data-aos-delay="300" style="margin-top:1rem;">⚠️ <span
+                    class="hl-red">القاعدة الذهبية:</span> قبل أي <span class="english">UPDATE</span> أو <span
+                    class="english">DELETE</span> — دايماً اعمل <span class="english">SELECT</span> بنفس الـ <span
+                    class="english">WHERE</span> الأول وتأكد من النتايج!</div>
+        </div>
+    </section>
+
+    <!-- Quiz -->
+    <section class="lesson-section" id="quiz">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-brain" style="color:#D946EF;margin-left:.5rem;"></i> اختبر نفسك!</h2>
+            <p class="en-sub">Quick Knowledge Check</p>
+        </div>
+        <div data-aos="fade-up" data-aos-delay="100">
+            <div class="quiz-question" id="q1">
+                <h4>❓ سؤال ١: إيه الأمر الصح لإضافة بيانات في جدول؟</h4>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">ADD INTO employee VALUES (...);</div>
+                    <div class="quiz-option" onclick="checkAnswer(1,this,true)">INSERT INTO employee (col1, col2) VALUES
+                        (v1, v2);</div>
+                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">CREATE employee VALUES (...);</div>
+                </div>
+                <div class="quiz-feedback" id="q1-feedback"></div>
+            </div>
+            <div class="quiz-question" id="q2">
+                <h4>❓ سؤال ٢: عايز أجيب أول 10 موظفين بأعلى راتب — إيه الأمر؟</h4>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkAnswer(2,this,true)">SELECT * FROM employee ORDER BY salary
+                        DESC LIMIT 10;</div>
+                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">SELECT TOP 10 * FROM employee ORDER BY
+                        salary;</div>
+                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">SELECT * FROM employee LIMIT 10 ORDER
+                        BY salary DSC;</div>
+                </div>
+                <div class="quiz-feedback" id="q2-feedback"></div>
+            </div>
+            <div class="quiz-question" id="q3">
+                <h4>❓ سؤال ٣: LIKE 'أحمد%' معناه إيه؟</h4>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">اللي فيه كلمة أحمد في النص</div>
+                    <div class="quiz-option" onclick="checkAnswer(3,this,true)">اللي بيبدأ بكلمة أحمد (% بعد = أي حاجة
+                        جاية)</div>
+                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">اللي بينتهي بكلمة أحمد</div>
+                </div>
+                <div class="quiz-feedback" id="q3-feedback"></div>
+            </div>
+        </div>
+        <div id="quiz-score" style="text-align:center;margin-top:2rem;display:none;">
+            <div class="glass-card" style="padding:2rem;border-radius:20px;display:inline-block;">
+                <div class="rtl-block">
+                    <h3 style="color:#34D399;margin-bottom:.5rem;" id="score-text"></h3>
+                    <p style="color:#94A3B8;" id="score-msg"></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div style="max-width:960px;margin:0 auto;padding:0 1.5rem;">
+        <div class="bottom-nav">
+            <a href="ddl_basics.html"><i class="fas fa-arrow-right"></i><span>الدرس السابق</span></a>
+            <a href="aggregate_grouping.html" style="color:#22D3EE;"><span>الدرس التالي: التجميع</span><i
+                    class="fas fa-arrow-left"></i></a>
+        </div>
+    </div>
+    <footer
+        style="text-align:center;padding:3rem 1.5rem;color:var(--text-ghost);font-size:.85rem;border-top:1px solid var(--border-subtle);">
+        <p>Database Mastery — Unit 3: SQL Fundamentals</p>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true, offset: 100 });
+        window.addEventListener('scroll', () => { const p = (document.documentElement.scrollTop / (document.documentElement.scrollHeight - document.documentElement.clientHeight)) * 100; document.getElementById('reading-progress').style.width = p + '%'; });
+        let quizScore = 0, answered = 0; const total = 3;
+        const fb = { 1: { correct: '🎉 INSERT INTO table (cols) VALUES (vals); — الشكل الصحيح!', wrong: '❌ الأمر الصحيح هو INSERT INTO table (columns) VALUES (values);' }, 2: { correct: '✅ ORDER BY salary DESC LIMIT 10 — بالظبط!', wrong: '❌ في PostgreSQL بنستخدم LIMIT مش TOP، وDESC للترتيب التنازلي.' }, 3: { correct: '💪 % في الآخر = أي حروف جاية — يعني بيبدأ بأحمد.', wrong: '❌ % بعد الكلمة = أي حاجة بعدها. يعني LIKE "أحمد%" = بيبدأ بأحمد.' } };
+        function checkAnswer(q, el, correct) { const qEl = document.getElementById('q' + q); if (qEl.classList.contains('answered')) return; qEl.classList.add('answered'); answered++; qEl.querySelectorAll('.quiz-option').forEach(o => o.style.pointerEvents = 'none'); const f = document.getElementById('q' + q + '-feedback'); if (correct) { el.classList.add('correct'); f.className = 'quiz-feedback show correct-fb'; f.textContent = fb[q].correct; quizScore++; } else { el.classList.add('wrong'); f.className = 'quiz-feedback show wrong-fb'; f.textContent = fb[q].wrong; qEl.querySelectorAll('.quiz-option').forEach(o => { if (o.getAttribute('onclick').includes('true')) o.classList.add('correct'); }); } if (answered === total) { const sd = document.getElementById('quiz-score'); sd.style.display = 'block'; document.getElementById('score-text').textContent = `🏆 النتيجة: ${quizScore} / ${total}`; const msg = document.getElementById('score-msg'); if (quizScore === total) { msg.textContent = '🔥 CRUD Master!'; msg.style.color = '#34D399'; } else { msg.textContent = '💪 راجع وحاول!'; msg.style.color = '#FBBF24'; } } }
+    </script>
+</body>
+
+</html>

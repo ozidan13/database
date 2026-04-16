@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Architecture — معمارية قواعد البيانات | Database Mastery</title>
+    <meta name="description" content="تعرف على معمارية قواعد البيانات: Three-Schema Architecture, Data Independence, ومكونات الـ DBMS.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="../css/global-db.css" rel="stylesheet">
+    <style>
+        body { background: #020617; color: #E2E8F0; font-family: 'Inter', sans-serif; }
+        .lesson-nav-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(2,6,23,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.06); height: 64px; display: flex; align-items: center; padding: 0 1.5rem; }
+        .nav-inner { max-width: 1280px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+        .nav-brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; }
+        .nav-brand .back-btn { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #10B981, #059669); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; transition: transform 0.3s; }
+        .nav-brand .back-btn:hover { transform: scale(1.1); }
+        .nav-links { display: flex; gap: 2rem; font-size: 0.85rem; font-family: 'Cairo', sans-serif; color: var(--text-faint); }
+        .nav-links a { transition: color 0.3s; direction: rtl; }
+        .nav-links a:hover { color: #34D399; }
+        @media (max-width: 768px) { .nav-links { display: none; } }
+        .lesson-hero { position: relative; padding: 8rem 1.5rem 5rem; text-align: center; overflow: hidden; }
+        .lesson-hero .glow-orb { position: absolute; width: 500px; height: 500px; border-radius: 50%; filter: blur(128px); pointer-events: none; }
+        .glow-orb-1 { top: -10%; right: -5%; background: rgba(139,92,246,0.12); }
+        .glow-orb-2 { bottom: -20%; left: -10%; background: rgba(6,182,212,0.08); }
+        .lesson-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 1rem; border-radius: 50px; background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08); font-family: 'Fira Code', monospace; font-size: 0.78rem; color: #34D399; margin-bottom: 1.5rem; }
+        .lesson-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; animation: pulse-dot 2s ease infinite; }
+        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .lesson-hero h1 { font-size: clamp(2.5rem,5vw,4rem); font-weight: 800; margin-bottom: 1rem; }
+        .lesson-hero h1 .text-gradient { background: linear-gradient(135deg, #8B5CF6, #06B6D4); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .lesson-hero .subtitle { font-family: 'Cairo', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1.5rem; direction: rtl; unicode-bidi: isolate; }
+        .lesson-hero .desc { color: var(--text-faint); max-width: 600px; margin: 0 auto; font-size: 1rem; line-height: 1.8; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
+        .lesson-section { padding: 5rem 1.5rem; max-width: 960px; margin: 0 auto; }
+        .lesson-section.alt-bg { background: rgba(15,23,42,0.3); max-width: 100%; }
+        .lesson-section.alt-bg > .section-inner { max-width: 960px; margin: 0 auto; }
+        .section-header { text-align: center; margin-bottom: 3rem; }
+        .section-header h2 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
+        .section-header .en-sub { font-family: 'Inter', sans-serif; color: var(--text-faint); font-size: 0.9rem; direction: ltr; unicode-bidi: isolate; display: block; }
+        .progress-bar-container { position: fixed; top: 64px; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.05); z-index: 99; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #8B5CF6, #06B6D4); width: 0%; transition: width 0.1s ease-out; }
+
+        /* 3-Layer Diagram */
+        .schema-layers { display: flex; flex-direction: column; gap: 0; margin: 2rem 0; }
+        .schema-layer { padding: 2rem; border: 1px solid rgba(255,255,255,0.08); cursor: pointer; transition: all 0.4s ease; position: relative; }
+        .schema-layer:first-child { border-radius: 20px 20px 0 0; }
+        .schema-layer:last-child { border-radius: 0 0 20px 20px; }
+        .schema-layer:hover { z-index: 2; transform: scale(1.02); }
+        .schema-layer .layer-label { font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
+        .schema-layer h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+        .schema-layer .layer-desc { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.95rem; color: var(--text-muted); line-height: 2; }
+        .layer-external { background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.2) !important; }
+        .layer-external:hover { background: rgba(59,130,246,0.12); box-shadow: 0 10px 40px rgba(59,130,246,0.1); }
+        .layer-external .layer-label { color: #60A5FA; }
+        .layer-conceptual { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.2) !important; }
+        .layer-conceptual:hover { background: rgba(16,185,129,0.12); box-shadow: 0 10px 40px rgba(16,185,129,0.1); }
+        .layer-conceptual .layer-label { color: #34D399; }
+        .layer-internal { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.2) !important; }
+        .layer-internal:hover { background: rgba(245,158,11,0.12); box-shadow: 0 10px 40px rgba(245,158,11,0.1); }
+        .layer-internal .layer-label { color: #FBBF24; }
+
+        /* Arrows between layers */
+        .layer-arrow { text-align: center; font-size: 1.5rem; color: var(--text-ghost); padding: 0.5rem 0; }
+
+        /* Independence Cards */
+        .indep-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2rem 0; }
+        @media (max-width: 768px) { .indep-grid { grid-template-columns: 1fr; } }
+        .indep-card { background: rgba(15,23,42,0.6); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1.8rem; transition: all 0.3s; }
+        .indep-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-4px); }
+        .indep-card .ic-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; margin-bottom: 1rem; }
+        .indep-card h4 { margin-bottom: 0.5rem; font-size: 1rem; }
+        .indep-card p { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.9rem; color: var(--text-muted); line-height: 2; }
+
+        .quiz-question { background: rgba(15,23,42,0.7); backdrop-filter: blur(12px); border: 1px solid var(--border-light); border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem; }
+        .quiz-question h4 { margin-bottom: 1rem; color: var(--text-primary); font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; }
+        .quiz-options { display: flex; flex-direction: column; gap: 0.6rem; }
+        .quiz-option { padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.3s; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; font-size: 0.92rem; color: var(--text-body); unicode-bidi: isolate; }
+        .quiz-option:hover { background: rgba(255,255,255,0.06); border-color: var(--border-hover); }
+        .quiz-option.correct { background: rgba(16,185,129,0.15); border-color: #10B981; color: #34D399; }
+        .quiz-option.wrong { background: rgba(239,68,68,0.15); border-color: #EF4444; color: #F87171; }
+        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: 10px; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; display: none; font-size: 0.92rem; line-height: 2; }
+        .quiz-feedback.show { display: block; }
+        .quiz-feedback.correct-fb { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #34D399; }
+        .quiz-feedback.wrong-fb { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #F87171; }
+
+        .lesson-bottom-nav { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 2rem 0; border-top: 1px solid var(--border-subtle); margin-top: 3rem; }
+        .lesson-bottom-nav a { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); transition: all 0.3s; font-weight: 600; font-size: 0.9rem; }
+        .lesson-bottom-nav a:hover { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <nav class="lesson-nav-bar">
+        <div class="nav-inner">
+            <a href="../index.html" class="nav-brand"><div class="back-btn"><i class="fas fa-arrow-left"></i></div><span>DB<span style="color:#8B5CF6;">Arch</span></span></a>
+            <div class="nav-links"><a href="#schema">المعمارية</a><a href="#independence">الاستقلالية</a><a href="#components">المكونات</a><a href="#quiz">اختبر نفسك</a></div>
+        </div>
+    </nav>
+    <div class="progress-bar-container"><div class="progress-bar-fill" id="reading-progress"></div></div>
+
+    <header class="lesson-hero">
+        <div class="glow-orb glow-orb-1"></div><div class="glow-orb glow-orb-2"></div>
+        <div style="position:relative;z-index:1;">
+            <div class="lesson-badge" data-aos="fade-down"><span class="dot"></span> UNIT 1 • Lesson 3</div>
+            <h1 data-aos="fade-up" data-aos-delay="150">Database <span class="text-gradient">Architecture</span></h1>
+            <div class="subtitle" data-aos="fade-up" data-aos-delay="300">معمارية قواعد البيانات</div>
+            <p class="desc" data-aos="fade-up" data-aos-delay="450">إزاي الـ Database مبنية من جوا؟ تعالوا نفتح غطاء المحرك! 🔧</p>
+        </div>
+    </header>
+
+    <!-- Three-Schema Architecture -->
+    <section class="lesson-section" id="schema">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-layer-group" style="color:#A78BFA;margin-left:0.5rem;"></i> معمارية الثلاث طبقات</h2>
+            <p class="en-sub">Three-Schema Architecture (ANSI/SPARC)</p>
+        </div>
+        <div class="glass-card" style="padding:2rem;border-radius:20px;margin-bottom:2rem;" data-aos="fade-up">
+            <div class="rtl-block" style="font-size:1.05rem;">
+                <p style="color:#E2E8F0;margin-bottom:1.5rem;">الـ <span class="english">DBMS</span> مبني على 3 طبقات — كل طبقة ليها دور مختلف. الفكرة إن كل طبقة <span class="hl-purple">مستقلة</span> عن التانية.</p>
+                <div class="note">💡 تخيل الموضوع كده: إنت بتسكن في شقة (الطبقة الخارجية). المبنى ليه تصميم معماري (الطبقة المفاهيمية). والأساسات والأسلاك والمواسير (الطبقة الداخلية). إنت مش محتاج تعرف المواسير فين عشان تفتح الحنفية! 🏠</div>
+            </div>
+        </div>
+
+        <div class="schema-layers" data-aos="fade-up" data-aos-delay="100">
+            <div class="schema-layer layer-external">
+                <div class="layer-label">External Level — المستوى الخارجي</div>
+                <h3 style="color:#60A5FA;"><i class="fas fa-users" style="margin-left:0.5rem;"></i> View Level</h3>
+                <div class="layer-desc">ده اللي المستخدم بيشوفه — كل مستخدم ليه <span class="english">View</span> (نافذة) خاصة بيه. الدكتور بيشوف درجات مادته بس. الطالب بيشوف بياناته بس. مدير الجامعة بيشوف كل حاجة. كلهم بيشوروا على نفس البيانات — بس من زوايا مختلفة.</div>
+            </div>
+            <div class="layer-arrow">⬇️</div>
+            <div class="schema-layer layer-conceptual">
+                <div class="layer-label">Conceptual Level — المستوى المفاهيمي</div>
+                <h3 style="color:#34D399;"><i class="fas fa-sitemap" style="margin-left:0.5rem;"></i> Logical Structure</h3>
+                <div class="layer-desc">ده التصميم الكامل للـ <span class="english">Database</span> — كل الجداول، العلاقات، القيود، والأنواع. الـ <span class="english">DBA</span> (مدير قاعدة البيانات) هو اللي بيصمم الطبقة دي. بتوصف "إيه البيانات اللي موجودة" من غير ما تقول "إزاي بتتخزن."</div>
+            </div>
+            <div class="layer-arrow">⬇️</div>
+            <div class="schema-layer layer-internal">
+                <div class="layer-label">Internal Level — المستوى الداخلي</div>
+                <h3 style="color:#FBBF24;"><i class="fas fa-hard-drive" style="margin-left:0.5rem;"></i> Physical Storage</h3>
+                <div class="layer-desc">إزاي البيانات فعلاً بتتخزن على الـ <span class="english">Disk</span>. ترتيب الملفات، الـ <span class="english">Indexes</span>، الضغط، الـ <span class="english">Buffer Pool</span>. المستخدم العادي مش بيشوف الطبقة دي خالص — الـ <span class="english">DBMS</span> بيدير كل حاجة ورا الكواليس.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Data Independence -->
+    <section class="lesson-section alt-bg" id="independence">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-unlink" style="color:#22D3EE;margin-left:0.5rem;"></i> استقلالية البيانات</h2>
+                <p class="en-sub">Data Independence — The Key Benefit</p>
+            </div>
+            <div class="glass-card" style="padding:2rem;border-radius:20px;margin-bottom:2rem;" data-aos="fade-up">
+                <div class="rtl-block" style="font-size:1.05rem;">
+                    <p style="color:#E2E8F0;">أهم فايدة من الـ <span class="english">Three-Schema Architecture</span> هي <span class="hl-cyan">استقلالية البيانات</span> — يعني تقدر تغير طبقة من غير ما تأثر على الطبقات التانية.</p>
+                </div>
+            </div>
+            <div class="indep-grid" data-aos="fade-up" data-aos-delay="100">
+                <div class="indep-card">
+                    <div class="ic-icon" style="background:rgba(96,165,250,0.1);color:#60A5FA;"><i class="fas fa-code"></i></div>
+                    <h4 style="color:#60A5FA;">Logical Data Independence</h4>
+                    <p>تقدر تغير في التصميم المنطقي (تضيف جدول، تغير عمود) من غير ما تأثر على التطبيقات والـ <span class="english">Views</span> القديمة. يعني لو ضفت عمود "رقم الموبايل" مش هتتأثر الـ <span class="english">Views</span> اللي مش بتعرضه.</p>
+                </div>
+                <div class="indep-card">
+                    <div class="ic-icon" style="background:rgba(251,191,36,0.1);color:#FBBF24;"><i class="fas fa-hdd"></i></div>
+                    <h4 style="color:#FBBF24;">Physical Data Independence</h4>
+                    <p>تقدر تغير طريقة التخزين (تضيف <span class="english">Index</span>، تنقل لـ <span class="english">SSD</span>، تضغط البيانات) من غير ما تغير حرف في التصميم المنطقي أو التطبيقات. ده اللي بيخلي الـ <span class="english">DBA</span> يحسّن الأداء بحرية!</p>
+                </div>
+            </div>
+            <div class="glass-card" style="padding:1.5rem;border-radius:16px;" data-aos="fade-up" data-aos-delay="200">
+                <div class="rtl-block" style="color:#94A3B8;font-size:0.95rem;text-align:center;">
+                    <p>🎓 <span class="hl-amber">مهم للامتحان:</span> السؤال الكلاسيكي: "إيه الفرق بين <span class="english">Logical</span> و <span class="english">Physical Data Independence</span>؟" — اتأكد إنك فاهمهم كويس!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DBMS Components -->
+    <section class="lesson-section" id="components">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-gears" style="color:#F59E0B;margin-left:0.5rem;"></i> مكونات الـ DBMS بالتفصيل</h2>
+            <p class="en-sub">DBMS System Architecture</p>
+        </div>
+        <div style="display:grid;gap:1rem;" data-aos="fade-up" data-aos-delay="100">
+            <div class="glass-card" style="padding:1.5rem;border-radius:16px;border-right:3px solid #60A5FA;">
+                <div class="rtl-block">
+                    <h4 style="color:#60A5FA;margin-bottom:0.5rem;">🔍 الـ <span class="english">Query Processor</span></h4>
+                    <p style="color:#CBD5E1;font-size:0.92rem;">بياخد الأمر بتاعك (<span class="english">SQL Query</span>) → بيحلله (<span class="english">Parser</span>) → بيحوله لخطة تنفيذ (<span class="english">Query Plan</span>) → بيختار أحسن خطة (<span class="english">Optimizer</span>) → بينفذها. كل ده بيحصل في أجزاء من الثانية! ⚡</p>
+                </div>
+            </div>
+            <div class="glass-card" style="padding:1.5rem;border-radius:16px;border-right:3px solid #34D399;">
+                <div class="rtl-block">
+                    <h4 style="color:#34D399;margin-bottom:0.5rem;">💾 الـ <span class="english">Storage Manager</span></h4>
+                    <p style="color:#CBD5E1;font-size:0.92rem;">مسؤول عن الكتابة والقراءة من الـ <span class="english">Disk</span>. بيدير <span class="english">Buffer Pool</span> (ذاكرة مؤقتة) عشان يسرّع القراءة. لو البيانات موجودة في الـ <span class="english">Buffer</span> مش لازم يروح للـ <span class="english">Disk</span> — وده أسرع بمراحل!</p>
+                </div>
+            </div>
+            <div class="glass-card" style="padding:1.5rem;border-radius:16px;border-right:3px solid #FBBF24;">
+                <div class="rtl-block">
+                    <h4 style="color:#FBBF24;margin-bottom:0.5rem;">🔄 الـ <span class="english">Transaction Manager</span></h4>
+                    <p style="color:#CBD5E1;font-size:0.92rem;">بيضمن إن العمليات بتتم بالكامل أو ما بتتمش خالص (<span class="english">Atomicity</span>). بيدير الأقفال (<span class="english">Locks</span>) عشان يمنع التعارض. بيكتب <span class="english">Log</span> لكل عملية عشان يقدر يعمل <span class="english">Recovery</span> لو الكهربا قطعت.</p>
+                </div>
+            </div>
+            <div class="glass-card" style="padding:1.5rem;border-radius:16px;border-right:3px solid #A78BFA;">
+                <div class="rtl-block">
+                    <h4 style="color:#A78BFA;margin-bottom:0.5rem;">📋 الـ <span class="english">Data Dictionary / Catalog</span></h4>
+                    <p style="color:#CBD5E1;font-size:0.92rem;">ده "الكتالوج" بتاع الـ <span class="english">Database</span> — فيه معلومات عن كل جدول (إيه أعمدته، أنواعها، القيود عليها، الـ <span class="english">Indexes</span>). يعني ده <span class="hl-purple">"بيانات عن البيانات"</span> أو <span class="english">Metadata</span>!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quiz -->
+    <section class="lesson-section alt-bg" id="quiz">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-brain" style="color:#D946EF;margin-left:0.5rem;"></i> اختبر نفسك!</h2>
+                <p class="en-sub">Quick Knowledge Check</p>
+            </div>
+            <div data-aos="fade-up" data-aos-delay="100">
+                <div class="quiz-question" id="q1">
+                    <h4>❓ سؤال ١: الطبقة اللي المستخدم العادي بيتعامل معاها في الـ Three-Schema Architecture هي؟</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" onclick="checkAnswer(1,this,false)">Internal Level — لأنها الأساس</div>
+                        <div class="quiz-option" onclick="checkAnswer(1,this,true)">External Level — كل مستخدم ليه View خاص</div>
+                        <div class="quiz-option" onclick="checkAnswer(1,this,false)">Conceptual Level — لأنها الأهم</div>
+                    </div>
+                    <div class="quiz-feedback" id="q1-feedback"></div>
+                </div>
+                <div class="quiz-question" id="q2">
+                    <h4>❓ سؤال ٢: لو غيرت طريقة تخزين البيانات (ضفت Index) من غير ما تأثر على التطبيقات — ده نوع إيه من الاستقلالية؟</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" onclick="checkAnswer(2,this,false)">Logical Data Independence</div>
+                        <div class="quiz-option" onclick="checkAnswer(2,this,true)">Physical Data Independence</div>
+                        <div class="quiz-option" onclick="checkAnswer(2,this,false)">Application Independence</div>
+                    </div>
+                    <div class="quiz-feedback" id="q2-feedback"></div>
+                </div>
+                <div class="quiz-question" id="q3">
+                    <h4>❓ سؤال ٣: إيه هو الـ Data Dictionary (Catalog)؟</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" onclick="checkAnswer(3,this,false)">مكان لتخزين بيانات المستخدمين</div>
+                        <div class="quiz-option" onclick="checkAnswer(3,this,false)">نسخة احتياطية من البيانات</div>
+                        <div class="quiz-option" onclick="checkAnswer(3,this,true)">بيانات عن البيانات (Metadata) — وصف الجداول والأعمدة والقيود</div>
+                    </div>
+                    <div class="quiz-feedback" id="q3-feedback"></div>
+                </div>
+            </div>
+            <div id="quiz-score" style="text-align:center;margin-top:2rem;display:none;">
+                <div class="glass-card" style="padding:2rem;border-radius:20px;display:inline-block;">
+                    <div class="rtl-block"><h3 style="color:#34D399;margin-bottom:0.5rem;" id="score-text"></h3><p style="color:#94A3B8;" id="score-msg"></p></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Summary & Nav -->
+    <section class="lesson-section">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-flag-checkered" style="color:#10B981;margin-left:0.5rem;"></i> الخلاصة</h2>
+            <p class="en-sub">Key Takeaways</p>
+        </div>
+        <div class="glass-card" style="padding:2rem;border-radius:20px;" data-aos="fade-up">
+            <div class="rtl-block" style="font-size:1.05rem;">
+                <div class="step-box" style="border-color:#8B5CF6;margin-bottom:1rem;"><p style="color:#A78BFA;">① الـ <span class="english">Three-Schema Architecture</span> بتفصل بين ما المستخدم بيشوفه والتصميم المنطقي والتخزين الفعلي.</p></div>
+                <div class="step-box" style="border-color:#06B6D4;margin-bottom:1rem;"><p style="color:#22D3EE;">② <span class="english">Data Independence</span> بتخليك تغير طبقة من غير ما تأثر على التانية — ودي ميزة قوية جداً!</p></div>
+                <div class="step-box" style="border-color:#F59E0B;margin-bottom:1rem;"><p style="color:#FBBF24;">③ الـ <span class="english">DBMS</span> فيه مكونات متخصصة: <span class="english">Query Processor</span>، <span class="english">Storage Manager</span>، <span class="english">Transaction Manager</span>.</p></div>
+                <div class="step-box" style="border-color:#10B981;"><p style="color:#34D399;">④ في الدرس الجاي هنثبت <span class="english">PostgreSQL</span> على جهازك ونكتب أول أمر! 🚀</p></div>
+            </div>
+        </div>
+    </section>
+
+    <div style="max-width:960px;margin:0 auto;padding:0 1.5rem;">
+        <div class="lesson-bottom-nav">
+            <a href="database_types.html"><i class="fas fa-arrow-right"></i><span>الدرس السابق</span></a>
+            <a href="postgresql_setup.html" style="color:#34D399;"><span>الدرس التالي: تثبيت PostgreSQL</span><i class="fas fa-arrow-left"></i></a>
+        </div>
+    </div>
+    <footer style="text-align:center;padding:3rem 1.5rem;color:var(--text-ghost);font-size:0.85rem;border-top:1px solid var(--border-subtle);">
+        <p>Database Mastery — Unit 1: The World of Databases</p>
+        <p style="font-family:'Cairo',sans-serif;margin-top:0.3rem;">إتقان قواعد البيانات — الوحدة ١</p>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true, offset: 100 });
+        window.addEventListener('scroll', () => { const p = (document.documentElement.scrollTop / (document.documentElement.scrollHeight - document.documentElement.clientHeight)) * 100; document.getElementById('reading-progress').style.width = p + '%'; });
+        let quizScore=0, answered=0; const total=3;
+        const fb = { 1:{correct:'🎉 صح! المستخدم بيتعامل مع External Level — كل واحد ليه View خاص بيه.',wrong:'❌ المستخدم العادي بيتعامل مع External Level (الطبقة الخارجية) — مش الداخلية.'}, 2:{correct:'✅ Physical Data Independence — تغيير التخزين من غير ما تأثر على التصميم المنطقي.',wrong:'❌ الإجابة هي Physical Data Independence — تغيير التخزين المادي.'}, 3:{correct:'💪 صح! Data Dictionary = Metadata = بيانات عن البيانات.',wrong:'❌ الـ Data Dictionary هو "بيانات عن البيانات" — وصف لبنية الـ Database.'} };
+        function checkAnswer(q,el,correct){const qEl=document.getElementById('q'+q);if(qEl.classList.contains('answered'))return;qEl.classList.add('answered');answered++;qEl.querySelectorAll('.quiz-option').forEach(o=>o.style.pointerEvents='none');const f=document.getElementById('q'+q+'-feedback');if(correct){el.classList.add('correct');f.className='quiz-feedback show correct-fb';f.textContent=fb[q].correct;quizScore++;}else{el.classList.add('wrong');f.className='quiz-feedback show wrong-fb';f.textContent=fb[q].wrong;qEl.querySelectorAll('.quiz-option').forEach(o=>{if(o.getAttribute('onclick').includes('true'))o.classList.add('correct');});}if(answered===total){const sd=document.getElementById('quiz-score');sd.style.display='block';document.getElementById('score-text').textContent=`🏆 النتيجة: ${quizScore} / ${total}`;const msg=document.getElementById('score-msg');if(quizScore===total){msg.textContent='🎉 درجة كاملة!';msg.style.color='#34D399';}else{msg.textContent='💪 راجع وحاول تاني!';msg.style.color='#FBBF24';}}}
+    </script>
+</body>
+</html>

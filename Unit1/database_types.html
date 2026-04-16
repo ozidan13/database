@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Types — أنواع قواعد البيانات | Database Mastery</title>
+    <meta name="description" content="تعرف على أنواع قواعد البيانات المختلفة: Relational, NoSQL, Graph, Key-Value وأمتى تستخدم كل نوع.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="../css/global-db.css" rel="stylesheet">
+    <style>
+        body { background: #020617; color: #E2E8F0; font-family: 'Inter', sans-serif; }
+        .lesson-nav-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(2,6,23,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.06); height: 64px; display: flex; align-items: center; padding: 0 1.5rem; }
+        .nav-inner { max-width: 1280px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+        .nav-brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; }
+        .nav-brand .back-btn { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #10B981, #059669); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; transition: transform 0.3s; }
+        .nav-brand .back-btn:hover { transform: scale(1.1); }
+        .nav-links { display: flex; gap: 2rem; font-size: 0.85rem; font-family: 'Cairo', sans-serif; color: var(--text-faint); }
+        .nav-links a { transition: color 0.3s; direction: rtl; }
+        .nav-links a:hover { color: #34D399; }
+        @media (max-width: 768px) { .nav-links { display: none; } }
+
+        .lesson-hero { position: relative; padding: 8rem 1.5rem 5rem; text-align: center; overflow: hidden; }
+        .lesson-hero .glow-orb { position: absolute; width: 500px; height: 500px; border-radius: 50%; filter: blur(128px); pointer-events: none; }
+        .glow-orb-1 { top: -10%; right: -5%; background: rgba(16,185,129,0.12); }
+        .glow-orb-2 { bottom: -20%; left: -10%; background: rgba(59,130,246,0.08); }
+        .lesson-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 1rem; border-radius: 50px; background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08); font-family: 'Fira Code', monospace; font-size: 0.78rem; color: #34D399; margin-bottom: 1.5rem; }
+        .lesson-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; animation: pulse-dot 2s ease infinite; }
+        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .lesson-hero h1 { font-size: clamp(2.5rem,5vw,4rem); font-weight: 800; margin-bottom: 1rem; }
+        .lesson-hero h1 .text-gradient { background: linear-gradient(135deg, #10B981, #3B82F6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .lesson-hero .subtitle { font-family: 'Cairo', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1.5rem; direction: rtl; unicode-bidi: isolate; }
+        .lesson-hero .desc { color: var(--text-faint); max-width: 600px; margin: 0 auto; font-size: 1rem; line-height: 1.8; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
+
+        .lesson-section { padding: 5rem 1.5rem; max-width: 960px; margin: 0 auto; }
+        .lesson-section.alt-bg { background: rgba(15,23,42,0.3); max-width: 100%; }
+        .lesson-section.alt-bg > .section-inner { max-width: 960px; margin: 0 auto; }
+        .section-header { text-align: center; margin-bottom: 3rem; }
+        .section-header h2 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
+        .section-header .en-sub { font-family: 'Inter', sans-serif; color: var(--text-faint); font-size: 0.9rem; direction: ltr; unicode-bidi: isolate; display: block; }
+
+        .progress-bar-container { position: fixed; top: 64px; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.05); z-index: 99; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #10B981, #3B82F6); width: 0%; transition: width 0.1s ease-out; }
+
+        /* DB Type Cards */
+        .db-types-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+        .db-type-card { background: rgba(15,23,42,0.6); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1.8rem; cursor: pointer; transition: all 0.4s ease; position: relative; overflow: hidden; }
+        .db-type-card::before { content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 2px; background: linear-gradient(90deg, transparent, var(--card-color), transparent); opacity: 0; transition: opacity 0.4s; }
+        .db-type-card:hover::before { opacity: 1; }
+        .db-type-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-6px); }
+        .db-type-card .card-icon { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 1.2rem; }
+        .db-type-card h3 { font-family: 'Inter', sans-serif; font-size: 1.1rem; margin-bottom: 0.3rem; direction: ltr; unicode-bidi: isolate; }
+        .db-type-card .card-ar { font-family: 'Cairo', sans-serif; font-size: 0.9rem; color: var(--text-faint); margin-bottom: 1rem; direction: rtl; unicode-bidi: isolate; }
+        .db-type-card .card-desc { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.92rem; color: var(--text-muted); line-height: 2; }
+        .db-type-card .examples { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+        .db-type-card .example-tag { font-family: 'Inter', sans-serif; font-size: 0.72rem; padding: 0.2rem 0.6rem; border-radius: 20px; background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.06); direction: ltr; unicode-bidi: isolate; }
+
+        .type-relational { --card-color: #3B82F6; }
+        .type-relational .card-icon { background: rgba(59,130,246,0.1); color: #60A5FA; }
+        .type-relational:hover { box-shadow: 0 15px 50px rgba(59,130,246,0.12); }
+        .type-document { --card-color: #10B981; }
+        .type-document .card-icon { background: rgba(16,185,129,0.1); color: #34D399; }
+        .type-document:hover { box-shadow: 0 15px 50px rgba(16,185,129,0.12); }
+        .type-keyvalue { --card-color: #F59E0B; }
+        .type-keyvalue .card-icon { background: rgba(245,158,11,0.1); color: #FBBF24; }
+        .type-keyvalue:hover { box-shadow: 0 15px 50px rgba(245,158,11,0.12); }
+        .type-graph { --card-color: #8B5CF6; }
+        .type-graph .card-icon { background: rgba(139,92,246,0.1); color: #A78BFA; }
+        .type-graph:hover { box-shadow: 0 15px 50px rgba(139,92,246,0.12); }
+        .type-column { --card-color: #EF4444; }
+        .type-column .card-icon { background: rgba(239,68,68,0.1); color: #F87171; }
+        .type-column:hover { box-shadow: 0 15px 50px rgba(239,68,68,0.12); }
+        .type-timeseries { --card-color: #06B6D4; }
+        .type-timeseries .card-icon { background: rgba(6,182,212,0.1); color: #22D3EE; }
+        .type-timeseries:hover { box-shadow: 0 15px 50px rgba(6,182,212,0.12); }
+
+        /* Decision Matrix */
+        .decision-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 2rem 0; }
+        .decision-table th { background: rgba(16,185,129,0.08); color: #34D399; padding: 0.7rem; text-align: center; border: 1px solid var(--border-subtle); font-family: 'Inter', sans-serif; }
+        .decision-table td { padding: 0.6rem; border: 1px solid var(--border-subtle); text-align: center; color: var(--text-body); }
+        .decision-table tr:hover { background: rgba(255,255,255,0.02); }
+        .check { color: #34D399; font-weight: bold; }
+        .x-mark { color: #F87171; }
+
+        /* Egypt Card */
+        .egypt-card { background: linear-gradient(135deg, rgba(16,185,129,0.05), rgba(59,130,246,0.05)); border: 1px solid rgba(16,185,129,0.15); border-radius: 16px; padding: 1.5rem; margin: 1rem 0; }
+        .egypt-card .eg-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.8rem; color: #34D399; font-weight: 700; font-size: 1rem; }
+
+        /* Quiz */
+        .quiz-question { background: rgba(15,23,42,0.7); backdrop-filter: blur(12px); border: 1px solid var(--border-light); border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem; }
+        .quiz-question h4 { margin-bottom: 1rem; color: var(--text-primary); font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; }
+        .quiz-options { display: flex; flex-direction: column; gap: 0.6rem; }
+        .quiz-option { padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.3s; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; font-size: 0.92rem; color: var(--text-body); unicode-bidi: isolate; }
+        .quiz-option:hover { background: rgba(255,255,255,0.06); border-color: var(--border-hover); }
+        .quiz-option.correct { background: rgba(16,185,129,0.15); border-color: #10B981; color: #34D399; }
+        .quiz-option.wrong { background: rgba(239,68,68,0.15); border-color: #EF4444; color: #F87171; }
+        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: 10px; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; display: none; font-size: 0.92rem; line-height: 2; }
+        .quiz-feedback.show { display: block; }
+        .quiz-feedback.correct-fb { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #34D399; }
+        .quiz-feedback.wrong-fb { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #F87171; }
+
+        .lesson-bottom-nav { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 2rem 0; border-top: 1px solid var(--border-subtle); margin-top: 3rem; }
+        .lesson-bottom-nav a { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); transition: all 0.3s; font-weight: 600; font-size: 0.9rem; }
+        .lesson-bottom-nav a:hover { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <nav class="lesson-nav-bar">
+        <div class="nav-inner">
+            <a href="../index.html" class="nav-brand"><div class="back-btn"><i class="fas fa-arrow-left"></i></div><span>DB<span style="color:#10B981;">Types</span></span></a>
+            <div class="nav-links">
+                <a href="#types">الأنواع</a>
+                <a href="#comparison">المقارنة</a>
+                <a href="#egypt">مصر</a>
+                <a href="#quiz">اختبر نفسك</a>
+            </div>
+        </div>
+    </nav>
+    <div class="progress-bar-container"><div class="progress-bar-fill" id="reading-progress"></div></div>
+
+    <header class="lesson-hero">
+        <div class="glow-orb glow-orb-1"></div>
+        <div class="glow-orb glow-orb-2"></div>
+        <div style="position:relative;z-index:1;">
+            <div class="lesson-badge" data-aos="fade-down"><span class="dot"></span> UNIT 1 • Lesson 2</div>
+            <h1 data-aos="fade-up" data-aos-delay="150"><span class="text-gradient">Database</span> Types</h1>
+            <div class="subtitle" data-aos="fade-up" data-aos-delay="300">أنواع قواعد البيانات</div>
+            <p class="desc" data-aos="fade-up" data-aos-delay="450">مش كل قواعد البيانات زي بعض — كل نوع ليه قوته وسبب وجوده.</p>
+        </div>
+    </header>
+
+    <!-- SECTION: Intro -->
+    <section class="lesson-section" id="intro">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-lightbulb" style="color:#FBBF24;margin-left:0.5rem;"></i> الفكرة</h2>
+            <p class="en-sub">Not All Databases Are Created Equal</p>
+        </div>
+        <div class="glass-card" style="padding:2rem;border-radius:20px;" data-aos="fade-up" data-aos-delay="100">
+            <div class="rtl-block" style="font-size:1.05rem;">
+                <p style="color:#E2E8F0;margin-bottom:1.5rem;">تخيل إنك عايز تخزن <span class="hl-amber">بيانات مختلفة</span> — جداول طلاب، بوستات سوشيال ميديا، علاقات بين ناس، أسعار أسهم كل ثانية...</p>
+                <p style="color:#CBD5E1;margin-bottom:1.5rem;">هل كل أنواع البيانات دي لازم تتخزن بنفس الطريقة؟ 🤔</p>
+                <p style="color:#CBD5E1;margin-bottom:1.5rem;"><span class="hl-red">لأ طبعاً!</span> عشان كده العالم اخترع أنواع مختلفة من قواعد البيانات — كل نوع متخصص في حاجة معينة.</p>
+                <div class="note">💡 فكر فيها كده: العربيات فيها أنواع — سيارة سباق، شاحنة، عربية عادية. كل واحدة مصممة لغرض. نفس الكلام في <span class="english">Databases</span>! 🏎️🚛🚗</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: Types Grid -->
+    <section class="lesson-section alt-bg" id="types">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-layer-group" style="color:#34D399;margin-left:0.5rem;"></i> أنواع قواعد البيانات</h2>
+                <p class="en-sub">The Major Database Types</p>
+            </div>
+
+            <div class="db-types-grid">
+                <!-- Relational -->
+                <div class="db-type-card type-relational" data-aos="fade-up" data-aos-delay="0">
+                    <div class="card-icon"><i class="fas fa-table"></i></div>
+                    <h3>Relational (SQL)</h3>
+                    <div class="card-ar">قواعد البيانات العلائقية</div>
+                    <div class="card-desc">البيانات بتتخزن في <span class="english">Tables</span> (جداول) مترابطة مع بعض بالـ <span class="english">Keys</span>. ده أشهر نوع وأقدمه — وبيستخدم لغة <span class="english">SQL</span> للاستعلامات. مثالي للبيانات المنظمة اللي ليها بنية ثابتة.</div>
+                    <div class="examples">
+                        <span class="example-tag">PostgreSQL</span>
+                        <span class="example-tag">MySQL</span>
+                        <span class="example-tag">Oracle</span>
+                        <span class="example-tag">SQL Server</span>
+                        <span class="example-tag">SQLite</span>
+                    </div>
+                </div>
+
+                <!-- Document -->
+                <div class="db-type-card type-document" data-aos="fade-up" data-aos-delay="100">
+                    <div class="card-icon"><i class="fas fa-file-code"></i></div>
+                    <h3>Document Store</h3>
+                    <div class="card-ar">قواعد بيانات المستندات</div>
+                    <div class="card-desc">البيانات بتتخزن كمستندات <span class="english">JSON</span> مرنة. مش لازم كل مستند يبقى ليه نفس البنية. مثالي للتطبيقات اللي بنيتها بتتغير كتير وللـ <span class="english">APIs</span>.</div>
+                    <div class="examples">
+                        <span class="example-tag">MongoDB</span>
+                        <span class="example-tag">CouchDB</span>
+                        <span class="example-tag">Firestore</span>
+                    </div>
+                </div>
+
+                <!-- Key-Value -->
+                <div class="db-type-card type-keyvalue" data-aos="fade-up" data-aos-delay="200">
+                    <div class="card-icon"><i class="fas fa-key"></i></div>
+                    <h3>Key-Value Store</h3>
+                    <div class="card-ar">قواعد بيانات المفتاح/القيمة</div>
+                    <div class="card-desc">أبسط نوع — كل حاجة بتتخزن كـ <span class="english">Key</span> وقيمة مرتبطة بيه. زي الـ <span class="english">Dictionary</span> في البرمجة. سريع جداً — بيتستخدم في <span class="english">Caching</span> والـ <span class="english">Sessions</span>.</div>
+                    <div class="examples">
+                        <span class="example-tag">Redis</span>
+                        <span class="example-tag">DynamoDB</span>
+                        <span class="example-tag">Memcached</span>
+                    </div>
+                </div>
+
+                <!-- Graph -->
+                <div class="db-type-card type-graph" data-aos="fade-up" data-aos-delay="0">
+                    <div class="card-icon"><i class="fas fa-diagram-project"></i></div>
+                    <h3>Graph Database</h3>
+                    <div class="card-ar">قواعد بيانات الرسم البياني</div>
+                    <div class="card-desc">البيانات بتتخزن كـ <span class="english">Nodes</span> (عُقد) و <span class="english">Edges</span> (علاقات). مثالي لما العلاقات بين البيانات أهم من البيانات نفسها — زي شبكات التواصل الاجتماعي. 🕸️</div>
+                    <div class="examples">
+                        <span class="example-tag">Neo4j</span>
+                        <span class="example-tag">ArangoDB</span>
+                        <span class="example-tag">Amazon Neptune</span>
+                    </div>
+                </div>
+
+                <!-- Column-Family -->
+                <div class="db-type-card type-column" data-aos="fade-up" data-aos-delay="100">
+                    <div class="card-icon"><i class="fas fa-columns"></i></div>
+                    <h3>Column-Family</h3>
+                    <div class="card-ar">قواعد بيانات الأعمدة</div>
+                    <div class="card-desc">بتخزن البيانات بالأعمدة مش بالصفوف. مثالي للـ <span class="english">Big Data</span> والتحليلات — لما عايز تقرأ عمود كامل (مثلاً كل الأسعار) مش صف كامل.</div>
+                    <div class="examples">
+                        <span class="example-tag">Cassandra</span>
+                        <span class="example-tag">HBase</span>
+                        <span class="example-tag">ScyllaDB</span>
+                    </div>
+                </div>
+
+                <!-- Time-Series -->
+                <div class="db-type-card type-timeseries" data-aos="fade-up" data-aos-delay="200">
+                    <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+                    <h3>Time-Series</h3>
+                    <div class="card-ar">قواعد البيانات الزمنية</div>
+                    <div class="card-desc">متخصصة في بيانات مرتبطة بالزمن — زي قراءات السنسورات، أسعار الأسهم، <span class="english">logs</span> السيرفرات. بتضغط البيانات بكفاءة وبتستعلم بسرعة على نطاقات زمنية.</div>
+                    <div class="examples">
+                        <span class="example-tag">InfluxDB</span>
+                        <span class="example-tag">TimescaleDB</span>
+                        <span class="example-tag">Prometheus</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: Comparison -->
+    <section class="lesson-section" id="comparison">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-scale-balanced" style="color:#06B6D4;margin-left:0.5rem;"></i> مقارنة سريعة</h2>
+            <p class="en-sub">Quick Comparison Matrix</p>
+        </div>
+        <div class="glass-card" style="padding:1.5rem;border-radius:20px;overflow-x:auto;" data-aos="fade-up">
+            <table class="decision-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Structure</th>
+                        <th>Scalability</th>
+                        <th>Flexibility</th>
+                        <th>Best For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td style="color:#60A5FA;font-weight:600;">Relational</td><td>Tables + Rows</td><td>Vertical ↕️</td><td class="x-mark">Rigid Schema</td><td>Banking, ERP, CRM</td></tr>
+                    <tr><td style="color:#34D399;font-weight:600;">Document</td><td>JSON Documents</td><td>Horizontal ↔️</td><td class="check">Flexible</td><td>APIs, CMS, E-commerce</td></tr>
+                    <tr><td style="color:#FBBF24;font-weight:600;">Key-Value</td><td>Key → Value</td><td>Horizontal ↔️</td><td class="check">Very Flexible</td><td>Caching, Sessions</td></tr>
+                    <tr><td style="color:#A78BFA;font-weight:600;">Graph</td><td>Nodes + Edges</td><td>Horizontal ↔️</td><td class="check">Flexible</td><td>Social Networks, Fraud</td></tr>
+                    <tr><td style="color:#F87171;font-weight:600;">Column</td><td>Column Families</td><td>Horizontal ↔️</td><td>Semi-Rigid</td><td>Big Data, Analytics</td></tr>
+                    <tr><td style="color:#22D3EE;font-weight:600;">Time-Series</td><td>Timestamped</td><td>Horizontal ↔️</td><td class="x-mark">Time-focused</td><td>IoT, Monitoring</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="glass-card" style="padding:2rem;border-radius:20px;margin-top:2rem;" data-aos="fade-up" data-aos-delay="100">
+            <div class="rtl-block" style="font-size:1.05rem;">
+                <h3 style="color:#FBBF24;margin-bottom:1rem;">🤔 طيب... أستخدم إيه؟</h3>
+                <div class="step-box" style="border-color:#3B82F6;"><p style="color:#60A5FA;">بيانات منظمة + علاقات كتير + محتاج <span class="english">ACID</span>؟ → <span class="hl-blue">Relational (PostgreSQL)</span></p></div>
+                <div class="step-box" style="border-color:#10B981;"><p style="color:#34D399;">بيانات مرنة + <span class="english">API</span> سريعة + مش محتاج <span class="english">Joins</span> كتير؟ → <span class="highlight">Document (MongoDB)</span></p></div>
+                <div class="step-box" style="border-color:#F59E0B;"><p style="color:#FBBF24;">محتاج سرعة رهيبة + بيانات بسيطة؟ → <span class="hl-amber">Key-Value (Redis)</span></p></div>
+                <div class="step-box" style="border-color:#8B5CF6;"><p style="color:#A78BFA;">العلاقات بين البيانات هي الأهم؟ → <span class="hl-purple">Graph (Neo4j)</span></p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: Egyptian Companies -->
+    <section class="lesson-section alt-bg" id="egypt">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-globe-africa" style="color:#22D3EE;margin-left:0.5rem;"></i> في مصر بيستخدموا إيه؟</h2>
+                <p class="en-sub">Databases Used by Egyptian Companies</p>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;" data-aos="fade-up" data-aos-delay="100">
+                <div class="egypt-card">
+                    <div class="eg-header"><i class="fas fa-phone"></i> فودافون مصر</div>
+                    <div class="rtl-block" style="font-size:0.9rem;color:#CBD5E1;">بتستخدم <span class="english">Oracle Database</span> لإدارة بيانات 40+ مليون عميل. <span class="english">Oracle</span> من أقوى وأغلى الـ <span class="english">Relational Databases</span> في العالم.</div>
+                </div>
+                <div class="egypt-card">
+                    <div class="eg-header"><i class="fas fa-money-bill-wave"></i> إنستاباي</div>
+                    <div class="rtl-block" style="font-size:0.9rem;color:#CBD5E1;">بتستخدم <span class="english">PostgreSQL</span> لعمليات التحويل المالي. محتاجين <span class="english">ACID compliance</span> — مينفعش فلوس تضيع! 💰</div>
+                </div>
+                <div class="egypt-card">
+                    <div class="eg-header"><i class="fas fa-shopping-cart"></i> سوق / أمازون مصر</div>
+                    <div class="rtl-block" style="font-size:0.9rem;color:#CBD5E1;">بتستخدم مزيج: <span class="english">DynamoDB</span> للسرعة + <span class="english">Aurora (MySQL)</span> للطلبات + <span class="english">ElastiCache (Redis)</span> للتخزين المؤقت. 🛒</div>
+                </div>
+                <div class="egypt-card">
+                    <div class="eg-header"><i class="fas fa-car"></i> سويفل / كريم</div>
+                    <div class="rtl-block" style="font-size:0.9rem;color:#CBD5E1;">بتستخدم <span class="english">MongoDB</span> لبيانات الرحلات + <span class="english">Redis</span> لتتبع المواقع اللحظية + <span class="english">PostgreSQL</span> للمحاسبة. كل نوع ليه دوره! 🚗</div>
+                </div>
+            </div>
+            <div class="glass-card" style="padding:1.5rem;border-radius:16px;margin-top:2rem;text-align:center;" data-aos="fade-up" data-aos-delay="200">
+                <div class="rtl-block" style="color:#94A3B8;font-size:0.95rem;">
+                    <p>💡 <span class="hl-cyan">ده اسمه <span class="english">Polyglot Persistence</span></span> — يعني استخدام أكتر من نوع <span class="english">Database</span> في نفس المشروع. كل نوع بيعمل اللي هو أحسن فيه!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION: Quiz -->
+    <section class="lesson-section" id="quiz">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-brain" style="color:#D946EF;margin-left:0.5rem;"></i> اختبر نفسك!</h2>
+            <p class="en-sub">Quick Knowledge Check</p>
+        </div>
+        <div data-aos="fade-up" data-aos-delay="100">
+            <div class="quiz-question" id="q1">
+                <h4>❓ سؤال ١: لو عايز تبني تطبيق بنكي بيحول فلوس — إيه أنسب نوع Database؟</h4>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">MongoDB — لأنها سريعة</div>
+                    <div class="quiz-option" onclick="checkAnswer(1,this,true)">PostgreSQL — لأنها Relational وبتدعم ACID</div>
+                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">Redis — لأنها أسرع حاجة</div>
+                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">Neo4j — لأنها بتدعم علاقات</div>
+                </div>
+                <div class="quiz-feedback" id="q1-feedback"></div>
+            </div>
+            <div class="quiz-question" id="q2">
+                <h4>❓ سؤال ٢: لو عايز تخزن بيانات بوستات بشكل مرن من غير Schema ثابت — إيه أنسب نوع؟</h4>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">Oracle — أقوى Relational</div>
+                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">Cassandra — للبيانات الكبيرة</div>
+                    <div class="quiz-option" onclick="checkAnswer(2,this,true)">MongoDB — Document Store مرن</div>
+                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">InfluxDB — للبيانات الزمنية</div>
+                </div>
+                <div class="quiz-feedback" id="q2-feedback"></div>
+            </div>
+            <div class="quiz-question" id="q3">
+                <h4>❓ سؤال ٣: إيه معنى Polyglot Persistence؟</h4>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">استخدام لغات برمجة متعددة</div>
+                    <div class="quiz-option" onclick="checkAnswer(3,this,true)">استخدام أكتر من نوع Database في نفس المشروع</div>
+                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">تخزين البيانات بلغات مختلفة</div>
+                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">عمل نسخ احتياطية متعددة</div>
+                </div>
+                <div class="quiz-feedback" id="q3-feedback"></div>
+            </div>
+        </div>
+        <div id="quiz-score" style="text-align:center;margin-top:2rem;display:none;">
+            <div class="glass-card" style="padding:2rem;border-radius:20px;display:inline-block;">
+                <div class="rtl-block"><h3 style="color:#34D399;margin-bottom:0.5rem;" id="score-text"></h3><p style="color:#94A3B8;" id="score-msg"></p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Summary -->
+    <section class="lesson-section alt-bg">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-flag-checkered" style="color:#10B981;margin-left:0.5rem;"></i> الخلاصة</h2>
+                <p class="en-sub">Key Takeaways</p>
+            </div>
+            <div class="glass-card" style="padding:2rem;border-radius:20px;" data-aos="fade-up">
+                <div class="rtl-block" style="font-size:1.05rem;">
+                    <div class="step-box" style="border-color:#3B82F6;margin-bottom:1rem;"><p style="color:#60A5FA;">① الـ <span class="english">Relational Databases</span> هي الأكثر انتشاراً — وهنركز عليها في الكورس ده (خاصة <span class="english">PostgreSQL</span>).</p></div>
+                    <div class="step-box" style="border-color:#10B981;margin-bottom:1rem;"><p style="color:#34D399;">② الـ <span class="english">NoSQL</span> مش "أحسن" من <span class="english">SQL</span> — كل نوع ليه استخدامه.</p></div>
+                    <div class="step-box" style="border-color:#F59E0B;margin-bottom:1rem;"><p style="color:#FBBF24;">③ الشركات الكبيرة بتستخدم أكتر من نوع — ده اسمه <span class="english">Polyglot Persistence</span>.</p></div>
+                    <div class="step-box" style="border-color:#8B5CF6;"><p style="color:#A78BFA;">④ في الدرس الجاي هنفهم <span class="hl-purple">معمارية الـ Database من جوا</span> — الـ <span class="english">Three-Schema Architecture</span>! 🏗️</p></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div style="max-width:960px;margin:0 auto;padding:0 1.5rem;">
+        <div class="lesson-bottom-nav">
+            <a href="why_databases.html"><i class="fas fa-arrow-right"></i><span>الدرس السابق</span></a>
+            <a href="database_architecture.html" style="color:#34D399;"><span>الدرس التالي: معمارية قواعد البيانات</span><i class="fas fa-arrow-left"></i></a>
+        </div>
+    </div>
+    <footer style="text-align:center;padding:3rem 1.5rem;color:var(--text-ghost);font-size:0.85rem;border-top:1px solid var(--border-subtle);">
+        <p>Database Mastery — Unit 1: The World of Databases</p>
+        <p style="font-family:'Cairo',sans-serif;margin-top:0.3rem;">إتقان قواعد البيانات — الوحدة ١</p>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true, offset: 100 });
+        window.addEventListener('scroll', () => {
+            const p = (document.documentElement.scrollTop / (document.documentElement.scrollHeight - document.documentElement.clientHeight)) * 100;
+            document.getElementById('reading-progress').style.width = p + '%';
+        });
+
+        let quizScore = 0, answered = 0;
+        const total = 3;
+        const fb = {
+            1: { correct: '🎉 صح! البنوك محتاجة ACID — والـ Relational Databases زي PostgreSQL هي الأنسب!', wrong: '❌ البنوك محتاجة ضمان ACID — والـ Relational Databases هي اللي بتوفر ده.' },
+            2: { correct: '✅ بالظبط! MongoDB بتخزن JSON documents مرنة — مناسبة لبيانات مالهاش schema ثابت.', wrong: '❌ لما البيانات ملهاش بنية ثابتة، Document Stores زي MongoDB هي الأنسب.' },
+            3: { correct: '💪 ممتاز! Polyglot Persistence = استخدام أنواع مختلفة من Databases كل واحدة في اللي بتتفوق فيه.', wrong: '❌ Polyglot Persistence معناها استخدام أكتر من نوع Database في نفس النظام.' },
+        };
+        function checkAnswer(q, el, correct) {
+            const qEl = document.getElementById('q' + q);
+            if (qEl.classList.contains('answered')) return;
+            qEl.classList.add('answered');
+            answered++;
+            qEl.querySelectorAll('.quiz-option').forEach(o => o.style.pointerEvents = 'none');
+            const f = document.getElementById('q' + q + '-feedback');
+            if (correct) { el.classList.add('correct'); f.className = 'quiz-feedback show correct-fb'; f.textContent = fb[q].correct; quizScore++; }
+            else { el.classList.add('wrong'); f.className = 'quiz-feedback show wrong-fb'; f.textContent = fb[q].wrong; qEl.querySelectorAll('.quiz-option').forEach(o => { if (o.getAttribute('onclick').includes('true')) o.classList.add('correct'); }); }
+            if (answered === total) {
+                const sd = document.getElementById('quiz-score'); sd.style.display = 'block';
+                document.getElementById('score-text').textContent = `🏆 النتيجة: ${quizScore} / ${total}`;
+                const msg = document.getElementById('score-msg');
+                if (quizScore === total) { msg.textContent = '🎉 درجة كاملة! جاهز للدرس الجاي!'; msg.style.color = '#34D399'; }
+                else if (quizScore >= 2) { msg.textContent = '👏 كويس! راجع اللي غلطت فيه وكمّل!'; msg.style.color = '#FBBF24'; }
+                else { msg.textContent = '💪 راجع الدرس تاني — هتفهمه أكتر!'; msg.style.color = '#F87171'; }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PostgreSQL Setup — تثبيت PostgreSQL | Database Mastery</title>
+    <meta name="description" content="دليل شامل خطوة بخطوة لتثبيت PostgreSQL على Windows, Mac, Linux وتشغيل أول Query.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="../css/global-db.css" rel="stylesheet">
+    <style>
+        body { background: #020617; color: #E2E8F0; font-family: 'Inter', sans-serif; }
+        .lesson-nav-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(2,6,23,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.06); height: 64px; display: flex; align-items: center; padding: 0 1.5rem; }
+        .nav-inner { max-width: 1280px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+        .nav-brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; }
+        .nav-brand .back-btn { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #06B6D4, #0891B2); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; transition: transform 0.3s; }
+        .nav-brand .back-btn:hover { transform: scale(1.1); }
+        .nav-links { display: flex; gap: 2rem; font-size: 0.85rem; font-family: 'Cairo', sans-serif; color: var(--text-faint); }
+        .nav-links a { transition: color 0.3s; direction: rtl; }
+        .nav-links a:hover { color: #22D3EE; }
+        @media (max-width: 768px) { .nav-links { display: none; } }
+        .lesson-hero { position: relative; padding: 8rem 1.5rem 5rem; text-align: center; overflow: hidden; }
+        .lesson-hero .glow-orb { position: absolute; width: 500px; height: 500px; border-radius: 50%; filter: blur(128px); pointer-events: none; }
+        .glow-orb-1 { top: -10%; right: -5%; background: rgba(6,182,212,0.15); }
+        .glow-orb-2 { bottom: -20%; left: -10%; background: rgba(59,130,246,0.08); }
+        .lesson-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 1rem; border-radius: 50px; background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08); font-family: 'Fira Code', monospace; font-size: 0.78rem; color: #22D3EE; margin-bottom: 1.5rem; }
+        .lesson-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #06B6D4; animation: pulse-dot 2s ease infinite; }
+        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .lesson-hero h1 { font-size: clamp(2.5rem,5vw,4rem); font-weight: 800; margin-bottom: 1rem; }
+        .lesson-hero h1 .text-gradient { background: linear-gradient(135deg, #06B6D4, #3B82F6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .lesson-hero .subtitle { font-family: 'Cairo', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1.5rem; direction: rtl; unicode-bidi: isolate; }
+        .lesson-hero .desc { color: var(--text-faint); max-width: 600px; margin: 0 auto; font-size: 1rem; line-height: 1.8; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
+        .lesson-section { padding: 5rem 1.5rem; max-width: 960px; margin: 0 auto; }
+        .lesson-section.alt-bg { background: rgba(15,23,42,0.3); max-width: 100%; }
+        .lesson-section.alt-bg > .section-inner { max-width: 960px; margin: 0 auto; }
+        .section-header { text-align: center; margin-bottom: 3rem; }
+        .section-header h2 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
+        .section-header .en-sub { font-family: 'Inter', sans-serif; color: var(--text-faint); font-size: 0.9rem; direction: ltr; unicode-bidi: isolate; display: block; }
+        .progress-bar-container { position: fixed; top: 64px; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.05); z-index: 99; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #06B6D4, #3B82F6); width: 0%; transition: width 0.1s ease-out; }
+
+        /* OS Tab Selector */
+        .os-tabs { display: flex; justify-content: center; gap: 0.5rem; margin: 2rem 0; flex-wrap: wrap; }
+        .os-tab { padding: 0.7rem 1.5rem; border-radius: 12px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem; }
+        .os-tab:hover { background: rgba(255,255,255,0.06); border-color: var(--border-hover); }
+        .os-tab.active { background: rgba(6,182,212,0.15); border-color: #06B6D4; color: #22D3EE; }
+        .os-tab i { font-size: 1.1rem; }
+        .os-content { display: none; }
+        .os-content.active { display: block; }
+
+        /* Step Cards */
+        .setup-step { background: rgba(15,23,42,0.6); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1.8rem; margin-bottom: 1.5rem; position: relative; }
+        .setup-step::before { content: attr(data-step); position: absolute; top: -12px; right: 1.5rem; background: linear-gradient(135deg, #06B6D4, #0891B2); color: white; font-weight: 800; padding: 0.3rem 0.8rem; border-radius: 8px; font-size: 0.8rem; font-family: 'Inter', sans-serif; }
+        .setup-step h4 { margin-bottom: 0.8rem; color: #22D3EE; font-size: 1.05rem; }
+        .setup-step .step-desc { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.95rem; color: var(--text-muted); line-height: 2; margin-bottom: 1rem; }
+
+        /* Terminal */
+        .terminal { background: #0a0a0a; border-radius: 12px; overflow: hidden; margin: 1rem 0; border: 1px solid rgba(255,255,255,0.06); }
+        .terminal-bar { background: #1a1a1a; padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .terminal-dot.red { background: #FF5F57; }
+        .terminal-dot.yellow { background: #FDBC40; }
+        .terminal-dot.green { background: #27C93F; }
+        .terminal-title { color: #6b7280; font-size: 0.75rem; margin-right: auto; font-family: 'Inter', sans-serif; }
+        .terminal-body { padding: 1rem 1.2rem; font-family: 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.8; direction: ltr; }
+        .terminal-body .prompt { color: #22D3EE; }
+        .terminal-body .command { color: #E2E8F0; }
+        .terminal-body .output { color: #6b7280; }
+        .terminal-body .success { color: #34D399; }
+        .terminal-body .warning { color: #FBBF24; }
+
+        /* PostgreSQL vs Others */
+        .pg-why { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin: 2rem 0; }
+        .pg-reason { background: rgba(15,23,42,0.6); border: 1px solid rgba(6,182,212,0.15); border-radius: 14px; padding: 1.3rem; transition: all 0.3s; }
+        .pg-reason:hover { border-color: rgba(6,182,212,0.3); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(6,182,212,0.08); }
+        .pg-reason .pr-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .pg-reason h4 { font-size: 0.95rem; margin-bottom: 0.3rem; color: #22D3EE; }
+        .pg-reason p { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.85rem; color: var(--text-muted); line-height: 1.8; }
+
+        .quiz-question { background: rgba(15,23,42,0.7); backdrop-filter: blur(12px); border: 1px solid var(--border-light); border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem; }
+        .quiz-question h4 { margin-bottom: 1rem; color: var(--text-primary); font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; }
+        .quiz-options { display: flex; flex-direction: column; gap: 0.6rem; }
+        .quiz-option { padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.3s; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; font-size: 0.92rem; color: var(--text-body); unicode-bidi: isolate; }
+        .quiz-option:hover { background: rgba(255,255,255,0.06); border-color: var(--border-hover); }
+        .quiz-option.correct { background: rgba(16,185,129,0.15); border-color: #10B981; color: #34D399; }
+        .quiz-option.wrong { background: rgba(239,68,68,0.15); border-color: #EF4444; color: #F87171; }
+        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: 10px; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; display: none; font-size: 0.92rem; line-height: 2; }
+        .quiz-feedback.show { display: block; }
+        .quiz-feedback.correct-fb { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #34D399; }
+        .quiz-feedback.wrong-fb { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #F87171; }
+        .lesson-bottom-nav { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 2rem 0; border-top: 1px solid var(--border-subtle); margin-top: 3rem; }
+        .lesson-bottom-nav a { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); transition: all 0.3s; font-weight: 600; font-size: 0.9rem; }
+        .lesson-bottom-nav a:hover { background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.3); transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <nav class="lesson-nav-bar">
+        <div class="nav-inner">
+            <a href="../index.html" class="nav-brand"><div class="back-btn"><i class="fas fa-arrow-left"></i></div><span><span style="color:#06B6D4;">PG</span>Setup</span></a>
+            <div class="nav-links"><a href="#why-pg">ليه PostgreSQL</a><a href="#install">التثبيت</a><a href="#first-query">أول Query</a><a href="#quiz">اختبر نفسك</a></div>
+        </div>
+    </nav>
+    <div class="progress-bar-container"><div class="progress-bar-fill" id="reading-progress"></div></div>
+
+    <header class="lesson-hero">
+        <div class="glow-orb glow-orb-1"></div><div class="glow-orb glow-orb-2"></div>
+        <div style="position:relative;z-index:1;">
+            <div class="lesson-badge" data-aos="fade-down"><span class="dot"></span> UNIT 1 • Lesson 4</div>
+            <h1 data-aos="fade-up" data-aos-delay="150"><span class="text-gradient">PostgreSQL</span> Setup</h1>
+            <div class="subtitle" data-aos="fade-up" data-aos-delay="300">تثبيت PostgreSQL وتشغيل أول Query</div>
+            <p class="desc" data-aos="fade-up" data-aos-delay="450">خلينا ننزل PostgreSQL على جهازنا ونكتب أول أمر — الممارسة العملية تبدأ هنا! 🚀</p>
+        </div>
+    </header>
+
+    <!-- Why PostgreSQL -->
+    <section class="lesson-section" id="why-pg">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-elephant" style="color:#22D3EE;margin-left:0.5rem;"></i> ليه PostgreSQL بالذات؟</h2>
+            <p class="en-sub">Why We Chose PostgreSQL</p>
+        </div>
+        <div class="glass-card" style="padding:2rem;border-radius:20px;margin-bottom:2rem;" data-aos="fade-up">
+            <div class="rtl-block" style="font-size:1.05rem;">
+                <p style="color:#E2E8F0;margin-bottom:1.5rem;">في كذا <span class="english">Relational Database</span> ممكن نستخدمها — بس إحنا اخترنا <span class="english">PostgreSQL</span> لأسباب كتير:</p>
+            </div>
+        </div>
+        <div class="pg-why" data-aos="fade-up" data-aos-delay="100">
+            <div class="pg-reason">
+                <div class="pr-icon">🆓</div>
+                <h4>مجاني ومفتوح المصدر</h4>
+                <p>مش محتاج تدفع حاجة — على عكس <span class="english">Oracle</span> اللي ممكن يكلفك آلاف الدولارات.</p>
+            </div>
+            <div class="pg-reason">
+                <div class="pr-icon">🏢</div>
+                <h4>بيتستخدم في الشركات الكبيرة</h4>
+                <p><span class="english">Apple, Instagram, Spotify, Uber</span> — كلهم بيستخدموا <span class="english">PostgreSQL</span>.</p>
+            </div>
+            <div class="pg-reason">
+                <div class="pr-icon">📚</div>
+                <h4>متوافق مع المنهج الأكاديمي</h4>
+                <p>بيدعم كل حاجة في كتاب <span class="english">Elmasri & Navathe</span> — <span class="english">Triggers, Views, Constraints</span>... كل حاجة!</p>
+            </div>
+            <div class="pg-reason">
+                <div class="pr-icon">⚡</div>
+                <h4>فيه Features متقدمة</h4>
+                <p>بيدعم <span class="english">JSON, Full-Text Search, Window Functions, CTEs</span> — حاجات <span class="english">MySQL</span> لسه بيلحق فيها.</p>
+            </div>
+            <div class="pg-reason">
+                <div class="pr-icon">🔌</div>
+                <h4>بيشتغل مع Prisma</h4>
+                <p>في الوحدات المتقدمة هنستخدم <span class="english">Prisma ORM</span> مع <span class="english">NestJS</span> — و <span class="english">PostgreSQL</span> هو الأفضل معاهم.</p>
+            </div>
+            <div class="pg-reason">
+                <div class="pr-icon">🌍</div>
+                <h4>مجتمع ضخم</h4>
+                <p>أي مشكلة هتقابلك — هتلاقي حلها على <span class="english">Stack Overflow</span> في ثواني.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Installation -->
+    <section class="lesson-section alt-bg" id="install">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-download" style="color:#FBBF24;margin-left:0.5rem;"></i> خطوات التثبيت</h2>
+                <p class="en-sub">Step-by-Step Installation Guide</p>
+            </div>
+
+            <div class="os-tabs" data-aos="fade-up">
+                <div class="os-tab active" onclick="switchOS('windows')"><i class="fab fa-windows"></i> Windows</div>
+                <div class="os-tab" onclick="switchOS('mac')"><i class="fab fa-apple"></i> macOS</div>
+                <div class="os-tab" onclick="switchOS('linux')"><i class="fab fa-linux"></i> Linux</div>
+            </div>
+
+            <!-- Windows -->
+            <div class="os-content active" id="os-windows" data-aos="fade-up" data-aos-delay="100">
+                <div class="setup-step" data-step="Step 1">
+                    <h4><i class="fas fa-globe" style="margin-left:0.5rem;"></i> Download the Installer</h4>
+                    <div class="step-desc">روح على الموقع الرسمي: <a href="https://www.postgresql.org/download/windows/" target="_blank" style="color:#22D3EE;text-decoration:underline;">postgresql.org/download/windows</a> — ونزّل الـ <span class="english">Windows x86-64 Installer</span> (أحدث إصدار).</div>
+                </div>
+                <div class="setup-step" data-step="Step 2">
+                    <h4><i class="fas fa-play" style="margin-left:0.5rem;"></i> Run the Installer</h4>
+                    <div class="step-desc">شغّل الملف اللي نزلته → <span class="english">Next</span> → اختار مكان التثبيت (سيبه Default) → اختار كل الـ <span class="english">Components</span> (خاصة <span class="english">pgAdmin 4</span> و <span class="english">Command Line Tools</span>).</div>
+                </div>
+                <div class="setup-step" data-step="Step 3">
+                    <h4><i class="fas fa-key" style="margin-left:0.5rem;"></i> Set Superuser Password</h4>
+                    <div class="step-desc"><span class="hl-red">مهم جداً!</span> هيطلب منك تعمل باسورد للمستخدم <span class="english">postgres</span> — ده الـ <span class="english">superuser</span>. <span class="hl-amber">احفظ الباسورد ده كويس!</span> لو نسيته هتضطر تعيد التثبيت. 🔐</div>
+                </div>
+                <div class="setup-step" data-step="Step 4">
+                    <h4><i class="fas fa-network-wired" style="margin-left:0.5rem;"></i> Port Configuration</h4>
+                    <div class="step-desc">الـ <span class="english">Port</span> الافتراضي هو <span class="inline-code">5432</span> — سيبه زي ما هو إلا لو عندك حاجة تانية شغالة عليه.</div>
+                </div>
+                <div class="setup-step" data-step="Step 5">
+                    <h4><i class="fas fa-check-circle" style="margin-left:0.5rem;"></i> Verify Installation</h4>
+                    <div class="step-desc">بعد ما يخلص — افتح <span class="english">Command Prompt</span> أو <span class="english">PowerShell</span> واكتب:</div>
+                    <div class="terminal">
+                        <div class="terminal-bar"><span class="terminal-dot red"></span><span class="terminal-dot yellow"></span><span class="terminal-dot green"></span><span class="terminal-title">PowerShell</span></div>
+                        <div class="terminal-body"><span class="prompt">PS&gt; </span><span class="command">psql --version</span><br><span class="success">psql (PostgreSQL) 16.2</span></div>
+                    </div>
+                    <div class="step-desc" style="margin-top:0.5rem;">لو ظهرت النسخة — مبروك! 🎉 التثبيت تمام. لو مطلعش — لازم تضيف <span class="english">PostgreSQL bin folder</span> للـ <span class="english">PATH</span>.</div>
+                </div>
+            </div>
+
+            <!-- macOS -->
+            <div class="os-content" id="os-mac">
+                <div class="setup-step" data-step="Step 1">
+                    <h4><i class="fas fa-beer-mug-empty" style="margin-left:0.5rem;"></i> Install via Homebrew</h4>
+                    <div class="step-desc">أسهل طريقة على Mac — استخدم <span class="english">Homebrew</span>:</div>
+                    <div class="terminal">
+                        <div class="terminal-bar"><span class="terminal-dot red"></span><span class="terminal-dot yellow"></span><span class="terminal-dot green"></span><span class="terminal-title">Terminal</span></div>
+                        <div class="terminal-body"><span class="prompt">$ </span><span class="command">brew install postgresql@16</span><br><span class="output">==&gt; Installing postgresql@16...</span><br><span class="success">✓ postgresql@16 was successfully installed!</span></div>
+                    </div>
+                </div>
+                <div class="setup-step" data-step="Step 2">
+                    <h4><i class="fas fa-play" style="margin-left:0.5rem;"></i> Start the Service</h4>
+                    <div class="terminal">
+                        <div class="terminal-bar"><span class="terminal-dot red"></span><span class="terminal-dot yellow"></span><span class="terminal-dot green"></span><span class="terminal-title">Terminal</span></div>
+                        <div class="terminal-body"><span class="prompt">$ </span><span class="command">brew services start postgresql@16</span><br><span class="success">==&gt; Successfully started `postgresql@16`</span></div>
+                    </div>
+                </div>
+                <div class="setup-step" data-step="Step 3">
+                    <h4><i class="fas fa-check-circle" style="margin-left:0.5rem;"></i> Verify</h4>
+                    <div class="terminal">
+                        <div class="terminal-bar"><span class="terminal-dot red"></span><span class="terminal-dot yellow"></span><span class="terminal-dot green"></span><span class="terminal-title">Terminal</span></div>
+                        <div class="terminal-body"><span class="prompt">$ </span><span class="command">psql --version</span><br><span class="success">psql (PostgreSQL) 16.2</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Linux -->
+            <div class="os-content" id="os-linux">
+                <div class="setup-step" data-step="Step 1">
+                    <h4><i class="fas fa-terminal" style="margin-left:0.5rem;"></i> Install via apt (Ubuntu/Debian)</h4>
+                    <div class="terminal">
+                        <div class="terminal-bar"><span class="terminal-dot red"></span><span class="terminal-dot yellow"></span><span class="terminal-dot green"></span><span class="terminal-title">Terminal</span></div>
+                        <div class="terminal-body"><span class="prompt">$ </span><span class="command">sudo apt update && sudo apt install postgresql postgresql-contrib</span><br><span class="output">Reading package lists... Done</span><br><span class="success">Setting up postgresql-16 (16.2-1) ...</span></div>
+                    </div>
+                </div>
+                <div class="setup-step" data-step="Step 2">
+                    <h4><i class="fas fa-play" style="margin-left:0.5rem;"></i> Start & Enable</h4>
+                    <div class="terminal">
+                        <div class="terminal-bar"><span class="terminal-dot red"></span><span class="terminal-dot yellow"></span><span class="terminal-dot green"></span><span class="terminal-title">Terminal</span></div>
+                        <div class="terminal-body"><span class="prompt">$ </span><span class="command">sudo systemctl start postgresql</span><br><span class="prompt">$ </span><span class="command">sudo systemctl enable postgresql</span><br><span class="success">Created symlink...</span></div>
+                    </div>
+                </div>
+                <div class="setup-step" data-step="Step 3">
+                    <h4><i class="fas fa-user-shield" style="margin-left:0.5rem;"></i> Set Password</h4>
+                    <div class="terminal">
+                        <div class="terminal-bar"><span class="terminal-dot red"></span><span class="terminal-dot yellow"></span><span class="terminal-dot green"></span><span class="terminal-title">Terminal</span></div>
+                        <div class="terminal-body"><span class="prompt">$ </span><span class="command">sudo -u postgres psql</span><br><span class="output">postgres=#</span> <span class="command">ALTER USER postgres PASSWORD 'your_password';</span><br><span class="success">ALTER ROLE</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- First Query -->
+    <section class="lesson-section" id="first-query">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-rocket" style="color:#34D399;margin-left:0.5rem;"></i> أول Query! </h2>
+            <p class="en-sub">Your First PostgreSQL Commands</p>
+        </div>
+        <div class="glass-card" style="padding:2rem;border-radius:20px;margin-bottom:2rem;" data-aos="fade-up">
+            <div class="rtl-block" style="font-size:1.05rem;">
+                <p style="color:#E2E8F0;margin-bottom:1rem;">تمام — <span class="english">PostgreSQL</span> اتثبت! دلوقتي خلينا نتصل بيها ونكتب أول أوامر. 🎉</p>
+            </div>
+        </div>
+
+        <div class="setup-step" data-step="Connect" data-aos="fade-up" data-aos-delay="100">
+            <h4>الاتصال بالـ PostgreSQL</h4>
+            <div class="step-desc">افتح الـ <span class="english">Terminal</span> واكتب الأمر ده عشان تتصل:</div>
+            <div class="terminal">
+                <div class="terminal-bar"><span class="terminal-dot red"></span><span class="terminal-dot yellow"></span><span class="terminal-dot green"></span><span class="terminal-title">psql</span></div>
+                <div class="terminal-body"><span class="prompt">$ </span><span class="command">psql -U postgres</span><br><span class="output">Password for user postgres: ********</span><br><span class="success">postgres=#</span> <span class="output">← أنت جوا PostgreSQL دلوقتي! 🎉</span></div>
+            </div>
+        </div>
+
+        <div class="setup-step" data-step="Create DB" data-aos="fade-up" data-aos-delay="200">
+            <h4>إنشاء أول Database</h4>
+            <div class="terminal">
+                <div class="terminal-bar"><span class="terminal-dot red"></span><span class="terminal-dot yellow"></span><span class="terminal-dot green"></span><span class="terminal-title">psql — postgres</span></div>
+                <div class="terminal-body"><span class="success">postgres=# </span><span class="command">CREATE DATABASE mastery_db;</span><br><span class="success">CREATE DATABASE</span><br><br><span class="success">postgres=# </span><span class="command">\c mastery_db</span><br><span class="output">You are now connected to database "mastery_db".</span></div>
+            </div>
+        </div>
+
+        <div class="setup-step" data-step="First Table" data-aos="fade-up" data-aos-delay="300">
+            <h4>إنشاء أول Table وإدخال بيانات</h4>
+            <div class="terminal">
+                <div class="terminal-bar"><span class="terminal-dot red"></span><span class="terminal-dot yellow"></span><span class="terminal-dot green"></span><span class="terminal-title">psql — mastery_db</span></div>
+                <div class="terminal-body"><span class="success">mastery_db=# </span><span class="command">CREATE TABLE students (</span><br>    <span class="command">id SERIAL PRIMARY KEY,</span><br>    <span class="command">name VARCHAR(100) NOT NULL,</span><br>    <span class="command">gpa DECIMAL(3,2)</span><br><span class="command">);</span><br><span class="success">CREATE TABLE</span><br><br><span class="success">mastery_db=# </span><span class="command">INSERT INTO students (name, gpa) VALUES</span><br>    <span class="command">('أحمد محمد', 3.5),</span><br>    <span class="command">('فاطمة علي', 3.8),</span><br>    <span class="command">('عمر حسن', 3.2);</span><br><span class="success">INSERT 0 3</span><br><br><span class="success">mastery_db=# </span><span class="command">SELECT * FROM students;</span><br><span class="output"> id |    name     | gpa</span><br><span class="output">----+-------------+------</span><br><span class="output">  1 | أحمد محمد    | 3.50</span><br><span class="output">  2 | فاطمة علي   | 3.80</span><br><span class="output">  3 | عمر حسن     | 3.20</span></div>
+            </div>
+            <div class="step-desc" style="margin-top:0.5rem;">🎉 <span class="hl-emerald">مبروك!</span> إنت لسه كتبت أول <span class="english">CREATE TABLE</span>، <span class="english">INSERT</span>، و <span class="english">SELECT</span> — ده الأساس بتاع كل حاجة هنتعلمها!</div>
+        </div>
+    </section>
+
+    <!-- pgAdmin -->
+    <section class="lesson-section alt-bg">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-desktop" style="color:#A78BFA;margin-left:0.5rem;"></i> pgAdmin 4 — الواجهة الرسومية</h2>
+                <p class="en-sub">The GUI Alternative</p>
+            </div>
+            <div class="glass-card" style="padding:2rem;border-radius:20px;" data-aos="fade-up">
+                <div class="rtl-block" style="font-size:1.05rem;">
+                    <p style="color:#E2E8F0;margin-bottom:1.5rem;">مش لازم تشتغل بالـ <span class="english">Terminal</span> على طول — في أداة رسمية اسمها <span class="english">pgAdmin 4</span> بتيجي مع <span class="english">PostgreSQL</span>:</p>
+                    <div class="step-box" style="border-color:#A78BFA;margin-bottom:1rem;"><p style="color:#A78BFA;">① افتح <span class="english">pgAdmin 4</span> من قائمة البرامج — هيفتح في المتصفح.</p></div>
+                    <div class="step-box" style="border-color:#A78BFA;margin-bottom:1rem;"><p style="color:#A78BFA;">② ادخل الباسورد بتاع المستخدم <span class="english">postgres</span>.</p></div>
+                    <div class="step-box" style="border-color:#A78BFA;margin-bottom:1rem;"><p style="color:#A78BFA;">③ هتلاقي الـ <span class="english">Databases</span> في الشمال — اضغط على <span class="english">mastery_db</span>.</p></div>
+                    <div class="step-box" style="border-color:#A78BFA;"><p style="color:#A78BFA;">④ اضغط على <span class="english">Query Tool</span> في الأعلى — وابدأ اكتب <span class="english">SQL</span>!</p></div>
+                    <div class="note" style="margin-top:1rem;">💡 <span class="english">pgAdmin</span> حلوة للمبتدئين عشان بتشوف البيانات في جدول. بس في الكورس ده هنستخدم الـ <span class="english">Terminal</span> أكتر — لأنه أسرع وبيبني عضلات! 💪</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quiz -->
+    <section class="lesson-section" id="quiz">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-brain" style="color:#D946EF;margin-left:0.5rem;"></i> اختبر نفسك!</h2>
+            <p class="en-sub">Quick Knowledge Check</p>
+        </div>
+        <div data-aos="fade-up" data-aos-delay="100">
+            <div class="quiz-question" id="q1">
+                <h4>❓ سؤال ١: إيه الـ Port الافتراضي بتاع PostgreSQL؟</h4>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">3306 — ده MySQL</div>
+                    <div class="quiz-option" onclick="checkAnswer(1,this,true)">5432</div>
+                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">8080 — ده Web Server</div>
+                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">27017 — ده MongoDB</div>
+                </div>
+                <div class="quiz-feedback" id="q1-feedback"></div>
+            </div>
+            <div class="quiz-question" id="q2">
+                <h4>❓ سؤال ٢: إيه الأمر اللي بيوريك كل البيانات من جدول students؟</h4>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">GET ALL FROM students;</div>
+                    <div class="quiz-option" onclick="checkAnswer(2,this,true)">SELECT * FROM students;</div>
+                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">SHOW students;</div>
+                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">READ * FROM students;</div>
+                </div>
+                <div class="quiz-feedback" id="q2-feedback"></div>
+            </div>
+            <div class="quiz-question" id="q3">
+                <h4>❓ سؤال ٣: مين الـ Superuser الافتراضي في PostgreSQL؟</h4>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">root</div>
+                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">admin</div>
+                    <div class="quiz-option" onclick="checkAnswer(3,this,true)">postgres</div>
+                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">superuser</div>
+                </div>
+                <div class="quiz-feedback" id="q3-feedback"></div>
+            </div>
+        </div>
+        <div id="quiz-score" style="text-align:center;margin-top:2rem;display:none;">
+            <div class="glass-card" style="padding:2rem;border-radius:20px;display:inline-block;">
+                <div class="rtl-block"><h3 style="color:#34D399;margin-bottom:0.5rem;" id="score-text"></h3><p style="color:#94A3B8;" id="score-msg"></p></div>
+            </div>
+        </div>
+    </section>
+
+    <div style="max-width:960px;margin:0 auto;padding:0 1.5rem;">
+        <div class="lesson-bottom-nav">
+            <a href="database_architecture.html"><i class="fas fa-arrow-right"></i><span>الدرس السابق</span></a>
+            <a href="database_history.html" style="color:#22D3EE;"><span>الدرس التالي: تاريخ قواعد البيانات</span><i class="fas fa-arrow-left"></i></a>
+        </div>
+    </div>
+    <footer style="text-align:center;padding:3rem 1.5rem;color:var(--text-ghost);font-size:0.85rem;border-top:1px solid var(--border-subtle);">
+        <p>Database Mastery — Unit 1: The World of Databases</p>
+        <p style="font-family:'Cairo',sans-serif;margin-top:0.3rem;">إتقان قواعد البيانات — الوحدة ١</p>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true, offset: 100 });
+        window.addEventListener('scroll', () => { const p = (document.documentElement.scrollTop / (document.documentElement.scrollHeight - document.documentElement.clientHeight)) * 100; document.getElementById('reading-progress').style.width = p + '%'; });
+
+        function switchOS(os) {
+            document.querySelectorAll('.os-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.os-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('os-' + os).classList.add('active');
+            event.target.closest('.os-tab').classList.add('active');
+        }
+
+        let quizScore=0, answered=0; const total=3;
+        const fb = { 1:{correct:'🎉 صح! PostgreSQL الافتراضي على Port 5432.',wrong:'❌ الـ Port الافتراضي بتاع PostgreSQL هو 5432.'}, 2:{correct:'✅ SELECT * FROM students; — ده الأمر الأساسي!',wrong:'❌ في SQL بنستخدم SELECT * FROM table_name; لاسترجاع كل البيانات.'}, 3:{correct:'💪 صح! postgres هو الـ superuser الافتراضي.',wrong:'❌ الـ superuser الافتراضي في PostgreSQL اسمه postgres (مش root زي Linux).'} };
+        function checkAnswer(q,el,correct){const qEl=document.getElementById('q'+q);if(qEl.classList.contains('answered'))return;qEl.classList.add('answered');answered++;qEl.querySelectorAll('.quiz-option').forEach(o=>o.style.pointerEvents='none');const f=document.getElementById('q'+q+'-feedback');if(correct){el.classList.add('correct');f.className='quiz-feedback show correct-fb';f.textContent=fb[q].correct;quizScore++;}else{el.classList.add('wrong');f.className='quiz-feedback show wrong-fb';f.textContent=fb[q].wrong;qEl.querySelectorAll('.quiz-option').forEach(o=>{if(o.getAttribute('onclick').includes('true'))o.classList.add('correct');});}if(answered===total){const sd=document.getElementById('quiz-score');sd.style.display='block';document.getElementById('score-text').textContent=`🏆 النتيجة: ${quizScore} / ${total}`;const msg=document.getElementById('score-msg');if(quizScore===total){msg.textContent='🎉 أنت جاهز! PostgreSQL شغالة وأنت بدأت تكتب SQL!';msg.style.color='#34D399';}else{msg.textContent='💪 راجع وحاول تاني!';msg.style.color='#FBBF24';}}}
+    </script>
+</body>
+</html>

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database History — تاريخ قواعد البيانات | Database Mastery</title>
+    <meta name="description" content="رحلة عبر تاريخ قواعد البيانات من الـ Flat Files في الستينيات لعصر الـ Cloud Databases.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="../css/global-db.css" rel="stylesheet">
+    <style>
+        body { background: #020617; color: #E2E8F0; font-family: 'Inter', sans-serif; }
+        .lesson-nav-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(2,6,23,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.06); height: 64px; display: flex; align-items: center; padding: 0 1.5rem; }
+        .nav-inner { max-width: 1280px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+        .nav-brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; }
+        .nav-brand .back-btn { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #D946EF, #C026D3); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; transition: transform 0.3s; }
+        .nav-brand .back-btn:hover { transform: scale(1.1); }
+        .nav-links { display: flex; gap: 2rem; font-size: 0.85rem; font-family: 'Cairo', sans-serif; color: var(--text-faint); }
+        .nav-links a { transition: color 0.3s; direction: rtl; }
+        .nav-links a:hover { color: #E879F9; }
+        @media (max-width: 768px) { .nav-links { display: none; } }
+        .lesson-hero { position: relative; padding: 8rem 1.5rem 5rem; text-align: center; overflow: hidden; }
+        .lesson-hero .glow-orb { position: absolute; width: 500px; height: 500px; border-radius: 50%; filter: blur(128px); pointer-events: none; }
+        .glow-orb-1 { top: -10%; right: -5%; background: rgba(217,70,239,0.12); }
+        .glow-orb-2 { bottom: -20%; left: -10%; background: rgba(245,158,11,0.08); }
+        .lesson-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 1rem; border-radius: 50px; background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08); font-family: 'Fira Code', monospace; font-size: 0.78rem; color: #E879F9; margin-bottom: 1.5rem; }
+        .lesson-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #D946EF; animation: pulse-dot 2s ease infinite; }
+        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .lesson-hero h1 { font-size: clamp(2.5rem,5vw,4rem); font-weight: 800; margin-bottom: 1rem; }
+        .lesson-hero h1 .text-gradient { background: linear-gradient(135deg, #D946EF, #F59E0B); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .lesson-hero .subtitle { font-family: 'Cairo', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1.5rem; direction: rtl; unicode-bidi: isolate; }
+        .lesson-hero .desc { color: var(--text-faint); max-width: 600px; margin: 0 auto; font-size: 1rem; line-height: 1.8; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
+        .lesson-section { padding: 5rem 1.5rem; max-width: 960px; margin: 0 auto; }
+        .lesson-section.alt-bg { background: rgba(15,23,42,0.3); max-width: 100%; }
+        .lesson-section.alt-bg > .section-inner { max-width: 960px; margin: 0 auto; }
+        .section-header { text-align: center; margin-bottom: 3rem; }
+        .section-header h2 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
+        .section-header .en-sub { font-family: 'Inter', sans-serif; color: var(--text-faint); font-size: 0.9rem; direction: ltr; unicode-bidi: isolate; display: block; }
+        .progress-bar-container { position: fixed; top: 64px; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.05); z-index: 99; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #D946EF, #F59E0B); width: 0%; transition: width 0.1s ease-out; }
+
+        /* Timeline */
+        .timeline { position: relative; padding: 2rem 0; }
+        .timeline::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, #D946EF, #F59E0B, #10B981, #3B82F6, #06B6D4); transform: translateX(-50%); }
+        @media (max-width: 768px) { .timeline::before { left: 20px; } }
+        .timeline-item { display: flex; align-items: flex-start; margin-bottom: 3rem; position: relative; }
+        .timeline-item:nth-child(odd) { flex-direction: row-reverse; }
+        @media (max-width: 768px) { .timeline-item, .timeline-item:nth-child(odd) { flex-direction: row; padding-left: 50px; } }
+        .timeline-content { width: 45%; background: rgba(15,23,42,0.7); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1.8rem; transition: all 0.4s ease; }
+        @media (max-width: 768px) { .timeline-content { width: 100%; } }
+        .timeline-content:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-4px); box-shadow: 0 15px 50px rgba(0,0,0,0.3); }
+        .timeline-dot { position: absolute; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 50%; border: 3px solid; background: #020617; z-index: 2; }
+        @media (max-width: 768px) { .timeline-dot { left: 20px; } }
+        .timeline-year { font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 800; letter-spacing: 1px; margin-bottom: 0.5rem; }
+        .timeline-content h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .timeline-content .t-desc { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.9rem; color: var(--text-muted); line-height: 2; }
+        .timeline-content .person-tag { display: inline-flex; align-items: center; gap: 0.3rem; font-family: 'Inter', sans-serif; font-size: 0.75rem; padding: 0.15rem 0.6rem; border-radius: 20px; background: rgba(255,255,255,0.05); color: var(--text-faint); border: 1px solid rgba(255,255,255,0.06); margin-top: 0.5rem; direction: ltr; unicode-bidi: isolate; }
+
+        .era-1 .timeline-dot { border-color: #F59E0B; }
+        .era-1 .timeline-year { color: #FBBF24; }
+        .era-2 .timeline-dot { border-color: #D946EF; }
+        .era-2 .timeline-year { color: #E879F9; }
+        .era-3 .timeline-dot { border-color: #10B981; }
+        .era-3 .timeline-year { color: #34D399; }
+        .era-4 .timeline-dot { border-color: #3B82F6; }
+        .era-4 .timeline-year { color: #60A5FA; }
+        .era-5 .timeline-dot { border-color: #06B6D4; }
+        .era-5 .timeline-year { color: #22D3EE; }
+        .era-6 .timeline-dot { border-color: #EF4444; }
+        .era-6 .timeline-year { color: #F87171; }
+
+        .quiz-question { background: rgba(15,23,42,0.7); backdrop-filter: blur(12px); border: 1px solid var(--border-light); border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem; }
+        .quiz-question h4 { margin-bottom: 1rem; color: var(--text-primary); font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; }
+        .quiz-options { display: flex; flex-direction: column; gap: 0.6rem; }
+        .quiz-option { padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.3s; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; font-size: 0.92rem; color: var(--text-body); unicode-bidi: isolate; }
+        .quiz-option:hover { background: rgba(255,255,255,0.06); border-color: var(--border-hover); }
+        .quiz-option.correct { background: rgba(16,185,129,0.15); border-color: #10B981; color: #34D399; }
+        .quiz-option.wrong { background: rgba(239,68,68,0.15); border-color: #EF4444; color: #F87171; }
+        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: 10px; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; display: none; font-size: 0.92rem; line-height: 2; }
+        .quiz-feedback.show { display: block; }
+        .quiz-feedback.correct-fb { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #34D399; }
+        .quiz-feedback.wrong-fb { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #F87171; }
+        .lesson-bottom-nav { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 2rem 0; border-top: 1px solid var(--border-subtle); margin-top: 3rem; }
+        .lesson-bottom-nav a { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); transition: all 0.3s; font-weight: 600; font-size: 0.9rem; }
+        .lesson-bottom-nav a:hover { background: rgba(217,70,239,0.1); border-color: rgba(217,70,239,0.3); transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <nav class="lesson-nav-bar">
+        <div class="nav-inner">
+            <a href="../index.html" class="nav-brand"><div class="back-btn"><i class="fas fa-arrow-left"></i></div><span>DB<span style="color:#D946EF;">History</span></span></a>
+            <div class="nav-links"><a href="#timeline">السلسلة الزمنية</a><a href="#pioneers">الرواد</a><a href="#quiz">اختبر نفسك</a></div>
+        </div>
+    </nav>
+    <div class="progress-bar-container"><div class="progress-bar-fill" id="reading-progress"></div></div>
+
+    <header class="lesson-hero">
+        <div class="glow-orb glow-orb-1"></div><div class="glow-orb glow-orb-2"></div>
+        <div style="position:relative;z-index:1;">
+            <div class="lesson-badge" data-aos="fade-down"><span class="dot"></span> UNIT 1 • Lesson 5</div>
+            <h1 data-aos="fade-up" data-aos-delay="150">Database <span class="text-gradient">History</span></h1>
+            <div class="subtitle" data-aos="fade-up" data-aos-delay="300">تاريخ قواعد البيانات</div>
+            <p class="desc" data-aos="fade-up" data-aos-delay="450">من الملفات المسطحة في الستينيات لعصر الـ Cloud — قصة عمرها 60 سنة! 📜</p>
+        </div>
+    </header>
+
+    <!-- Timeline -->
+    <section class="lesson-section" id="timeline">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-clock-rotate-left" style="color:#E879F9;margin-left:0.5rem;"></i> رحلة عبر الزمن</h2>
+            <p class="en-sub">A Journey Through Database History</p>
+        </div>
+
+        <div class="timeline">
+            <!-- 1960s -->
+            <div class="timeline-item era-1" data-aos="fade-up">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="timeline-year">🗓️ 1960s — البداية</div>
+                    <h3 style="color:#FBBF24;">Flat Files & File Systems</h3>
+                    <div class="t-desc">كل حاجة كانت بتتخزن في ملفات مسطحة (<span class="english">Flat Files</span>). كل برنامج كان بيدير ملفاته بنفسه. مفيش معايير، مفيش مشاركة — فوضى! أول محاولات لتنظيم البيانات ظهرت في <span class="english">IBM</span> ووكالة الفضاء <span class="english">NASA</span>.</div>
+                </div>
+            </div>
+
+            <!-- 1960s-70s Hierarchical & Network -->
+            <div class="timeline-item era-2" data-aos="fade-up">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="timeline-year">🗓️ 1966-1969 — أول أنظمة حقيقية</div>
+                    <h3 style="color:#E879F9;">IMS & CODASYL (Hierarchical & Network)</h3>
+                    <div class="t-desc"><span class="english">IBM</span> بنت <span class="english">IMS</span> لمشروع أبولو الفضائي 🚀 — أول <span class="english">DBMS</span> حقيقي! كان بيخزن البيانات في شكل شجرة (هيراركي). بعده ظهر نموذج الشبكة (<span class="english">Network Model - CODASYL</span>) اللي سمح بعلاقات أكتر مرونة.</div>
+                    <span class="person-tag">🏢 IBM — IMS (1966)</span>
+                </div>
+            </div>
+
+            <!-- 1970 Codd -->
+            <div class="timeline-item era-3" data-aos="fade-up">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content" style="border-color:rgba(16,185,129,0.3) !important;">
+                    <div class="timeline-year">🗓️ 1970 — نقطة التحول! 🔥</div>
+                    <h3 style="color:#34D399;">Relational Model — Edgar F. Codd</h3>
+                    <div class="t-desc"><span class="hl-emerald">أهم لحظة في تاريخ قواعد البيانات!</span> الدكتور <span class="english">Edgar F. Codd</span> في <span class="english">IBM Research</span> نشر ورقة بحثية بعنوان <span class="english">"A Relational Model of Data for Large Shared Data Banks"</span>. اقترح إن البيانات تتخزن في <span class="english">Tables</span> (جداول) مترابطة — وده أساس كل الـ <span class="english">Relational Databases</span> اللي بنستخدمها اليوم!</div>
+                    <span class="person-tag">👤 Edgar F. Codd — IBM Research</span>
+                </div>
+            </div>
+
+            <!-- 1970s SQL & Early RDBMS -->
+            <div class="timeline-item era-4" data-aos="fade-up">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="timeline-year">🗓️ 1974-1979 — SQL وأول RDBMS</div>
+                    <h3 style="color:#60A5FA;">System R, SEQUEL → SQL, Oracle</h3>
+                    <div class="t-desc"><span class="english">IBM</span> بنت <span class="english">System R</span> — أول تطبيق عملي للنموذج العلائقي. معاه اتطورت لغة <span class="english">SEQUEL</span> اللي بقت <span class="english">SQL</span>! في ١٩٧٩، <span class="english">Larry Ellison</span> أسس <span class="english">Oracle</span> — أول <span class="english">RDBMS</span> تجاري ناجح. 💰</div>
+                    <span class="person-tag">👤 Larry Ellison — Oracle (1979)</span>
+                </div>
+            </div>
+
+            <!-- 1980s-90s Growth -->
+            <div class="timeline-item era-5" data-aos="fade-up">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="timeline-year">🗓️ 1980s-1995 — العصر الذهبي</div>
+                    <h3 style="color:#22D3EE;">SQL Standard & PostgreSQL Origins</h3>
+                    <div class="t-desc"><span class="english">SQL</span> بقت معيار عالمي (<span class="english">ANSI SQL 1986</span>). ظهرت <span class="english">DB2</span> من <span class="english">IBM</span>، و <span class="english">SQL Server</span> من <span class="english">Microsoft</span>. في ١٩٨٦، <span class="english">Michael Stonebraker</span> في <span class="english">UC Berkeley</span> بدأ مشروع <span class="english">POSTGRES</span> — اللي بقى <span class="english">PostgreSQL</span> اللي بنستخدمه النهاردة! 🐘</div>
+                    <span class="person-tag">👤 Michael Stonebraker — PostgreSQL</span>
+                </div>
+            </div>
+
+            <!-- 2000s NoSQL -->
+            <div class="timeline-item era-6" data-aos="fade-up">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="timeline-year">🗓️ 2004-2010 — ثورة NoSQL</div>
+                    <h3 style="color:#F87171;">NoSQL Revolution</h3>
+                    <div class="t-desc">مع ظهور <span class="english">Web 2.0</span> والـ <span class="english">Big Data</span>، الشركات زي <span class="english">Google, Facebook, Amazon</span> احتاجت حلول جديدة. <span class="english">Google</span> نشرت <span class="english">BigTable</span>، <span class="english">Amazon</span> نشرت <span class="english">Dynamo</span> — ومنهم ظهرت <span class="english">MongoDB, Cassandra, Redis</span>. مصطلح <span class="english">"NoSQL"</span> بقى ترند! 🔥</div>
+                </div>
+            </div>
+
+            <!-- 2010s-Present -->
+            <div class="timeline-item era-5" data-aos="fade-up">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="timeline-year">🗓️ 2010s — الحاضر والمستقبل</div>
+                    <h3 style="color:#22D3EE;">NewSQL, Cloud & AI Databases</h3>
+                    <div class="t-desc">ظهرت الـ <span class="english">Cloud Databases</span> (<span class="english">AWS RDS, Google Cloud SQL, Supabase</span>). والـ <span class="english">NewSQL</span> (<span class="english">CockroachDB, TiDB</span>) بتجمع بين قوة <span class="english">SQL</span> ومرونة <span class="english">NoSQL</span>. والـ <span class="english">Vector Databases</span> (<span class="english">Pinecone, Weaviate</span>) ظهرت للـ <span class="english">AI</span> والـ <span class="english">LLMs</span>! 🤖</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pioneers -->
+    <section class="lesson-section alt-bg" id="pioneers">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-trophy" style="color:#FBBF24;margin-left:0.5rem;"></i> رواد قواعد البيانات</h2>
+                <p class="en-sub">The Pioneers You Should Know</p>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;" data-aos="fade-up" data-aos-delay="100">
+                <div class="glass-card" style="padding:1.5rem;border-radius:16px;border-top:3px solid #34D399;">
+                    <h4 style="color:#34D399;margin-bottom:0.5rem;font-size:1rem;">🏆 Edgar F. Codd</h4>
+                    <div class="rtl-block" style="font-size:0.88rem;color:#CBD5E1;">أبو النموذج العلائقي. حاصل على <span class="english">Turing Award 1981</span>. من غيره مكانش في <span class="english">SQL</span> ولا <span class="english">Relational Databases</span>. ورقته في ١٩٧٠ غيرت عالم البيانات للأبد.</div>
+                </div>
+                <div class="glass-card" style="padding:1.5rem;border-radius:16px;border-top:3px solid #60A5FA;">
+                    <h4 style="color:#60A5FA;margin-bottom:0.5rem;font-size:1rem;">🏆 Michael Stonebraker</h4>
+                    <div class="rtl-block" style="font-size:0.88rem;color:#CBD5E1;">مؤسس <span class="english">POSTGRES</span> (أصل <span class="english">PostgreSQL</span>). حاصل على <span class="english">Turing Award 2014</span>. ساهم في تطوير مفاهيم الـ <span class="english">Object-Relational</span> الموجودة في <span class="english">PostgreSQL</span> النهاردة.</div>
+                </div>
+                <div class="glass-card" style="padding:1.5rem;border-radius:16px;border-top:3px solid #FBBF24;">
+                    <h4 style="color:#FBBF24;margin-bottom:0.5rem;font-size:1rem;">💼 Larry Ellison</h4>
+                    <div class="rtl-block" style="font-size:0.88rem;color:#CBD5E1;">مؤسس <span class="english">Oracle Corporation</span>. أخذ ورقة <span class="english">Codd</span> وحولها لمنتج تجاري ناجح. النهاردة <span class="english">Oracle</span> من أكبر شركات البرمجيات في العالم. 💰</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quiz -->
+    <section class="lesson-section" id="quiz">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-brain" style="color:#D946EF;margin-left:0.5rem;"></i> اختبر نفسك!</h2>
+            <p class="en-sub">Quick Knowledge Check</p>
+        </div>
+        <div data-aos="fade-up" data-aos-delay="100">
+            <div class="quiz-question" id="q1">
+                <h4>❓ سؤال ١: مين اللي اقترح النموذج العلائقي (Relational Model) في 1970؟</h4>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">Larry Ellison</div>
+                    <div class="quiz-option" onclick="checkAnswer(1,this,true)">Edgar F. Codd</div>
+                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">Michael Stonebraker</div>
+                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">Tim Berners-Lee</div>
+                </div>
+                <div class="quiz-feedback" id="q1-feedback"></div>
+            </div>
+            <div class="quiz-question" id="q2">
+                <h4>❓ سؤال ٢: إيه أول RDBMS تجاري ناجح؟</h4>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">MySQL</div>
+                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">PostgreSQL</div>
+                    <div class="quiz-option" onclick="checkAnswer(2,this,true)">Oracle</div>
+                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">SQL Server</div>
+                </div>
+                <div class="quiz-feedback" id="q2-feedback"></div>
+            </div>
+            <div class="quiz-question" id="q3">
+                <h4>❓ سؤال ٣: ثورة NoSQL ظهرت بسبب إيه؟</h4>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">عشان SQL كانت بطيئة</div>
+                    <div class="quiz-option" onclick="checkAnswer(3,this,true)">Web 2.0 والـ Big Data احتاجت حلول جديدة للتوسع الأفقي</div>
+                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">عشان Oracle كان غالي</div>
+                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">عشان الناس ملت من SQL</div>
+                </div>
+                <div class="quiz-feedback" id="q3-feedback"></div>
+            </div>
+            <div class="quiz-question" id="q4">
+                <h4>❓ سؤال ٤: PostgreSQL أصله جاي من مشروع اسمه إيه؟</h4>
+                <div class="quiz-options">
+                    <div class="quiz-option" onclick="checkAnswer(4,this,false)">System R</div>
+                    <div class="quiz-option" onclick="checkAnswer(4,this,false)">IMS</div>
+                    <div class="quiz-option" onclick="checkAnswer(4,this,true)">POSTGRES (بواسطة Stonebraker في UC Berkeley)</div>
+                    <div class="quiz-option" onclick="checkAnswer(4,this,false)">BigTable</div>
+                </div>
+                <div class="quiz-feedback" id="q4-feedback"></div>
+            </div>
+        </div>
+        <div id="quiz-score" style="text-align:center;margin-top:2rem;display:none;">
+            <div class="glass-card" style="padding:2rem;border-radius:20px;display:inline-block;">
+                <div class="rtl-block"><h3 style="color:#34D399;margin-bottom:0.5rem;" id="score-text"></h3><p style="color:#94A3B8;" id="score-msg"></p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Summary & Celebration -->
+    <section class="lesson-section alt-bg">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-party-horn" style="color:#FBBF24;margin-left:0.5rem;"></i> 🎉 مبروك! خلصت الوحدة الأولى!</h2>
+                <p class="en-sub">Unit 1 Complete — You're Ready for the Next Step!</p>
+            </div>
+            <div class="glass-card" style="padding:2rem;border-radius:20px;border:1px solid rgba(16,185,129,0.2);background:linear-gradient(135deg,rgba(16,185,129,0.05),rgba(59,130,246,0.05));" data-aos="fade-up">
+                <div class="rtl-block" style="font-size:1.05rem;">
+                    <p style="color:#34D399;font-weight:700;font-size:1.2rem;margin-bottom:1rem;text-align:center;">🏆 الوحدة الأولى خلصت!</p>
+                    <p style="color:#E2E8F0;margin-bottom:1.5rem;">إنت دلوقتي تعرف:</p>
+                    <div class="step-box" style="border-color:#10B981;margin-bottom:0.8rem;"><p style="color:#34D399;">✅ ليه العالم محتاج قواعد بيانات ومشاكل الملفات</p></div>
+                    <div class="step-box" style="border-color:#3B82F6;margin-bottom:0.8rem;"><p style="color:#60A5FA;">✅ أنواع قواعد البيانات المختلفة ومتى تستخدم كل نوع</p></div>
+                    <div class="step-box" style="border-color:#8B5CF6;margin-bottom:0.8rem;"><p style="color:#A78BFA;">✅ معمارية الثلاث طبقات واستقلالية البيانات</p></div>
+                    <div class="step-box" style="border-color:#06B6D4;margin-bottom:0.8rem;"><p style="color:#22D3EE;">✅ PostgreSQL مثبت وشغال على جهازك</p></div>
+                    <div class="step-box" style="border-color:#D946EF;"><p style="color:#E879F9;">✅ تاريخ قواعد البيانات من Codd لعصر الـ Cloud</p></div>
+                    <div class="note" style="margin-top:1.5rem;">🚀 الوحدة الجاية: <span class="hl-blue">النموذج العلائقي و ER Diagrams</span> — هنبدأ نصمم قواعد بيانات من الصفر!</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div style="max-width:960px;margin:0 auto;padding:0 1.5rem;">
+        <div class="lesson-bottom-nav">
+            <a href="postgresql_setup.html"><i class="fas fa-arrow-right"></i><span>الدرس السابق</span></a>
+            <a href="../index.html" style="color:#E879F9;"><span>🏠 العودة للبوابة</span><i class="fas fa-arrow-left"></i></a>
+        </div>
+    </div>
+    <footer style="text-align:center;padding:3rem 1.5rem;color:var(--text-ghost);font-size:0.85rem;border-top:1px solid var(--border-subtle);">
+        <p>Database Mastery — Unit 1: The World of Databases ✅</p>
+        <p style="font-family:'Cairo',sans-serif;margin-top:0.3rem;">إتقان قواعد البيانات — الوحدة ١ (مكتملة)</p>
+    </footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true, offset: 100 });
+        window.addEventListener('scroll', () => { const p = (document.documentElement.scrollTop / (document.documentElement.scrollHeight - document.documentElement.clientHeight)) * 100; document.getElementById('reading-progress').style.width = p + '%'; });
+        let quizScore=0, answered=0; const total=4;
+        const fb = { 1:{correct:'🎉 صح! Codd هو أبو النموذج العلائقي — ورقته في 1970 غيرت كل حاجة!',wrong:'❌ Edgar F. Codd هو اللي اقترح الـ Relational Model في 1970.'}, 2:{correct:'✅ Oracle في 1979 كان أول RDBMS تجاري يحقق نجاح كبير!',wrong:'❌ Oracle (1979) بواسطة Larry Ellison كان أول RDBMS تجاري ناجح.'}, 3:{correct:'💪 بالظبط! Web 2.0 و Big Data خلت الشركات الكبيرة تحتاج حلول جديدة!',wrong:'❌ NoSQL ظهر بسبب احتياجات Web 2.0 والـ Big Data للتوسع الأفقي.'}, 4:{correct:'🐘 صح! POSTGRES بتاع Stonebraker في UC Berkeley هو أصل PostgreSQL!',wrong:'❌ PostgreSQL جاي من مشروع POSTGRES اللي بدأه Stonebraker في UC Berkeley.'} };
+        function checkAnswer(q,el,correct){const qEl=document.getElementById('q'+q);if(qEl.classList.contains('answered'))return;qEl.classList.add('answered');answered++;qEl.querySelectorAll('.quiz-option').forEach(o=>o.style.pointerEvents='none');const f=document.getElementById('q'+q+'-feedback');if(correct){el.classList.add('correct');f.className='quiz-feedback show correct-fb';f.textContent=fb[q].correct;quizScore++;}else{el.classList.add('wrong');f.className='quiz-feedback show wrong-fb';f.textContent=fb[q].wrong;qEl.querySelectorAll('.quiz-option').forEach(o=>{if(o.getAttribute('onclick').includes('true'))o.classList.add('correct');});}if(answered===total){const sd=document.getElementById('quiz-score');sd.style.display='block';document.getElementById('score-text').textContent=`🏆 النتيجة: ${quizScore} / ${total}`;const msg=document.getElementById('score-msg');if(quizScore===total){msg.textContent='🎉 درجة كاملة! الوحدة الأولى خلصت بنجاح! 🏆';msg.style.color='#34D399';}else if(quizScore>=3){msg.textContent='👏 كويس جداً! خلصت الوحدة الأولى!';msg.style.color='#FBBF24';}else{msg.textContent='💪 راجع الدرس وحاول تاني!';msg.style.color='#F87171';}}}
+    </script>
+</body>
+</html>

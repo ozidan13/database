@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relational Model — النموذج العلائقي | Database Mastery</title>
+    <meta name="description" content="تعرف على النموذج العلائقي: Relations, Tuples, Keys, والقيود بالتفصيل.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link href="../css/global-db.css" rel="stylesheet">
+    <style>
+        body { background: #020617; color: #E2E8F0; font-family: 'Inter', sans-serif; }
+        .lesson-nav-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(2,6,23,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.06); height: 64px; display: flex; align-items: center; padding: 0 1.5rem; }
+        .nav-inner { max-width: 1280px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; }
+        .nav-brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; }
+        .nav-brand .back-btn { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #F59E0B, #D97706); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; transition: transform 0.3s; }
+        .nav-brand .back-btn:hover { transform: scale(1.1); }
+        .nav-links { display: flex; gap: 2rem; font-size: 0.85rem; font-family: 'Cairo', sans-serif; color: var(--text-faint); }
+        .nav-links a { transition: color 0.3s; direction: rtl; }
+        .nav-links a:hover { color: #FBBF24; }
+        @media (max-width: 768px) { .nav-links { display: none; } }
+        .lesson-hero { position: relative; padding: 8rem 1.5rem 5rem; text-align: center; overflow: hidden; }
+        .lesson-hero .glow-orb { position: absolute; width: 500px; height: 500px; border-radius: 50%; filter: blur(128px); pointer-events: none; }
+        .glow-orb-1 { top: -10%; right: -5%; background: rgba(245,158,11,0.15); }
+        .glow-orb-2 { bottom: -20%; left: -10%; background: rgba(59,130,246,0.08); }
+        .lesson-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 1rem; border-radius: 50px; background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08); font-family: 'Fira Code', monospace; font-size: 0.78rem; color: #FBBF24; margin-bottom: 1.5rem; }
+        .lesson-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #F59E0B; animation: pulse-dot 2s ease infinite; }
+        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .lesson-hero h1 { font-size: clamp(2.5rem,5vw,4rem); font-weight: 800; margin-bottom: 1rem; }
+        .lesson-hero h1 .text-gradient { background: linear-gradient(135deg, #F59E0B, #EF4444); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .lesson-hero .subtitle { font-family: 'Cairo', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1.5rem; direction: rtl; unicode-bidi: isolate; }
+        .lesson-hero .desc { color: var(--text-faint); max-width: 600px; margin: 0 auto; font-size: 1rem; line-height: 1.8; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
+        .lesson-section { padding: 5rem 1.5rem; max-width: 960px; margin: 0 auto; }
+        .lesson-section.alt-bg { background: rgba(15,23,42,0.3); max-width: 100%; }
+        .lesson-section.alt-bg > .section-inner { max-width: 960px; margin: 0 auto; }
+        .section-header { text-align: center; margin-bottom: 3rem; }
+        .section-header h2 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
+        .section-header .en-sub { font-family: 'Inter', sans-serif; color: var(--text-faint); font-size: 0.9rem; direction: ltr; unicode-bidi: isolate; display: block; }
+        .progress-bar-container { position: fixed; top: 64px; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.05); z-index: 99; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #F59E0B, #EF4444); width: 0%; transition: width 0.1s ease-out; }
+
+        /* Vocabulary Table */
+        .vocab-table { width: 100%; border-collapse: collapse; margin: 2rem 0; font-size: 0.9rem; }
+        .vocab-table th { background: rgba(245,158,11,0.08); color: #FBBF24; padding: 0.75rem; text-align: center; border: 1px solid var(--border-subtle); }
+        .vocab-table td { padding: 0.75rem; border: 1px solid var(--border-subtle); text-align: center; }
+        .vocab-table tr:hover { background: rgba(255,255,255,0.02); }
+
+        /* Key Types */
+        .key-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 1rem; margin: 2rem 0; }
+        .key-card { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1.5rem; transition: all 0.3s; }
+        .key-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-3px); }
+        .key-card .key-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .key-card h4 { font-size: 0.95rem; margin-bottom: 0.3rem; }
+        .key-card p { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.88rem; color: var(--text-muted); line-height: 1.9; }
+
+        /* Constraint Cards */
+        .constraint-grid { display: grid; gap: 1rem; margin: 2rem 0; }
+        .con-card { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1.5rem; display: flex; gap: 1rem; align-items: flex-start; transition: all 0.3s; }
+        .con-card:hover { border-color: rgba(255,255,255,0.15); }
+        .con-card .con-badge { padding: 0.3rem 0.8rem; border-radius: 8px; font-weight: 700; font-size: 0.75rem; white-space: nowrap; font-family: 'Inter', sans-serif; }
+        .con-card .con-text { flex: 1; }
+        .con-card .con-text h4 { font-size: 0.95rem; margin-bottom: 0.3rem; }
+        .con-card .con-text p { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.88rem; color: var(--text-muted); line-height: 1.9; }
+
+        .quiz-question { background: rgba(15,23,42,0.7); backdrop-filter: blur(12px); border: 1px solid var(--border-light); border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem; }
+        .quiz-question h4 { margin-bottom: 1rem; color: var(--text-primary); font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; }
+        .quiz-options { display: flex; flex-direction: column; gap: 0.6rem; }
+        .quiz-option { padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.3s; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; font-size: 0.92rem; color: var(--text-body); unicode-bidi: isolate; }
+        .quiz-option:hover { background: rgba(255,255,255,0.06); }
+        .quiz-option.correct { background: rgba(16,185,129,0.15); border-color: #10B981; color: #34D399; }
+        .quiz-option.wrong { background: rgba(239,68,68,0.15); border-color: #EF4444; color: #F87171; }
+        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: 10px; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; display: none; font-size: 0.92rem; line-height: 2; }
+        .quiz-feedback.show { display: block; }
+        .quiz-feedback.correct-fb { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #34D399; }
+        .quiz-feedback.wrong-fb { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #F87171; }
+        .lesson-bottom-nav { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 2rem 0; border-top: 1px solid var(--border-subtle); margin-top: 3rem; }
+        .lesson-bottom-nav a { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); transition: all 0.3s; font-weight: 600; font-size: 0.9rem; }
+        .lesson-bottom-nav a:hover { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <nav class="lesson-nav-bar"><div class="nav-inner"><a href="../index.html" class="nav-brand"><div class="back-btn"><i class="fas fa-arrow-left"></i></div><span><span style="color:#F59E0B;">Rel</span>Model</span></a><div class="nav-links"><a href="#vocab">المصطلحات</a><a href="#keys">المفاتيح</a><a href="#constraints">القيود</a><a href="#quiz">اختبر نفسك</a></div></div></nav>
+    <div class="progress-bar-container"><div class="progress-bar-fill" id="reading-progress"></div></div>
+
+    <header class="lesson-hero">
+        <div class="glow-orb glow-orb-1"></div><div class="glow-orb glow-orb-2"></div>
+        <div style="position:relative;z-index:1;">
+            <div class="lesson-badge" data-aos="fade-down"><span class="dot"></span> UNIT 2 • Lesson 4</div>
+            <h1 data-aos="fade-up" data-aos-delay="150"><span class="text-gradient">Relational</span> Model</h1>
+            <div class="subtitle" data-aos="fade-up" data-aos-delay="300">النموذج العلائقي</div>
+            <p class="desc" data-aos="fade-up" data-aos-delay="450">ده الأساس النظري لكل الـ SQL Databases — اللي اقترحه Codd سنة 1970! 📐</p>
+        </div>
+    </header>
+
+    <!-- Vocabulary -->
+    <section class="lesson-section" id="vocab">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-book" style="color:#FBBF24;margin-left:0.5rem;"></i> المصطلحات الأساسية</h2>
+            <p class="en-sub">Formal vs Informal Terminology</p>
+        </div>
+        <div class="glass-card" style="padding:2rem;border-radius:20px;margin-bottom:2rem;" data-aos="fade-up">
+            <div class="rtl-block" style="font-size:1.05rem;">
+                <p style="color:#E2E8F0;margin-bottom:1rem;">في النموذج العلائقي، المصطلحات ليها <span class="hl-amber">اسم رسمي</span> و <span class="hl-blue">اسم عملي</span>. لازم تعرف الاتنين:</p>
+            </div>
+            <div class="ltr-island" style="margin-top:1rem;">
+                <table class="vocab-table">
+                    <thead><tr><th>Formal (Theory)</th><th>Informal (Practice)</th><th style="font-family:'Cairo',sans-serif;direction:rtl;">بالعربي</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color:#FBBF24;font-weight:600;">Relation</td><td style="color:#60A5FA;">Table</td><td style="font-family:'Cairo',sans-serif;">جدول</td></tr>
+                        <tr><td style="color:#FBBF24;font-weight:600;">Tuple</td><td style="color:#60A5FA;">Row / Record</td><td style="font-family:'Cairo',sans-serif;">صف / سجل</td></tr>
+                        <tr><td style="color:#FBBF24;font-weight:600;">Attribute</td><td style="color:#60A5FA;">Column / Field</td><td style="font-family:'Cairo',sans-serif;">عمود / حقل</td></tr>
+                        <tr><td style="color:#FBBF24;font-weight:600;">Domain</td><td style="color:#60A5FA;">Data Type</td><td style="font-family:'Cairo',sans-serif;">نوع البيانات</td></tr>
+                        <tr><td style="color:#FBBF24;font-weight:600;">Degree</td><td style="color:#60A5FA;">Number of Columns</td><td style="font-family:'Cairo',sans-serif;">عدد الأعمدة</td></tr>
+                        <tr><td style="color:#FBBF24;font-weight:600;">Cardinality</td><td style="color:#60A5FA;">Number of Rows</td><td style="font-family:'Cairo',sans-serif;">عدد الصفوف</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Keys -->
+    <section class="lesson-section alt-bg" id="keys">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-key" style="color:#34D399;margin-left:0.5rem;"></i> أنواع المفاتيح</h2>
+                <p class="en-sub">Key Types — The Foundation of Relationships</p>
+            </div>
+            <div class="key-grid" data-aos="fade-up" data-aos-delay="100">
+                <div class="key-card" style="border-top:3px solid #34D399;">
+                    <div class="key-icon">🔑</div>
+                    <h4 style="color:#34D399;">Primary Key (PK)</h4>
+                    <p>المفتاح الأساسي — يميز كل صف عن التاني. <span class="hl-emerald">لازم يكون فريد</span> ومش <span class="english">NULL</span>. مثال: <span class="english">Student_ID</span>.</p>
+                </div>
+                <div class="key-card" style="border-top:3px solid #60A5FA;">
+                    <div class="key-icon">🔗</div>
+                    <h4 style="color:#60A5FA;">Foreign Key (FK)</h4>
+                    <p>مفتاح بيشاور على <span class="english">Primary Key</span> في جدول تاني. ده اللي بيربط الجداول ببعض! مثال: <span class="english">Dept_ID</span> في جدول الموظفين.</p>
+                </div>
+                <div class="key-card" style="border-top:3px solid #FBBF24;">
+                    <div class="key-icon">🗝️</div>
+                    <h4 style="color:#FBBF24;">Candidate Key</h4>
+                    <p>أي مجموعة أعمدة ممكن تكون <span class="english">Primary Key</span>. ممكن يكون في أكتر من مرشح — بنختار واحد يبقى <span class="english">PK</span> والباقي <span class="english">Alternate Keys</span>.</p>
+                </div>
+                <div class="key-card" style="border-top:3px solid #A78BFA;">
+                    <div class="key-icon">🔐</div>
+                    <h4 style="color:#A78BFA;">Super Key</h4>
+                    <p>أي مجموعة أعمدة بتميز كل صف — حتى لو فيها أعمدة زيادة مش محتاجينها. كل <span class="english">Candidate Key</span> هو <span class="english">Super Key</span> بس مش العكس.</p>
+                </div>
+                <div class="key-card" style="border-top:3px solid #F87171;">
+                    <div class="key-icon">🔧</div>
+                    <h4 style="color:#F87171;">Composite Key</h4>
+                    <p>مفتاح مكون من أكتر من عمود. مثال في جدول <span class="english">Enrollment</span>: المفتاح = (<span class="english">Student_ID</span>, <span class="english">Course_ID</span>) مع بعض.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Constraints -->
+    <section class="lesson-section" id="constraints">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-shield-halved" style="color:#EF4444;margin-left:0.5rem;"></i> قيود النموذج العلائقي</h2>
+            <p class="en-sub">Relational Integrity Constraints</p>
+        </div>
+        <div class="constraint-grid" data-aos="fade-up" data-aos-delay="100">
+            <div class="con-card">
+                <div class="con-badge" style="background:rgba(52,211,153,0.15);color:#34D399;">1</div>
+                <div class="con-text">
+                    <h4 style="color:#34D399;">Entity Integrity — سلامة الكيان</h4>
+                    <p>الـ <span class="english">Primary Key</span> مينفعش يكون <span class="english">NULL</span> أبداً. لو الـ <span class="english">PK</span> فاضي — مش هنقدر نميز الصف ده!</p>
+                </div>
+            </div>
+            <div class="con-card">
+                <div class="con-badge" style="background:rgba(96,165,250,0.15);color:#60A5FA;">2</div>
+                <div class="con-text">
+                    <h4 style="color:#60A5FA;">Referential Integrity — سلامة المرجع</h4>
+                    <p>الـ <span class="english">Foreign Key</span> لازم يشاور على قيمة <span class="hl-blue">موجودة فعلاً</span> في الجدول التاني — أو يكون <span class="english">NULL</span>. مينفعش يشاور على حاجة مش موجودة!</p>
+                </div>
+            </div>
+            <div class="con-card">
+                <div class="con-badge" style="background:rgba(251,191,36,0.15);color:#FBBF24;">3</div>
+                <div class="con-text">
+                    <h4 style="color:#FBBF24;">Domain Constraint — قيد النطاق</h4>
+                    <p>كل قيمة لازم تكون من نفس نوع البيانات المحدد. يعني لو العمود <span class="english">INTEGER</span> مينفعش تحط فيه نص!</p>
+                </div>
+            </div>
+            <div class="con-card">
+                <div class="con-badge" style="background:rgba(167,139,250,0.15);color:#A78BFA;">4</div>
+                <div class="con-text">
+                    <h4 style="color:#A78BFA;">Key Constraint — قيد المفتاح</h4>
+                    <p>مفيش صفين يقدروا يبقى عندهم نفس قيمة الـ <span class="english">Primary Key</span>. الـ <span class="english">PK</span> لازم يكون <span class="hl-purple">فريد</span>!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quiz -->
+    <section class="lesson-section alt-bg" id="quiz">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up"><h2><i class="fas fa-brain" style="color:#D946EF;margin-left:0.5rem;"></i> اختبر نفسك!</h2><p class="en-sub">Quick Knowledge Check</p></div>
+            <div data-aos="fade-up" data-aos-delay="100">
+                <div class="quiz-question" id="q1">
+                    <h4>❓ سؤال ١: Tuple في المصطلحات الرسمية يساوي إيه في العملي؟</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" onclick="checkAnswer(1,this,false)">Table</div>
+                        <div class="quiz-option" onclick="checkAnswer(1,this,true)">Row / Record</div>
+                        <div class="quiz-option" onclick="checkAnswer(1,this,false)">Column</div>
+                    </div><div class="quiz-feedback" id="q1-feedback"></div>
+                </div>
+                <div class="quiz-question" id="q2">
+                    <h4>❓ سؤال ٢: المفتاح اللي بيربط جدول بجدول تاني اسمه إيه؟</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" onclick="checkAnswer(2,this,false)">Primary Key</div>
+                        <div class="quiz-option" onclick="checkAnswer(2,this,true)">Foreign Key</div>
+                        <div class="quiz-option" onclick="checkAnswer(2,this,false)">Super Key</div>
+                    </div><div class="quiz-feedback" id="q2-feedback"></div>
+                </div>
+                <div class="quiz-question" id="q3">
+                    <h4>❓ سؤال ٣: Entity Integrity بتقول إيه؟</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" onclick="checkAnswer(3,this,true)">الـ Primary Key مينفعش يكون NULL</div>
+                        <div class="quiz-option" onclick="checkAnswer(3,this,false)">الـ Foreign Key لازم يشاور على قيمة موجودة</div>
+                        <div class="quiz-option" onclick="checkAnswer(3,this,false)">كل القيم لازم تكون من نفس النوع</div>
+                    </div><div class="quiz-feedback" id="q3-feedback"></div>
+                </div>
+            </div>
+            <div id="quiz-score" style="text-align:center;margin-top:2rem;display:none;"><div class="glass-card" style="padding:2rem;border-radius:20px;display:inline-block;"><div class="rtl-block"><h3 style="color:#34D399;margin-bottom:0.5rem;" id="score-text"></h3><p style="color:#94A3B8;" id="score-msg"></p></div></div></div>
+        </div>
+    </section>
+
+    <div style="max-width:960px;margin:0 auto;padding:0 1.5rem;">
+        <div class="lesson-bottom-nav">
+            <a href="eer_diagrams.html"><i class="fas fa-arrow-right"></i><span>الدرس السابق</span></a>
+            <a href="er_to_relational.html" style="color:#FBBF24;"><span>الدرس التالي: تحويل ER لجداول</span><i class="fas fa-arrow-left"></i></a>
+        </div>
+    </div>
+    <footer style="text-align:center;padding:3rem 1.5rem;color:var(--text-ghost);font-size:0.85rem;border-top:1px solid var(--border-subtle);"><p>Database Mastery — Unit 2: Data Modeling & ER</p></footer>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true, offset: 100 });
+        window.addEventListener('scroll', () => { const p = (document.documentElement.scrollTop / (document.documentElement.scrollHeight - document.documentElement.clientHeight)) * 100; document.getElementById('reading-progress').style.width = p + '%'; });
+        let quizScore=0, answered=0; const total=3;
+        const fb = { 1:{correct:'🎉 Tuple = Row = Record = صف!',wrong:'❌ Tuple في المصطلحات الرسمية = Row/Record.'}, 2:{correct:'✅ Foreign Key — المفتاح الأجنبي اللي بيربط الجداول!',wrong:'❌ الـ Foreign Key هو اللي بيربط جدول بجدول تاني.'}, 3:{correct:'💪 Entity Integrity = PK مينفعش يكون NULL!',wrong:'❌ Entity Integrity = الـ Primary Key لا يمكن أن يكون NULL.'} };
+        function checkAnswer(q,el,correct){const qEl=document.getElementById('q'+q);if(qEl.classList.contains('answered'))return;qEl.classList.add('answered');answered++;qEl.querySelectorAll('.quiz-option').forEach(o=>o.style.pointerEvents='none');const f=document.getElementById('q'+q+'-feedback');if(correct){el.classList.add('correct');f.className='quiz-feedback show correct-fb';f.textContent=fb[q].correct;quizScore++;}else{el.classList.add('wrong');f.className='quiz-feedback show wrong-fb';f.textContent=fb[q].wrong;qEl.querySelectorAll('.quiz-option').forEach(o=>{if(o.getAttribute('onclick').includes('true'))o.classList.add('correct');});}if(answered===total){const sd=document.getElementById('quiz-score');sd.style.display='block';document.getElementById('score-text').textContent=`🏆 النتيجة: ${quizScore} / ${total}`;const msg=document.getElementById('score-msg');if(quizScore===total){msg.textContent='🎉 ممتاز!';msg.style.color='#34D399';}else{msg.textContent='💪 راجع وحاول!';msg.style.color='#FBBF24';}}}
+    </script>
+</body>
+</html>
