@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Data Types — JSONB, Arrays, Enums | Database Mastery</title>
+    <meta name="description" content="دليل شامل للأنواع المتقدمة في PostgreSQL: JSONB (operators, indexing, GIN), Arrays (operations, ANY/ALL), ENUM types، HSTORE، UUID، Full-Text Search — مع أمثلة E-Commerce كاملة.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global-db.css">
+    <style>
+        :root{--accent:#F59E0B;--accent-lt:#FCD34D;}
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;text-decoration:none;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#F59E0B,#B45309);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#FCD34D;}
+        .nav-toc{display:flex;gap:1.3rem;font-size:.82rem;color:#64748B;}
+        .nav-toc a{color:#64748B;text-decoration:none;transition:.2s;}
+        .nav-toc a:hover{color:#FCD34D;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#F59E0B,#EF4444);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(245,158,11,.1),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#FCD34D;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#F59E0B;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#F59E0B,#EF4444);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.1rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1.05rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);font-size:.78rem;color:#FCD34D;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.why{background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);}
+        .callout.why .chead{color:#22D3EE;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.tip{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);}
+        .callout.tip .chead{color:#FBBF24;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);}
+        .callout.realworld .chead{color:#34D399;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
+        .op-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin:1rem 0;}
+        @media(max-width:640px){.op-grid{grid-template-columns:1fr;}}
+        .op-row{background:rgba(15,23,42,.6);border:1px solid rgba(255,255,255,.05);border-radius:10px;padding:.8rem 1rem;display:flex;align-items:flex-start;gap:.8rem;}
+        .op-sym{font-family:'Fira Code',monospace;font-size:.9rem;font-weight:700;flex-shrink:0;padding:.1rem .5rem;border-radius:6px;}
+        .op-desc{font-size:.85rem;color:#94A3B8;line-height:1.8;}
+        .sql-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:1rem 0;border:1px solid rgba(255,255,255,.05);}
+        .sql-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .sdot{width:9px;height:9px;border-radius:50%;}
+        .sdot.r{background:#FF5F57}.sdot.y{background:#FDBC40}.sdot.g{background:#27C93F}
+        .slabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .sbody{padding:1rem 1.2rem;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.col{color:#60A5FA}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.fn{color:#22D3EE}.cn{color:#A5B4FC}
+        .practice-block{background:rgba(15,23,42,.8);border:1px solid rgba(255,255,255,.07);border-radius:18px;overflow:hidden;margin:2rem 0;}
+        .practice-header{background:rgba(245,158,11,.1);padding:1.2rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.06);}
+        .practice-header h3{font-size:1.1rem;font-weight:800;color:#FCD34D;margin:0;}
+        .practice-body{padding:1.8rem;}
+        .task-list{list-style:none;padding:0;margin-bottom:1.5rem;}
+        .task-list li{padding:.5rem 0;font-size:.93rem;color:#CBD5E1;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:.5rem;align-items:flex-start;}
+        .tnum{background:rgba(245,158,11,.15);color:#FCD34D;font-weight:800;font-size:.78rem;padding:.1rem .5rem;border-radius:5px;flex-shrink:0;font-family:'Inter',sans-serif;margin-top:.2rem;}
+        .sol-btn{width:100%;padding:.9rem;border-radius:10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:#FCD34D;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:.3s;}
+        .sol-btn:hover{background:rgba(245,158,11,.18);}
+        .sol-content{display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.05);}
+        .sol-content.open{display:block;}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;text-decoration:none;color:#E2E8F0;}
+        .bnav-btn:hover{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);transform:translateY(-2px);}
+    </style>
+</head>
+<body>
+<nav class="lesson-nav-bar">
+    <div class="nav-inner">
+        <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-arrow-right"></i></div>العودة للبوابة</a>
+        <div class="nav-toc">
+            <a href="#jsonb">JSONB</a>
+            <a href="#arrays">Arrays</a>
+            <a href="#enum">ENUM</a>
+            <a href="#uuid">UUID</a>
+            <a href="#fts">Full-Text Search</a>
+            <a href="#quiz">اختبار</a>
+        </div>
+    </div>
+</nav>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
+
+<header class="hero" data-aos="fade-up">
+    <div class="lesson-badge"><span class="pulse"></span>الوحدة 4 — الدرس 3</div>
+    <h1>الأنواع <span class="grad">المتقدمة</span></h1>
+    <p class="en-title">JSONB, Arrays, ENUM, UUID, Full-Text Search — Beyond Standard Types</p>
+    <p class="desc">PostgreSQL مش مجرد قاعدة بيانات علائقية — هي بتدعم JSONB وArrays والبحث النصي وكتير بيجعلها تتنافس مع الـ NoSQL دون أن تتخلى عن قوة الـ SQL.</p>
+    <div class="learn-pills">
+        <span class="pill">JSON vs JSONB</span>
+        <span class="pill">JSONB Operators</span>
+        <span class="pill">GIN Index</span>
+        <span class="pill">jsonb_set / jsonb_agg</span>
+        <span class="pill">Arrays وعملياتها</span>
+        <span class="pill">ENUM Types</span>
+        <span class="pill">UUID</span>
+        <span class="pill">Full-Text Search</span>
+    </div>
+</header>
+
+<div class="lesson-body">
+
+<!-- JSONB -->
+<div class="section-block" id="jsonb" data-aos="fade-up">
+    <div class="section-title"><span class="icon">🗂️</span> JSONB — البيانات شبه المنظّمة</div>
+    <p class="section-en">JSONB — Binary JSON with Full Indexing and Query Power</p>
+
+    <p class="body-text">الـ JSON والـ JSONB كلاهما يخزّن JSON. الفرق: <strong>JSONB</strong> بيخزّنه في صيغة Binary محسّنة — أسرع في القراءة، يدعم الـ Indexing الكامل، ويتجاهل المسافات الزائدة والتكرار في المفاتيح. استخدم JSONB دايماً إلا لو محتاج للحفاظ على ترتيب المفاتيح أو سرعة الكتابة بالضبط.</p>
+
+    <div class="callout realworld">
+        <div class="chead">🛒 متى تستخدم JSONB؟</div>
+        <p>
+        ✅ خصائص المنتجات التي تختلف بين الفئات (موبايل: RAM/Storage، ملابس: Size/Color)<br>
+        ✅ إعدادات المستخدم المتنوعة (preferences, notifications)<br>
+        ✅ بيانات API خارجية بتيجي محتلفة كل مرة<br>
+        ✅ Metadata متغيّر لا تعرف أعمدته مسبقاً<br><br>
+        ❌ مش مناسب لو البيانات منظّمة ثابتة — استخدم أعمدة عادية
+        </p>
+    </div>
+
+    <h3 style="color:#FCD34D;margin:1.5rem 0 .8rem;">JSONB Operators</h3>
+    <div class="op-grid">
+        <div class="op-row"><span class="op-sym" style="background:rgba(245,158,11,.15);color:#FCD34D;">-></span><div class="op-desc">جيب قيمة مفتاح → يرجع JSONB<br><code style="font-family:'Fira Code',monospace;">data->'name'</code> → <code>"أحمد"</code></div></div>
+        <div class="op-row"><span class="op-sym" style="background:rgba(96,165,250,.12);color:#60A5FA;">->></span><div class="op-desc">جيب قيمة مفتاح → يرجع TEXT<br><code style="font-family:'Fira Code',monospace;">data->>'name'</code> → <code>أحمد</code></div></div>
+        <div class="op-row"><span class="op-sym" style="background:rgba(52,211,153,.12);color:#34D399;">#></span><div class="op-desc">مسار متداخل → JSONB<br><code style="font-family:'Fira Code',monospace;">data#>'{address,city}'</code></div></div>
+        <div class="op-row"><span class="op-sym" style="background:rgba(167,139,250,.12);color:#A78BFA;">#>></span><div class="op-desc">مسار متداخل → TEXT<br><code style="font-family:'Fira Code',monospace;">data#>>'{address,city}'</code></div></div>
+        <div class="op-row"><span class="op-sym" style="background:rgba(251,191,36,.12);color:#FBBF24;">@></span><div class="op-desc">يحتوي على؟ (Contains)<br><code style="font-family:'Fira Code',monospace;">data @> '{"color":"red"}'</code></div></div>
+        <div class="op-row"><span class="op-sym" style="background:rgba(239,68,68,.12);color:#F87171;"><@</span><div class="op-desc">محتوى في؟ (Contained by)<br><code style="font-family:'Fira Code',monospace;">'{"a":1}' <@ data</code></div></div>
+        <div class="op-row"><span class="op-sym" style="background:rgba(6,182,212,.12);color:#22D3EE;">?</span><div class="op-desc">المفتاح موجود؟<br><code style="font-family:'Fira Code',monospace;">data ? 'email'</code></div></div>
+        <div class="op-row"><span class="op-sym" style="background:rgba(16,185,129,.12);color:#34D399;">?|</span><div class="op-desc">أي من المفاتيح موجود؟<br><code style="font-family:'Fira Code',monospace;">data ?| array['a','b']</code></div></div>
+    </div>
+
+    <div class="sql-block">
+        <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">JSONB — Complete Reference</span></div>
+        <div class="sbody">
+<span class="cmt">-- ══ إنشاء جدول مع JSONB ══</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">product</span> (
+    product_id   <span class="fn">BIGSERIAL</span>  <span class="cn">PRIMARY KEY</span>,
+    name         <span class="fn">TEXT</span>       <span class="cn">NOT NULL</span>,
+    price        <span class="fn">NUMERIC</span>(<span class="num">10</span>,<span class="num">2</span>),
+    attributes   <span class="fn">JSONB</span>      <span class="cn">DEFAULT</span> <span class="str">'{}'</span>   <span class="cmt">-- خصائص مرنة</span>
+);
+
+<span class="cmt">-- ══ INSERT بيانات JSONB ══</span>
+<span class="kw">INSERT INTO</span> <span class="tb">product</span> (name, price, attributes) <span class="kw">VALUES</span>
+(<span class="str">'iPhone 15'</span>, <span class="num">4999</span>, <span class="str">'{"brand":"Apple","ram":6,"storage":[128,256,512],"colors":["black","white"]}'</span>),
+(<span class="str">'T-Shirt'</span>, <span class="num">199</span>, <span class="str">'{"sizes":["S","M","L","XL"],"material":"cotton","colors":["red","blue"]}'</span>);
+
+<span class="cmt">-- ══ الاستعلام من JSONB ══</span>
+<span class="kw">SELECT</span>
+    name,
+    attributes-><span class="str">'brand'</span>          <span class="kw">AS</span> brand_jsonb,   <span class="cmt">-- يرجع "Apple" (مع quotes)</span>
+    attributes->><span class="str">'brand'</span>         <span class="kw">AS</span> brand_text,    <span class="cmt">-- يرجع Apple (بدون quotes)</span>
+    attributes->><span class="str">'ram'</span>           <span class="kw">AS</span> ram,
+    attributes-><span class="str">'colors'</span>->><span class="num">0</span>     <span class="kw">AS</span> first_color    <span class="cmt">-- أول لون في array</span>
+<span class="kw">FROM</span> <span class="tb">product</span>
+<span class="kw">WHERE</span> attributes->><span class="str">'brand'</span> = <span class="str">'Apple'</span>;
+
+<span class="cmt">-- ══ WHERE مع JSONB Operators ══</span>
+<span class="cmt">-- المنتجات اللي اللون الأحمر متاح فيها</span>
+<span class="kw">SELECT</span> name <span class="kw">FROM</span> <span class="tb">product</span>
+<span class="kw">WHERE</span> attributes @> <span class="str">'{"colors":["red"]}'</span>;
+
+<span class="cmt">-- المنتجات اللي عندها خاصية ram</span>
+<span class="kw">SELECT</span> name <span class="kw">FROM</span> <span class="tb">product</span>
+<span class="kw">WHERE</span> attributes ? <span class="str">'ram'</span>;
+
+<span class="cmt">-- ══ JSONB UPDATE — jsonb_set ══</span>
+<span class="kw">UPDATE</span> <span class="tb">product</span>
+<span class="kw">SET</span>    attributes = <span class="fn">jsonb_set</span>(attributes, <span class="str">'{ram}'</span>, <span class="str">'8'</span>)
+<span class="kw">WHERE</span>  product_id = <span class="num">1</span>;
+
+<span class="cmt">-- إضافة مفتاح جديد</span>
+<span class="kw">UPDATE</span> <span class="tb">product</span>
+<span class="kw">SET</span>    attributes = attributes || <span class="str">'{"warranty_years":2}'</span>::<span class="fn">jsonb</span>
+<span class="kw">WHERE</span>  product_id = <span class="num">1</span>;
+
+<span class="cmt">-- حذف مفتاح</span>
+<span class="kw">UPDATE</span> <span class="tb">product</span>
+<span class="kw">SET</span>    attributes = attributes - <span class="str">'ram'</span>       <span class="cmt">-- يحذف مفتاح ram</span>
+<span class="kw">WHERE</span>  product_id = <span class="num">1</span>;
+
+<span class="cmt">-- ══ jsonb_agg — دمج JSONB من عدة صفوف ══</span>
+<span class="kw">SELECT</span>
+    category_id,
+    <span class="fn">jsonb_agg</span>(jsonb_build_object(
+        <span class="str">'id'</span>,    product_id,
+        <span class="str">'name'</span>,  name,
+        <span class="str">'price'</span>, price
+    )) <span class="kw">AS</span> products_json
+<span class="kw">FROM</span> <span class="tb">product</span>
+<span class="kw">GROUP BY</span> category_id;
+
+<span class="cmt">-- ══ GIN Index للـ JSONB ══</span>
+<span class="kw">CREATE INDEX</span> idx_product_attrs <span class="kw">ON</span> <span class="tb">product</span> <span class="kw">USING GIN</span> (attributes);
+<span class="cmt">-- يُسرّع @>, ?, ?|, ?& operators</span>
+<span class="cmt">-- لو عايز index على مفتاح معين:</span>
+<span class="kw">CREATE INDEX</span> idx_product_brand <span class="kw">ON</span> <span class="tb">product</span> ((attributes->><span class="str">'brand'</span>));
+        </div>
+    </div>
+</div>
+
+<!-- ARRAYS -->
+<div class="section-block" id="arrays" data-aos="fade-up">
+    <div class="section-title"><span class="icon">📏</span> Arrays — مصفوفات داخل الجدول</div>
+    <p class="section-en">PostgreSQL Arrays — Multidimensional Array Support</p>
+
+    <div class="sql-block">
+        <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Arrays — Full Reference</span></div>
+        <div class="sbody">
+<span class="cmt">-- ══ تعريف Arrays ══</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">post</span> (
+    post_id  <span class="fn">BIGSERIAL</span> <span class="cn">PRIMARY KEY</span>,
+    title    <span class="fn">TEXT</span>,
+    tags     <span class="fn">TEXT</span>[]    <span class="cn">DEFAULT</span> <span class="str">'{}'</span>,  <span class="cmt">-- Array of TEXT</span>
+    scores   <span class="fn">INT</span>[]                      <span class="cmt">-- Array of INT</span>
+);
+
+<span class="cmt">-- ══ INSERT Arrays ══</span>
+<span class="kw">INSERT INTO</span> <span class="tb">post</span> (title, tags, scores) <span class="kw">VALUES</span>
+(<span class="str">'درس SQL'</span>,    <span class="str">'{database,sql,postgres}'</span>, <span class="str">'{95,88,91}'</span>),
+(<span class="str">'درس Python'</span>, <span class="str">ARRAY['python','programming']', '{80,92}'</span>);
+
+<span class="cmt">-- ══ الوصول للعناصر (1-indexed في PostgreSQL!) ══</span>
+<span class="kw">SELECT</span>
+    title,
+    tags[<span class="num">1</span>]          <span class="kw">AS</span> first_tag,
+    tags[<span class="str">'2'</span>::<span class="fn">INT</span>]  <span class="kw">AS</span> second_tag,
+    tags[<span class="num">1</span>:<span class="num">2</span>]        <span class="kw">AS</span> first_two_tags  <span class="cmt">-- slice</span>
+<span class="kw">FROM</span> <span class="tb">post</span>;
+
+<span class="cmt">-- ══ الاستعلام على Arrays ══</span>
+<span class="cmt">-- المقالات اللي فيها تاج 'sql'</span>
+<span class="kw">SELECT</span> title <span class="kw">FROM</span> <span class="tb">post</span>
+<span class="kw">WHERE</span> <span class="str">'sql'</span> = <span class="kw">ANY</span>(tags);     <span class="cmt">-- هل 'sql' موجود في array؟</span>
+
+<span class="cmt">-- المقالات اللي كل تاجاتها موجودة في قائمة معينة</span>
+<span class="kw">SELECT</span> title <span class="kw">FROM</span> <span class="tb">post</span>
+<span class="kw">WHERE</span> tags @> <span class="str">ARRAY['sql','database']</span>;  <span class="cmt">-- Contains: مقالة فيها sql وdatabase</span>
+
+<span class="cmt">-- التقاطع: مقالات فيها أي من هذه التاجات</span>
+<span class="kw">SELECT</span> title <span class="kw">FROM</span> <span class="tb">post</span>
+<span class="kw">WHERE</span> tags && <span class="str">ARRAY['sql','python']</span>;   <span class="cmt">-- && = Overlap operator</span>
+
+<span class="cmt">-- ══ Array Functions ══</span>
+<span class="kw">SELECT</span>
+    <span class="fn">array_length</span>(tags, <span class="num">1</span>)                  <span class="kw">AS</span> tag_count,
+    <span class="fn">array_append</span>(tags, <span class="str">'new_tag'</span>)         <span class="kw">AS</span> with_new,
+    <span class="fn">array_remove</span>(tags, <span class="str">'sql'</span>)             <span class="kw">AS</span> without_sql,
+    <span class="fn">array_to_string</span>(tags, <span class="str">', '</span>)            <span class="kw">AS</span> tags_str,
+    <span class="fn">array_cat</span>(tags, <span class="str">ARRAY['extra']</span>)        <span class="kw">AS</span> combined,
+    <span class="fn">UNNEST</span>(tags)                            <span class="kw">AS</span> expanded_tag  <span class="cmt">-- يحوّل array لصفوف</span>
+<span class="kw">FROM</span> <span class="tb">post</span>;
+
+<span class="cmt">-- ══ UNNEST — تحويل Array لجدول ══</span>
+<span class="kw">SELECT</span> post_id, title, <span class="fn">UNNEST</span>(tags) <span class="kw">AS</span> tag
+<span class="kw">FROM</span>   <span class="tb">post</span>
+<span class="kw">ORDER BY</span> post_id, tag;
+
+<span class="cmt">-- ══ GIN Index للـ Arrays === </span>
+<span class="kw">CREATE INDEX</span> idx_post_tags <span class="kw">ON</span> <span class="tb">post</span> <span class="kw">USING GIN</span> (tags);
+<span class="cmt">-- يُسرّع @>, &&, <@</span>
+        </div>
+    </div>
+</div>
+
+<!-- ENUM -->
+<div class="section-block" id="enum" data-aos="fade-up">
+    <div class="section-title"><span class="icon">🏷️</span> ENUM Types — قيم محددة مسبقاً</div>
+    <p class="section-en">ENUM — Type-Safe Categorical Values</p>
+
+    <div class="sql-block">
+        <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">ENUM — Definition, Use, and Modifications</span></div>
+        <div class="sbody">
+<span class="cmt">-- ══ إنشاء ENUM Type ══</span>
+<span class="kw">CREATE TYPE</span> order_status_enum <span class="kw">AS ENUM</span> (
+    <span class="str">'pending'</span>, <span class="str">'confirmed'</span>, <span class="str">'shipped'</span>,
+    <span class="str">'delivered'</span>, <span class="str">'cancelled'</span>, <span class="str">'refunded'</span>
+);
+
+<span class="kw">CREATE TYPE</span> employee_level_enum <span class="kw">AS ENUM</span> (
+    <span class="str">'junior'</span>, <span class="str">'mid'</span>, <span class="str">'senior'</span>, <span class="str">'lead'</span>, <span class="str">'principal'</span>
+);
+
+<span class="cmt">-- ══ استخدام ENUM في جدول ══</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">orders</span> (
+    order_id  <span class="fn">BIGSERIAL</span> <span class="cn">PRIMARY KEY</span>,
+    status    order_status_enum <span class="cn">NOT NULL DEFAULT</span> <span class="str">'pending'</span>
+);
+
+<span class="cmt">-- ══ فوائد ENUM ══</span>
+<span class="cmt">-- 1. Type safety: ما تقدرش تدخّل قيمة خارج القائمة</span>
+<span class="kw">UPDATE</span> <span class="tb">orders</span> <span class="kw">SET</span> status = <span class="str">'lost'</span>;  <span class="cmt">-- ERROR: invalid input value</span>
+
+<span class="cmt">-- 2. الترتيب الطبيعي: VALUES مرتّبة حسب تعريفها</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">orders</span> <span class="kw">WHERE</span> status > <span class="str">'pending'</span>::order_status_enum;
+<span class="cmt">-- بيرجع confirmed, shipped, delivered...</span>
+
+<span class="cmt">-- 3. الـ Storage: أصغر من TEXT (يخزّن 4 bytes كل قيمة)</span>
+
+<span class="cmt">-- ══ تعديل ENUM ══</span>
+<span class="cmt">-- إضافة قيمة جديدة (بدون rebuild الجدول)</span>
+<span class="kw">ALTER TYPE</span> order_status_enum <span class="kw">ADD VALUE</span> <span class="str">'processing'</span> <span class="kw">AFTER</span> <span class="str">'confirmed'</span>;
+
+<span class="cmt">-- ⚠️ مش ممكن تحذف قيمة من ENUM في PostgreSQL!</span>
+<span class="cmt">-- الحل: إنشاء type جديد + تحويل البيانات + حذف القديم</span>
+<span class="kw">CREATE TYPE</span> new_status <span class="kw">AS ENUM</span>(<span class="str">'pending'</span>, <span class="str">'delivered'</span>);  <span class="cmt">-- بدون المحذوفة</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">orders</span> <span class="kw">ALTER COLUMN</span> status <span class="kw">TYPE</span> new_status
+    <span class="kw">USING</span> status::TEXT::new_status;
+
+<span class="cmt">-- ══ قائمة ENUMs الموجودة ══</span>
+<span class="kw">SELECT</span> typname, <span class="fn">array_agg</span>(enumlabel <span class="kw">ORDER BY</span> enumsortorder) <span class="kw">AS</span> values
+<span class="kw">FROM</span>   pg_type <span class="kw">JOIN</span> pg_enum <span class="kw">USING</span> (oid)
+<span class="kw">GROUP BY</span> typname;
+        </div>
+    </div>
+</div>
+
+<!-- UUID -->
+<div class="section-block" id="uuid" data-aos="fade-up">
+    <div class="section-title"><span class="icon">🔑</span> UUID — معرّف فريد عالمي</div>
+    <p class="section-en">UUID — Universally Unique Identifiers as Primary Keys</p>
+
+    <div class="sql-block">
+        <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">UUID — Generation and Usage</span></div>
+        <div class="sbody">
+<span class="cmt">-- ══ UUID Extension ══</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> <span class="str">"pgcrypto"</span>;
+<span class="cmt">-- أو في PG 14+:</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> <span class="str">"uuid-ossp"</span>;
+
+<span class="cmt">-- ══ UUID كـ Primary Key ══</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">api_token</span> (
+    token_id   <span class="fn">UUID</span>     <span class="cn">DEFAULT gen_random_uuid</span>() <span class="cn">PRIMARY KEY</span>,
+    user_id    <span class="fn">BIGINT</span>   <span class="cn">NOT NULL REFERENCES</span> <span class="tb">users</span>,
+    token_name <span class="fn">TEXT</span>,
+    created_at <span class="fn">TIMESTAMPTZ</span> <span class="cn">DEFAULT NOW</span>(),
+    expires_at <span class="fn">TIMESTAMPTZ</span>
+);
+
+<span class="cmt">-- توليد UUID يدوياً</span>
+<span class="kw">SELECT</span> <span class="fn">gen_random_uuid</span>();
+<span class="cmt">-- → a4d1f8b2-7c3e-4f2a-8b9c-1d5e7f3a9b2c</span>
+
+<span class="cmt">-- ══ UUID vs BIGSERIAL ══</span>
+<span class="cmt">-- UUID:
+--  ✅ فريد عالمياً — آمن في الـ API (مش ممكن يتخمّن)
+--  ✅ ممكن تولّده في الـ Client قبل الحفظ
+--  ✅ لا مشاكل في الـ Merge / Distributed systems
+--  ❌ أكبر حجماً (16 bytes vs 8)
+--  ❌ بطيء في الـ Index (random inserts)
+-- BIGSERIAL:
+--  ✅ أسرع في الـ Index (sequential)
+--  ✅ أصغر حجماً
+--  ❌ يمكن تخمينه — لا تعرضه في الـ API
+--  ❌ مشاكل في الـ Distributed systems</span>
+        </div>
+    </div>
+</div>
+
+<!-- FULL TEXT SEARCH -->
+<div class="section-block" id="fts" data-aos="fade-up">
+    <div class="section-title"><span class="icon">🔍</span> Full-Text Search — البحث النصي الكامل</div>
+    <p class="section-en">tsvector, tsquery, GIN Index — Built-in Search Engine</p>
+
+    <p class="body-text">PostgreSQL بيدعم بحثاً نصياً متكاملاً — tokenization، stemming، ranking — بدون الحاجة لـ Elasticsearch في كتير من الحالات.</p>
+
+    <div class="sql-block">
+        <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Full-Text Search — Complete Setup</span></div>
+        <div class="sbody">
+<span class="cmt">-- ══ المفاهيم ══</span>
+<span class="cmt">-- tsvector: نص محوَّل لـ tokens قابلة للبحث
+-- tsquery: شرط البحث
+-- @@ : مطابقة tsvector مع tsquery</span>
+
+<span class="cmt">-- ══ بحث بسيط ══</span>
+<span class="kw">SELECT</span> to_tsvector(<span class="str">'english'</span>, <span class="str">'The quick brown fox'</span>);
+<span class="cmt">-- → 'brown':3 'fox':4 'quick':2  (the مش مهم — stop word)</span>
+
+<span class="kw">SELECT</span> to_tsquery(<span class="str">'english'</span>, <span class="str">'fox & quick'</span>);
+<span class="cmt">-- → 'fox' & 'quick'</span>
+
+<span class="cmt">-- ══ بحث في جدول ══</span>
+<span class="kw">SELECT</span> title, body
+<span class="kw">FROM</span>   <span class="tb">article</span>
+<span class="kw">WHERE</span>  to_tsvector(<span class="str">'arabic'</span>, title || <span class="str">' '</span> || body)
+    @@ plainto_tsquery(<span class="str">'arabic'</span>, <span class="str">'قاعدة بيانات'</span>);
+
+<span class="cmt">-- ══ Ranking النتائج ══</span>
+<span class="kw">SELECT</span>
+    title,
+    <span class="fn">ts_rank</span>(
+        to_tsvector(<span class="str">'english'</span>, body),
+        to_tsquery(<span class="str">'english'</span>, <span class="str">'database'</span>)
+    ) <span class="kw">AS</span> relevance
+<span class="kw">FROM</span>   <span class="tb">article</span>
+<span class="kw">WHERE</span>  to_tsvector(<span class="str">'english'</span>, body) @@ to_tsquery(<span class="str">'english'</span>, <span class="str">'database'</span>)
+<span class="kw">ORDER BY</span> relevance <span class="kw">DESC</span>
+<span class="kw">LIMIT</span>  <span class="num">10</span>;
+
+<span class="cmt">-- ══ Setup الأمثل: عمود tsvector محفوظ ══</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">article</span> <span class="kw">ADD COLUMN</span> search_vector <span class="fn">TSVECTOR</span>;
+
+<span class="cmt">-- تحديث بالبيانات الموجودة</span>
+<span class="kw">UPDATE</span> <span class="tb">article</span>
+<span class="kw">SET</span>    search_vector = to_tsvector(<span class="str">'english'</span>, <span class="fn">COALESCE</span>(title,<span class="str">''</span>) || <span class="str">' '</span> || <span class="fn">COALESCE</span>(body,<span class="str">''</span>));
+
+<span class="cmt">-- GIN Index على العمود المحفوظ (أسرع بكتير)</span>
+<span class="kw">CREATE INDEX</span> idx_article_fts <span class="kw">ON</span> <span class="tb">article</span> <span class="kw">USING GIN</span> (search_vector);
+
+<span class="cmt">-- Trigger لتحديث تلقائي عند INSERT/UPDATE</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> <span class="fn">update_article_fts</span>() <span class="kw">RETURNS TRIGGER AS</span> $$
+<span class="kw">BEGIN</span>
+    NEW.search_vector := to_tsvector(<span class="str">'english'</span>,
+        <span class="fn">COALESCE</span>(NEW.title, <span class="str">''</span>) || <span class="str">' '</span> || <span class="fn">COALESCE</span>(NEW.body, <span class="str">''</span>));
+    <span class="kw">RETURN NEW</span>;
+<span class="kw">END</span>;
+$$ <span class="kw">LANGUAGE</span> plpgsql;
+
+<span class="kw">CREATE TRIGGER</span> trig_article_fts
+<span class="kw">BEFORE INSERT OR UPDATE ON</span> <span class="tb">article</span>
+<span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> <span class="fn">update_article_fts</span>();
+        </div>
+    </div>
+</div>
+
+<!-- PRACTICE -->
+<div class="section-block" id="practice" data-aos="fade-up">
+    <div class="section-title"><span class="icon">✍️</span> تمرين عملي</div>
+    <div class="practice-block">
+        <div class="practice-header"><h3>🛒 تمرين: منتجات متجر بخصائص مرنة</h3></div>
+        <div class="practice-body">
+            <div class="callout tip"><div class="chead">السيناريو</div>
+                <p>قاعدة بيانات متجر فيها منتجات ذات خصائص مختلفة (إلكترونيات لها RAM/Storage، ملابس لها مقاسات).</p>
+            </div>
+            <ul class="task-list">
+                <li><span class="tnum">A</span>أنشئ جدول product مع ENUM للحالة، UUID كـ primary key، وJSONB للخصائص.</li>
+                <li><span class="tnum">B</span>أضف GIN index على attributes، واجيب كل المنتجات اللي فيها لون "أبيض".</li>
+                <li><span class="tnum">C</span>استخدم UNNEST لاستخراج كل مقاس من حقل sizes (Array) مع اسم المنتج.</li>
+            </ul>
+            <button class="sol-btn" onclick="toggleSol(this)">👁️ اظهر الحل الكامل</button>
+            <div class="sol-content">
+                <div class="sql-block">
+                    <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Advanced Types — Solutions</span></div>
+                    <div class="sbody">
+<span class="cmt">-- A: جدول product</span>
+<span class="kw">CREATE TYPE</span> product_status <span class="kw">AS ENUM</span> (<span class="str">'active'</span>, <span class="str">'inactive'</span>, <span class="str">'discontinued'</span>);
+
+<span class="kw">CREATE TABLE</span> <span class="tb">product</span> (
+    product_id  <span class="fn">UUID</span>           <span class="cn">DEFAULT gen_random_uuid</span>() <span class="cn">PRIMARY KEY</span>,
+    name        <span class="fn">TEXT</span>           <span class="cn">NOT NULL</span>,
+    price       <span class="fn">NUMERIC</span>(<span class="num">10</span>,<span class="num">2</span>) <span class="cn">NOT NULL</span>,
+    status      product_status <span class="cn">DEFAULT</span> <span class="str">'active'</span>,
+    attributes  <span class="fn">JSONB</span>          <span class="cn">DEFAULT</span> <span class="str">'{}'</span>
+);
+
+<span class="cmt">-- B: GIN Index + استعلام</span>
+<span class="kw">CREATE INDEX</span> idx_product_attrs <span class="kw">ON</span> <span class="tb">product</span> <span class="kw">USING GIN</span> (attributes);
+
+<span class="kw">SELECT</span> name, attributes->><span class="str">'brand'</span> <span class="kw">AS</span> brand
+<span class="kw">FROM</span>   <span class="tb">product</span>
+<span class="kw">WHERE</span>  attributes @> <span class="str">'{"colors":["أبيض"]}'</span>;
+
+<span class="cmt">-- C: UNNEST للمقاسات</span>
+<span class="kw">SELECT</span>
+    name,
+    <span class="fn">UNNEST</span>((attributes-><span class="str">'sizes'</span>)::TEXT[]) <span class="kw">AS</span> size
+<span class="kw">FROM</span>   <span class="tb">product</span>
+<span class="kw">WHERE</span>  attributes ? <span class="str">'sizes'</span>
+<span class="kw">ORDER BY</span> name, size;
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QUIZ -->
+<div class="section-block" id="quiz" data-aos="fade-up">
+    <div class="section-title"><span class="icon">🧠</span> اختبار الفهم</div>
+    <div class="quiz-card" id="qq1">
+        <div class="quiz-q">١. الفرق الرئيسي بين JSON وJSONB في PostgreSQL؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(1,this,false)">JSONB أحدث وبس</div>
+            <div class="quiz-opt" onclick="ans(1,this,true)">JSONB يخزّن بصيغة Binary محسّنة — يدعم GIN Index، أسرع قراءة، يتجاهل تكرار المفاتيح. JSON نص خام — أسرع كتابة، يحتفظ بالترتيب.</div>
+            <div class="quiz-opt" onclick="ans(1,this,false)">مفيش فرق في الاستخدام</div>
+        </div>
+        <div class="quiz-fb" id="fb1"></div>
+    </div>
+    <div class="quiz-card" id="qq2">
+        <div class="quiz-q">٢. ما الـ Operator المناسب للبحث "المنتجات اللي فيها اللون الأحمر ضمن attributes"؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(2,this,false)">attributes->>'color' = 'red'</div>
+            <div class="quiz-opt" onclick="ans(2,this,true)">attributes @> '{"colors":["red"]}' — الـ @> يتحقق من الاحتواء في JSONB</div>
+            <div class="quiz-opt" onclick="ans(2,this,false)">attributes ? 'red'</div>
+        </div>
+        <div class="quiz-fb" id="fb2"></div>
+    </div>
+    <div class="quiz-card" id="qq3">
+        <div class="quiz-q">٣. ما ميزة ENUM على TEXT CHECK CONSTRAINT؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(3,this,false)">ENUM أسرع في الكتابة</div>
+            <div class="quiz-opt" onclick="ans(3,this,true)">ENUM يوفّر Storage أصغر، ترتيب طبيعي للقيم، وقابلية للتوسع بدون Rebuild — وهو Type مستقل قابل للمشاركة بين الجداول.</div>
+            <div class="quiz-opt" onclick="ans(3,this,false)">TEXT CHECK CONSTRAINT أفضل دايماً</div>
+        </div>
+        <div class="quiz-fb" id="fb3"></div>
+    </div>
+    <div class="quiz-card" id="qq4">
+        <div class="quiz-q">٤. لاستخراج كل عنصر من Array في صفوف منفصلة — أي دالة تستخدم؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(4,this,false)">array_length()</div>
+            <div class="quiz-opt" onclick="ans(4,this,true)">UNNEST() — بتحوّل كل عنصر في الـ Array لصف منفصل</div>
+            <div class="quiz-opt" onclick="ans(4,this,false)">array_to_string()</div>
+        </div>
+        <div class="quiz-fb" id="fb4"></div>
+    </div>
+    <div class="quiz-score-box" id="score-box">
+        <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+        <p id="score-msg" style="color:#94A3B8;"></p>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <a href="window_functions.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: Window Functions</a>
+    <a href="functions_triggers.html" class="bnav-btn" style="color:#FCD34D;">التالي: Functions & Triggers <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 4: Advanced Types</footer>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({duration:700,once:true,offset:80});
+    window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+    function toggleSol(btn){const sc=btn.nextElementSibling;sc.classList.toggle('open');btn.textContent=sc.classList.contains('open')?'🙈 إخفاء الحل':'👁️ اظهر الحل الكامل';}
+    const fbs={
+        1:{c:'✅ JSONB = Binary storage + GIN Index support + يتجاهل تكرار المفاتيح. JSON = نص خام + أسرع كتابة + يحتفظ بالترتيب. استخدم JSONB دايماً إلا لحالات خاصة.',w:'❌ الفرق جوهري في الأداء والـ Indexing. JSONB هو الاختيار الافتراضي في 99% من الحالات.'},
+        2:{c:'✅ @> (contains) بيتحقق إذا كان الـ JSONB الأيسر يحتوي على الأيمن. مثالي للبحث داخل Arrays في JSONB.',w:'❌ attributes->>"color" = "red" يشتغل لو color هو string بس. @> هو الصح للبحث داخل Array من القيم.'},
+        3:{c:'✅ ENUM يوفّر: storage أصغر (4 bytes)، ترتيب طبيعي للمقارنة، type مشترك بين جداول، قابلية إضافة قيم بدون Rebuild. CHECK CONSTRAINT مجرد قيد على TEXT.',w:'❌ ENUM مش بس أسرع كتابة — هو type مستقل بخصائص إضافية كالترتيب والمشاركة.'},
+        4:{c:'✅ UNNEST(array_col) بتحوّل كل عنصر في الـ Array لصف مستقل — مفيد جداً للـ JOIN وال Aggregation على عناصر Array.',w:'❌ array_length يعطيك عدد العناصر. array_to_string يدمجها في string. UNNEST هي اللي تحوّل لصفوف.'}
+    };
+    let answered=0,score=0;
+    function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';document.getElementById('score-text').textContent=`نتيجتك: ${score} / 4`;document.getElementById('score-msg').textContent=score===4?'🎉 Advanced Types Master!':score>=3?'👏 كويس جداً!':'💪 راجع الدرس.';document.getElementById('score-text').style.color=score===4?'#34D399':score>=3?'#FBBF24':'#F87171';}}
+</script>
+</body>
+</html>

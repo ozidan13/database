@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Window Functions — دوال النافذة | Database Mastery</title>
+    <meta name="description" content="دليل شامل لـ Window Functions في PostgreSQL: OVER، PARTITION BY، ORDER BY، ROW_NUMBER، RANK، DENSE_RANK، NTILE، LAG، LEAD، FIRST_VALUE، LAST_VALUE، نطاق الـ Frame — مع أمثلة حقيقية.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global-db.css">
+    <style>
+        :root{--accent:#8B5CF6;--accent-lt:#A78BFA;}
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;text-decoration:none;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#8B5CF6,#6D28D9);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#A78BFA;}
+        .nav-toc{display:flex;gap:1.3rem;font-size:.82rem;color:#64748B;}
+        .nav-toc a{color:#64748B;text-decoration:none;transition:.2s;}
+        .nav-toc a:hover{color:#A78BFA;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#8B5CF6,#EC4899);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(139,92,246,.12),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#A78BFA;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#8B5CF6;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#8B5CF6,#EC4899);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.1rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1.05rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);font-size:.78rem;color:#C4B5FD;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.why{background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);}
+        .callout.why .chead{color:#22D3EE;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);}
+        .callout.realworld .chead{color:#34D399;font-weight:800;margin-bottom:.5rem;}
+        .callout.tip{background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);}
+        .callout.tip .chead{color:#A78BFA;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
+        /* window anatomy */
+        .window-anatomy{background:rgba(15,23,42,.8);border:1px solid rgba(139,92,246,.2);border-radius:16px;padding:1.5rem;margin:1.5rem 0;}
+        .anatomy-row{display:flex;align-items:center;gap:.8rem;margin:.4rem 0;flex-wrap:wrap;}
+        .anat-part{padding:.3rem .8rem;border-radius:8px;font-family:'Fira Code',monospace;font-size:.88rem;font-weight:700;}
+        .anat-kw{background:rgba(192,132,252,.15);color:#C084FC;}
+        .anat-fn{background:rgba(34,211,238,.12);color:#22D3EE;}
+        .anat-clause{background:rgba(251,191,36,.12);color:#FBBF24;}
+        .anat-desc{font-size:.85rem;color:#64748B;}
+        /* fn grid */
+        .fn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.2rem;margin:1.5rem 0;}
+        .fn-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1.4rem;transition:.3s;}
+        .fn-card:hover{border-color:rgba(139,92,246,.25);transform:translateY(-2px);}
+        .fn-name{font-family:'Fira Code',monospace;font-size:1.05rem;font-weight:900;margin-bottom:.4rem;}
+        .fn-card h3{font-size:.92rem;font-weight:700;margin-bottom:.4rem;color:#E2E8F0;}
+        .fn-card p{font-size:.85rem;line-height:1.9;color:#94A3B8;}
+        .fn-example{background:rgba(0,0,0,.3);border-radius:8px;padding:.5rem .8rem;font-size:.78rem;font-family:'Fira Code',monospace;direction:ltr;margin-top:.6rem;color:#CBD5E1;}
+        /* data table */
+        .data-table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:.8rem;}
+        .data-table th{padding:.5rem .8rem;background:rgba(139,92,246,.08);border:1px solid rgba(255,255,255,.06);color:#A78BFA;font-weight:700;text-align:center;}
+        .data-table td{padding:.45rem .8rem;border:1px solid rgba(255,255,255,.05);color:#CBD5E1;text-align:center;font-family:'Fira Code',monospace;}
+        .hl{background:rgba(139,92,246,.08);}
+        .sql-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:1rem 0;border:1px solid rgba(255,255,255,.05);}
+        .sql-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .sdot{width:9px;height:9px;border-radius:50%;}
+        .sdot.r{background:#FF5F57}.sdot.y{background:#FDBC40}.sdot.g{background:#27C93F}
+        .slabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .sbody{padding:1rem 1.2rem;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.col{color:#60A5FA}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.fn{color:#22D3EE}.cn{color:#A5B4FC}
+        .practice-block{background:rgba(15,23,42,.8);border:1px solid rgba(255,255,255,.07);border-radius:18px;overflow:hidden;margin:2rem 0;}
+        .practice-header{background:rgba(139,92,246,.1);padding:1.2rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.06);}
+        .practice-header h3{font-size:1.1rem;font-weight:800;color:#A78BFA;margin:0;}
+        .practice-body{padding:1.8rem;}
+        .task-list{list-style:none;padding:0;margin-bottom:1.5rem;}
+        .task-list li{padding:.5rem 0;font-size:.93rem;color:#CBD5E1;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:.5rem;align-items:flex-start;}
+        .tnum{background:rgba(139,92,246,.15);color:#A78BFA;font-weight:800;font-size:.78rem;padding:.1rem .5rem;border-radius:5px;flex-shrink:0;font-family:'Inter',sans-serif;margin-top:.2rem;}
+        .sol-btn{width:100%;padding:.9rem;border-radius:10px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);color:#A78BFA;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:.3s;}
+        .sol-btn:hover{background:rgba(139,92,246,.18);}
+        .sol-content{display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.05);}
+        .sol-content.open{display:block;}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;text-decoration:none;color:#E2E8F0;}
+        .bnav-btn:hover{background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.3);transform:translateY(-2px);}
+    </style>
+</head>
+<body>
+<nav class="lesson-nav-bar">
+    <div class="nav-inner">
+        <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-arrow-right"></i></div>العودة للبوابة</a>
+        <div class="nav-toc">
+            <a href="#why">لماذا Window؟</a>
+            <a href="#anatomy">تشريح OVER</a>
+            <a href="#ranking">Ranking</a>
+            <a href="#value">Value Functions</a>
+            <a href="#offset">LAG/LEAD</a>
+            <a href="#aggregate">Agg Windows</a>
+            <a href="#frame">Frame Clause</a>
+            <a href="#quiz">اختبار</a>
+        </div>
+    </div>
+</nav>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
+
+<header class="hero" data-aos="fade-up">
+    <div class="lesson-badge"><span class="pulse"></span>الوحدة 4 — الدرس 2</div>
+    <h1><span class="grad">Window Functions</span> — دوال النافذة</h1>
+    <p class="en-title">OVER, PARTITION BY, ROW_NUMBER, RANK, LAG, LEAD, Running Totals, Frame Clauses</p>
+    <p class="desc">الـ Window Functions هي أقوى ميزة في SQL. بتديك قوة الـ Aggregation بدون ما تفقد تفاصيل كل صف — كل عمليات الـ Analytics تمر منها.</p>
+    <div class="learn-pills">
+        <span class="pill">OVER() — النافذة</span>
+        <span class="pill">PARTITION BY</span>
+        <span class="pill">ROW_NUMBER / RANK / DENSE_RANK</span>
+        <span class="pill">NTILE</span>
+        <span class="pill">LAG / LEAD</span>
+        <span class="pill">FIRST_VALUE / LAST_VALUE</span>
+        <span class="pill">Running Total</span>
+        <span class="pill">Frame Clause</span>
+        <span class="pill">WINDOW ALIAS</span>
+    </div>
+</header>
+
+<div class="lesson-body">
+
+<!-- WHY -->
+<div class="section-block" id="why" data-aos="fade-up">
+    <div class="section-title"><span class="icon">🤔</span> لماذا Window Functions؟</div>
+    <p class="section-en">The Power of Knowing Context Without Losing Details</p>
+    <p class="body-text">تخيّل إنك عايز تعرف راتب كل موظف <em>ونسبته من متوسط قسمه</em> في نفس الوقت. بالـ GROUP BY، أنت تخسر تفاصيل الموظف الفردي. الـ Window Functions بتحسب على "نافذة" من الصفوف <strong>بدون إزالة التفاصيل</strong>.</p>
+
+    <div class="sql-block">
+        <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Window vs GROUP BY — The Difference</span></div>
+        <div class="sbody">
+<span class="cmt">-- ❌ GROUP BY: تفقد تفاصيل الموظف</span>
+<span class="kw">SELECT</span> dept_id, <span class="fn">AVG</span>(salary) <span class="kw">AS</span> dept_avg
+<span class="kw">FROM</span>   <span class="tb">employee</span>
+<span class="kw">GROUP BY</span> dept_id;
+<span class="cmt">-- بيرجع صف واحد لكل قسم — مش تفاصيل كل موظف</span>
+
+<span class="cmt">-- ✅ Window Function: كل موظف + متوسط قسمه</span>
+<span class="kw">SELECT</span>
+    full_name,
+    salary,
+    dept_id,
+    <span class="fn">AVG</span>(salary) <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> dept_id) <span class="kw">AS</span> dept_avg,
+    salary - <span class="fn">AVG</span>(salary) <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> dept_id) <span class="kw">AS</span> diff
+<span class="kw">FROM</span>   <span class="tb">employee</span>;
+<span class="cmt">-- كل صف موظف محتفظ بتفاصيله + عمود متوسط قسمه</span>
+        </div>
+    </div>
+</div>
+
+<!-- ANATOMY OF OVER -->
+<div class="section-block" id="anatomy" data-aos="fade-up">
+    <div class="section-title"><span class="icon">🔬</span> تشريح الـ OVER Clause</div>
+    <p class="section-en">Anatomy of the OVER() Window Specification</p>
+
+    <div class="window-anatomy">
+        <p style="font-family:'Fira Code',monospace;font-size:.88rem;color:#CBD5E1;direction:ltr;margin-bottom:1rem;">FUNCTION_NAME() OVER ( [PARTITION BY ...] [ORDER BY ...] [frame_clause] )</p>
+        <div class="anatomy-row">
+            <span class="anat-part anat-fn">FUNCTION()</span>
+            <span class="anat-desc">الدالة: ROW_NUMBER, RANK, SUM, AVG, LAG...</span>
+        </div>
+        <div class="anatomy-row">
+            <span class="anat-part anat-kw">OVER</span>
+            <span class="anat-desc">الكلمة المفتاحية — بتحوّل الدالة لـ Window Function</span>
+        </div>
+        <div class="anatomy-row">
+            <span class="anat-part anat-clause">PARTITION BY col</span>
+            <span class="anat-desc">تقسيم الصفوف لمجموعات (مثل GROUP BY لكن بدون دمج). اختياري.</span>
+        </div>
+        <div class="anatomy-row">
+            <span class="anat-part anat-clause">ORDER BY col</span>
+            <span class="anat-desc">ترتيب الصفوف داخل كل partition — مطلوب لـ Ranking وOffset functions.</span>
+        </div>
+        <div class="anatomy-row">
+            <span class="anat-part anat-clause">frame_clause</span>
+            <span class="anat-desc">تحديد "نطاق" الصفوف: ROWS BETWEEN ... AND ... — اختياري.</span>
+        </div>
+    </div>
+
+    <div class="sql-block">
+        <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">OVER Clause Combinations</span></div>
+        <div class="sbody">
+<span class="cmt">-- OVER() بدون فلوس: النافذة = كل الجدول</span>
+<span class="fn">RANK</span>() <span class="kw">OVER</span> ()
+
+<span class="cmt">-- OVER مع PARTITION فقط</span>
+<span class="fn">AVG</span>(salary) <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> dept_id)
+
+<span class="cmt">-- OVER مع ORDER BY فقط (بدون partition)</span>
+<span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> hire_date)
+
+<span class="cmt">-- OVER مع الاثنين</span>
+<span class="fn">RANK</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> dept_id <span class="kw">ORDER BY</span> salary <span class="kw">DESC</span>)
+
+<span class="cmt">-- WINDOW ALIAS — تعريف نافذة مرة وإعادة استخدامها</span>
+<span class="kw">SELECT</span>
+    full_name,
+    <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> dept_win,
+    <span class="fn">RANK</span>()       <span class="kw">OVER</span> dept_win,
+    <span class="fn">AVG</span>(salary)  <span class="kw">OVER</span> dept_win
+<span class="kw">FROM</span> <span class="tb">employee</span>
+<span class="kw">WINDOW</span> dept_win <span class="kw">AS</span> (<span class="kw">PARTITION BY</span> dept_id <span class="kw">ORDER BY</span> salary <span class="kw">DESC</span>);
+        </div>
+    </div>
+</div>
+
+<!-- RANKING FUNCTIONS -->
+<div class="section-block" id="ranking" data-aos="fade-up">
+    <div class="section-title"><span class="icon">🏆</span> Ranking Functions</div>
+    <p class="section-en">ROW_NUMBER, RANK, DENSE_RANK, NTILE — When to Use Each</p>
+
+    <div class="fn-grid">
+        <div class="fn-card" style="border-top:3px solid #60A5FA;">
+            <div class="fn-name" style="color:#60A5FA;">ROW_NUMBER()</div>
+            <h3>رقم تسلسلي فريد</h3>
+            <p>بيعطي كل صف رقماً تسلسلياً مستمراً. حتى لو في تعادل → أرقام مختلفة. الأكثر استخداماً لـ Pagination وإزالة التكرار.</p>
+            <div class="fn-example">ROW_NUMBER() OVER (ORDER BY salary DESC)
+→ 1, 2, 3, 4, 5 (حتى لو في تعادل)</div>
+        </div>
+        <div class="fn-card" style="border-top:3px solid #FBBF24;">
+            <div class="fn-name" style="color:#FBBF24;">RANK()</div>
+            <h3>الترتيب مع فجوات</h3>
+            <p>في حالة التعادل: نفس الرقم. الرقم التالي يقفز. مثل سباق: اتنين جاوا أول → مفيش ثاني، التالت هو الثالث.</p>
+            <div class="fn-example">RANK() OVER (ORDER BY salary DESC)
+→ 1, 1, 3, 4 (الثاني غائب)</div>
+        </div>
+        <div class="fn-card" style="border-top:3px solid #34D399;">
+            <div class="fn-name" style="color:#34D399;">DENSE_RANK()</div>
+            <h3>الترتيب بدون فجوات</h3>
+            <p>في حالة التعادل: نفس الرقم. لكن الرقم التالي مستمر. مثالي لـ "أعلى N" بدون فجوات في الترتيب.</p>
+            <div class="fn-example">DENSE_RANK() OVER (ORDER BY salary DESC)
+→ 1, 1, 2, 3 (بدون فجوات)</div>
+        </div>
+        <div class="fn-card" style="border-top:3px solid #F472B6;">
+            <div class="fn-name" style="color:#F472B6;">NTILE(n)</div>
+            <h3>تقسيم لـ n مجموعات</h3>
+            <p>بيقسّم الصفوف لـ n مجموعات متساوية (Quartiles, Deciles). مفيد للتحليل الإحصائي والـ Segmentation.</p>
+            <div class="fn-example">NTILE(4) OVER (ORDER BY salary)
+→ الربع الأول/الثاني/الثالث/الرابع</div>
+        </div>
+    </div>
+
+    <div style="overflow-x:auto;margin:1rem 0;">
+        <table class="data-table" style="font-size:.78rem;">
+            <caption style="color:#64748B;font-size:.78rem;margin-bottom:.5rem;text-align:right;">مثال: بيانات الرواتب</caption>
+            <thead><tr><th>الاسم</th><th>القسم</th><th>الراتب</th><th>ROW_NUMBER</th><th>RANK</th><th>DENSE_RANK</th><th>NTILE(3)</th></tr></thead>
+            <tbody>
+                <tr class="hl"><td>أحمد</td><td>IT</td><td>30000</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+                <tr class="hl"><td>فاطمة</td><td>IT</td><td>30000</td><td>2</td><td>1</td><td>1</td><td>1</td></tr>
+                <tr><td>محمد</td><td>IT</td><td>25000</td><td>3</td><td>3</td><td>2</td><td>2</td></tr>
+                <tr><td>نور</td><td>HR</td><td>22000</td><td>4</td><td>4</td><td>3</td><td>2</td></tr>
+                <tr><td>خالد</td><td>HR</td><td>18000</td><td>5</td><td>5</td><td>4</td><td>3</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="sql-block">
+        <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Ranking Functions — Practical Use Cases</span></div>
+        <div class="sbody">
+<span class="cmt">-- ══ أعلى 3 موظفين في كل قسم ══</span>
+<span class="kw">SELECT</span> dept_id, full_name, salary, dept_rank
+<span class="kw">FROM</span> (
+    <span class="kw">SELECT</span>
+        dept_id, full_name, salary,
+        <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> dept_id <span class="kw">ORDER BY</span> salary <span class="kw">DESC</span>) <span class="kw">AS</span> dept_rank
+    <span class="kw">FROM</span> <span class="tb">employee</span>
+    <span class="kw">WHERE</span> is_active = <span class="cn">TRUE</span>
+) <span class="kw">AS</span> ranked
+<span class="kw">WHERE</span> dept_rank <= <span class="num">3</span>
+<span class="kw">ORDER BY</span> dept_id, dept_rank;
+
+<span class="cmt">-- ══ Deduplication — أحدث أوردر لكل عميل ══</span>
+<span class="kw">SELECT</span> customer_id, order_id, order_date, total_amount
+<span class="kw">FROM</span> (
+    <span class="kw">SELECT</span> *,
+        <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (
+            <span class="kw">PARTITION BY</span> customer_id
+            <span class="kw">ORDER BY</span> order_date <span class="kw">DESC</span>
+        ) <span class="kw">AS</span> rn
+    <span class="kw">FROM</span> <span class="tb">orders</span>
+) ranked
+<span class="kw">WHERE</span> rn = <span class="num">1</span>;   <span class="cmt">-- أحدث أوردر فقط لكل عميل</span>
+
+<span class="cmt">-- ══ Quartiles — توزيع الرواتب ══</span>
+<span class="kw">SELECT</span>
+    full_name, salary,
+    <span class="fn">NTILE</span>(<span class="num">4</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> salary) <span class="kw">AS</span> quartile,
+    <span class="kw">CASE</span> <span class="fn">NTILE</span>(<span class="num">4</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> salary)
+        <span class="kw">WHEN</span> <span class="num">1</span> <span class="kw">THEN</span> <span class="str">'Q1 - أدنى 25%'</span>
+        <span class="kw">WHEN</span> <span class="num">2</span> <span class="kw">THEN</span> <span class="str">'Q2 - 25-50%'</span>
+        <span class="kw">WHEN</span> <span class="num">3</span> <span class="kw">THEN</span> <span class="str">'Q3 - 50-75%'</span>
+        <span class="kw">WHEN</span> <span class="num">4</span> <span class="kw">THEN</span> <span class="str">'Q4 - أعلى 25%'</span>
+    <span class="kw">END</span> <span class="kw">AS</span> quartile_label
+<span class="kw">FROM</span> <span class="tb">employee</span>;
+        </div>
+    </div>
+</div>
+
+<!-- VALUE FUNCTIONS -->
+<div class="section-block" id="value" data-aos="fade-up">
+    <div class="section-title"><span class="icon">📌</span> FIRST_VALUE, LAST_VALUE, NTH_VALUE</div>
+    <p class="section-en">Value Window Functions — Accessing Specific Rows in Window</p>
+
+    <div class="sql-block">
+        <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">FIRST_VALUE / LAST_VALUE / NTH_VALUE</span></div>
+        <div class="sbody">
+<span class="cmt">-- FIRST_VALUE: أعلى راتب في القسم (على كل صف)</span>
+<span class="kw">SELECT</span>
+    full_name,
+    salary,
+    dept_id,
+    <span class="fn">FIRST_VALUE</span>(salary) <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> dept_id
+        <span class="kw">ORDER BY</span> salary <span class="kw">DESC</span>
+    ) <span class="kw">AS</span> dept_highest_salary,
+    <span class="fn">FIRST_VALUE</span>(full_name) <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> dept_id
+        <span class="kw">ORDER BY</span> salary <span class="kw">DESC</span>
+    ) <span class="kw">AS</span> top_earner_name
+<span class="kw">FROM</span> <span class="tb">employee</span>;
+
+<span class="cmt">-- LAST_VALUE: ⚠️ تحتاج RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</span>
+<span class="cmt">-- بدونها بترجع القيمة الحالية مش الأخيرة!</span>
+<span class="kw">SELECT</span>
+    full_name, salary,
+    <span class="fn">LAST_VALUE</span>(salary) <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> dept_id
+        <span class="kw">ORDER BY</span> salary <span class="kw">DESC</span>
+        <span class="kw">ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</span>
+    ) <span class="kw">AS</span> dept_lowest_salary
+<span class="kw">FROM</span> <span class="tb">employee</span>;
+
+<span class="cmt">-- NTH_VALUE: الراتب الثاني الأعلى في القسم</span>
+<span class="kw">SELECT</span>
+    full_name, salary,
+    <span class="fn">NTH_VALUE</span>(salary, <span class="num">2</span>) <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> dept_id
+        <span class="kw">ORDER BY</span> salary <span class="kw">DESC</span>
+        <span class="kw">ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</span>
+    ) <span class="kw">AS</span> second_highest
+<span class="kw">FROM</span> <span class="tb">employee</span>;
+        </div>
+    </div>
+</div>
+
+<!-- LAG / LEAD -->
+<div class="section-block" id="offset" data-aos="fade-up">
+    <div class="section-title"><span class="icon">↔️</span> LAG و LEAD — الصفوف المجاورة</div>
+    <p class="section-en">LAG and LEAD — Accessing Previous and Next Row Values</p>
+
+    <p class="body-text">الـ LAG بيجيب قيمة من الصف السابق (N صفوف). الـ LEAD من الصف التالي. مفيدان جداً لحساب الفرق بين فترتين زمنيتين.</p>
+
+    <div class="sql-block">
+        <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">LAG / LEAD — Time Series Analysis</span></div>
+        <div class="sbody">
+<span class="cmt">-- ══ LAG: مقارنة المبيعات بالشهر السابق ══</span>
+<span class="kw">SELECT</span>
+    month,
+    revenue,
+    <span class="fn">LAG</span>(revenue, <span class="num">1</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month)    <span class="kw">AS</span> prev_month_revenue,
+    revenue - <span class="fn">LAG</span>(revenue, <span class="num">1</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month) <span class="kw">AS</span> month_diff,
+    <span class="fn">ROUND</span>(
+        (revenue - <span class="fn">LAG</span>(revenue,<span class="num">1</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month)) * <span class="num">100.0</span>
+        / <span class="fn">NULLIF</span>(<span class="fn">LAG</span>(revenue,<span class="num">1</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month), <span class="num">0</span>), <span class="num">2</span>
+    ) <span class="kw">AS</span> pct_change
+<span class="kw">FROM</span> <span class="tb">monthly_sales</span>
+<span class="kw">ORDER BY</span> month;
+
+<span class="cmt">-- ══ LAG مع Default Value ══</span>
+<span class="cmt">-- LAG(col, offset, default) — لو مفيش صف سابق → يرجع default بدل NULL</span>
+<span class="fn">LAG</span>(revenue, <span class="num">1</span>, <span class="num">0</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month)  <span class="cmt">-- 0 بدل NULL للشهر الأول</span>
+
+<span class="cmt">-- ══ LEAD: توقع الطلب القادم لكل عميل ══</span>
+<span class="kw">SELECT</span>
+    customer_id,
+    order_date,
+    total_amount,
+    <span class="fn">LEAD</span>(order_date, <span class="num">1</span>) <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> customer_id
+        <span class="kw">ORDER BY</span> order_date
+    ) <span class="kw">AS</span> next_order_date,
+    <span class="fn">LEAD</span>(order_date, <span class="num">1</span>) <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> customer_id
+        <span class="kw">ORDER BY</span> order_date
+    ) - order_date <span class="kw">AS</span> days_between_orders
+<span class="kw">FROM</span> <span class="tb">orders</span>
+<span class="kw">ORDER BY</span> customer_id, order_date;
+
+<span class="cmt">-- ══ LAG لكشف التغييرات المتتالية ══</span>
+<span class="cmt">-- الموظفين اللي اتغيّر قسمهم</span>
+<span class="kw">SELECT</span> emp_id, dept_id, changed_at,
+    <span class="fn">LAG</span>(dept_id) <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> emp_id <span class="kw">ORDER BY</span> changed_at) <span class="kw">AS</span> prev_dept
+<span class="kw">FROM</span> <span class="tb">employee_dept_history</span>;
+        </div>
+    </div>
+</div>
+
+<!-- AGGREGATE WINDOWS -->
+<div class="section-block" id="aggregate" data-aos="fade-up">
+    <div class="section-title"><span class="icon">📈</span> Aggregate Window Functions — Running Totals</div>
+    <p class="section-en">SUM, AVG, COUNT — Used as Window Functions for Running Calculations</p>
+
+    <div class="sql-block">
+        <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Running Totals and Moving Averages</span></div>
+        <div class="sbody">
+<span class="cmt">-- ══ Running Total (مجموع تراكمي) ══</span>
+<span class="kw">SELECT</span>
+    order_date,
+    total_amount,
+    <span class="fn">SUM</span>(total_amount) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> order_date) <span class="kw">AS</span> running_total,
+    <span class="fn">COUNT</span>(*) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> order_date)          <span class="kw">AS</span> running_count
+<span class="kw">FROM</span> <span class="tb">orders</span>
+<span class="kw">WHERE</span> status = <span class="str">'delivered'</span>
+<span class="kw">ORDER BY</span> order_date;
+
+<span class="cmt">-- ══ Running Total بـ PARTITION (مجموع تراكمي لكل فئة) ══</span>
+<span class="kw">SELECT</span>
+    category_name,
+    order_date,
+    <span class="fn">SUM</span>(amount) <span class="kw">OVER</span> (
+        <span class="kw">PARTITION BY</span> category_name
+        <span class="kw">ORDER BY</span> order_date
+    ) <span class="kw">AS</span> category_running_total
+<span class="kw">FROM</span> <span class="tb">sales_by_category</span>;
+
+<span class="cmt">-- ══ نسبة تراكمية % ══</span>
+<span class="kw">SELECT</span>
+    month,
+    revenue,
+    <span class="fn">SUM</span>(revenue) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month) <span class="kw">AS</span> cumulative,
+    <span class="fn">ROUND</span>(
+        <span class="fn">SUM</span>(revenue) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month) * <span class="num">100.0</span>
+        / <span class="fn">SUM</span>(revenue) <span class="kw">OVER</span> (), <span class="num">2</span>
+    ) <span class="kw">AS</span> cumulative_pct
+<span class="kw">FROM</span> <span class="tb">monthly_sales</span>;
+        </div>
+    </div>
+</div>
+
+<!-- FRAME CLAUSE -->
+<div class="section-block" id="frame" data-aos="fade-up">
+    <div class="section-title"><span class="icon">🖼️</span> Frame Clause — نطاق النافذة</div>
+    <p class="section-en">ROWS and RANGE Frame Clauses — Defining Window Boundaries</p>
+
+    <p class="body-text">الـ Frame بيحدّد أيّ الصفوف تدخل في حساب الـ Window Function بالنسبة للصف الحالي. بيفيد في الـ Moving Average وغيره.</p>
+
+    <div class="sql-block">
+        <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Frame Clause — Moving Average</span></div>
+        <div class="sbody">
+<span class="cmt">-- ══ Frame Clause الشكل العام ══</span>
+<span class="cmt">-- { ROWS | RANGE } BETWEEN start AND end</span>
+<span class="cmt">-- start/end يمكن أن يكون:
+--   UNBOUNDED PRECEDING  → من أول الـ partition
+--   N PRECEDING          → N صفوف/قيم قبل الحالي
+--   CURRENT ROW          → الصف الحالي
+--   N FOLLOWING          → N صفوف/قيم بعد الحالي
+--   UNBOUNDED FOLLOWING  → حتى آخر الـ partition</span>
+
+<span class="cmt">-- ══ Moving Average (متوسط متحرك 3 أشهر) ══</span>
+<span class="kw">SELECT</span>
+    month,
+    revenue,
+    <span class="fn">ROUND</span>(<span class="fn">AVG</span>(revenue) <span class="kw">OVER</span> (
+        <span class="kw">ORDER BY</span> month
+        <span class="kw">ROWS BETWEEN</span> <span class="num">2</span> <span class="kw">PRECEDING AND CURRENT ROW</span>
+    ), <span class="num">2</span>) <span class="kw">AS</span> moving_avg_3m,  <span class="cmt">-- الشهر الحالي + 2 سابقين</span>
+    <span class="fn">ROUND</span>(<span class="fn">AVG</span>(revenue) <span class="kw">OVER</span> (
+        <span class="kw">ORDER BY</span> month
+        <span class="kw">ROWS BETWEEN</span> <span class="num">1</span> <span class="kw">PRECEDING AND</span> <span class="num">1</span> <span class="kw">FOLLOWING</span>
+    ), <span class="num">2</span>) <span class="kw">AS</span> centered_avg   <span class="cmt">-- شهر قبل + الحالي + شهر بعد</span>
+<span class="kw">FROM</span> <span class="tb">monthly_sales</span>
+<span class="kw">ORDER BY</span> month;
+
+<span class="cmt">-- ══ ROWS vs RANGE ══</span>
+<span class="cmt">-- ROWS: صفوف فعلية (physical rows)</span>
+<span class="cmt">-- RANGE: نطاق بقيمة ORDER BY — كل الصفوف بنفس القيمة = CURRENT ROW</span>
+<span class="cmt">-- الـ Default بدون frame clause: RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>
+        </div>
+    </div>
+</div>
+
+<!-- PRACTICE -->
+<div class="section-block" id="practice" data-aos="fade-up">
+    <div class="section-title"><span class="icon">✍️</span> تمرين عملي</div>
+    <div class="practice-block">
+        <div class="practice-header"><h3>📊 تمرين: تقرير Analytics كامل</h3></div>
+        <div class="practice-body">
+            <div class="callout tip"><div class="chead">الجداول</div>
+                <p>employee(emp_id, full_name, salary, dept_id, hire_date), orders(order_id, customer_id, total_amount, order_date, status)</p>
+            </div>
+            <ul class="task-list">
+                <li><span class="tnum">A</span>لكل موظف: اعرض اسمه + راتبه + ترتيبه في قسمه (بدون فجوات) + الفرق بين راتبه وأعلى راتب في قسمه.</li>
+                <li><span class="tnum">B</span>على أوردرات 2024: اعرض كل أوردر + المجموع التراكمي + نسبة الأوردر من الإجمالي الكلي.</li>
+                <li><span class="tnum">C</span>احسب المتوسط المتحرك للمبيعات الشهرية لآخر 3 أشهر.</li>
+            </ul>
+            <button class="sol-btn" onclick="toggleSol(this)">👁️ اظهر الحل الكامل</button>
+            <div class="sol-content">
+                <div class="sql-block">
+                    <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Window Functions — Solutions</span></div>
+                    <div class="sbody">
+<span class="cmt">-- A: ترتيب الموظفين في قسمهم + فرق الراتب</span>
+<span class="kw">SELECT</span>
+    full_name, dept_id, salary,
+    <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> dept_id <span class="kw">ORDER BY</span> salary <span class="kw">DESC</span>) <span class="kw">AS</span> dept_rank,
+    <span class="fn">FIRST_VALUE</span>(salary) <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> dept_id <span class="kw">ORDER BY</span> salary <span class="kw">DESC</span>) - salary <span class="kw">AS</span> gap_from_top
+<span class="kw">FROM</span> <span class="tb">employee</span>
+<span class="kw">ORDER BY</span> dept_id, dept_rank;
+
+<span class="cmt">-- B: أوردرات 2024 + تراكمي + نسبة</span>
+<span class="kw">SELECT</span>
+    order_id, order_date, total_amount,
+    <span class="fn">SUM</span>(total_amount) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> order_date) <span class="kw">AS</span> running_total,
+    <span class="fn">ROUND</span>(total_amount * <span class="num">100.0</span> / <span class="fn">SUM</span>(total_amount) <span class="kw">OVER</span> (), <span class="num">2</span>)  <span class="kw">AS</span> pct_of_total
+<span class="kw">FROM</span> <span class="tb">orders</span>
+<span class="kw">WHERE</span> status = <span class="str">'delivered'</span>
+<span class="kw">AND</span>   order_date <span class="kw">BETWEEN</span> <span class="str">'2024-01-01'</span> <span class="kw">AND</span> <span class="str">'2024-12-31'</span>
+<span class="kw">ORDER BY</span> order_date;
+
+<span class="cmt">-- C: Moving Average 3 أشهر</span>
+<span class="kw">SELECT</span>
+    month, revenue,
+    <span class="fn">ROUND</span>(<span class="fn">AVG</span>(revenue) <span class="kw">OVER</span> (
+        <span class="kw">ORDER BY</span> month
+        <span class="kw">ROWS BETWEEN</span> <span class="num">2</span> <span class="kw">PRECEDING AND CURRENT ROW</span>
+    ), <span class="num">2</span>) <span class="kw">AS</span> moving_avg_3m
+<span class="kw">FROM</span> (
+    <span class="kw">SELECT</span>
+        <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, order_date) <span class="kw">AS</span> month,
+        <span class="fn">SUM</span>(total_amount) <span class="kw">AS</span> revenue
+    <span class="kw">FROM</span> <span class="tb">orders</span>
+    <span class="kw">WHERE</span> status = <span class="str">'delivered'</span>
+    <span class="kw">GROUP BY</span> <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, order_date)
+) <span class="kw">AS</span> monthly
+<span class="kw">ORDER BY</span> month;
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QUIZ -->
+<div class="section-block" id="quiz" data-aos="fade-up">
+    <div class="section-title"><span class="icon">🧠</span> اختبار الفهم</div>
+    <div class="quiz-card" id="qq1">
+        <div class="quiz-q">١. ما الفرق بين RANK() وDENSE_RANK() في حالة التعادل؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(1,this,false)">مفيش فرق</div>
+            <div class="quiz-opt" onclick="ans(1,this,true)">RANK() يترك فجوات (1,1,3). DENSE_RANK() بدون فجوات (1,1,2). لـ "أعلى N" استخدم DENSE_RANK.</div>
+            <div class="quiz-opt" onclick="ans(1,this,false)">DENSE_RANK() أسرع</div>
+        </div>
+        <div class="quiz-fb" id="fb1"></div>
+    </div>
+    <div class="quiz-card" id="qq2">
+        <div class="quiz-q">٢. ما الفرق بين OVER() بدون شيء وOVER(PARTITION BY dept_id)؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(2,this,false)">OVER() أبطأ</div>
+            <div class="quiz-opt" onclick="ans(2,this,true)">OVER() = النافذة كل الجدول (قيمة واحدة للكل). OVER(PARTITION BY dept_id) = قيمة مستقلة لكل قسم.</div>
+            <div class="quiz-opt" onclick="ans(2,this,false)">مفيش فرق في النتيجة</div>
+        </div>
+        <div class="quiz-fb" id="fb2"></div>
+    </div>
+    <div class="quiz-card" id="qq3">
+        <div class="quiz-q">٣. عايز تعمل "آخر 3 أشهر Moving Average" — أي Frame Clause تستخدم؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(3,this,false)">ROWS BETWEEN 3 PRECEDING AND CURRENT ROW</div>
+            <div class="quiz-opt" onclick="ans(3,this,true)">ROWS BETWEEN 2 PRECEDING AND CURRENT ROW (الحالي + 2 سابقين = 3)</div>
+            <div class="quiz-opt" onclick="ans(3,this,false)">RANGE BETWEEN 3 PRECEDING AND CURRENT ROW</div>
+        </div>
+        <div class="quiz-fb" id="fb3"></div>
+    </div>
+    <div class="quiz-card" id="qq4">
+        <div class="quiz-q">٤. لاستخراج الموظف الأكثر أجراً في كل قسم (بدون subquery إضافية) — أي دالة تستخدم؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(4,this,false)">MAX() مع GROUP BY</div>
+            <div class="quiz-opt" onclick="ans(4,this,true)">FIRST_VALUE(full_name) OVER (PARTITION BY dept_id ORDER BY salary DESC) — بيرجع اسم الأعلى لكل صف في القسم</div>
+            <div class="quiz-opt" onclick="ans(4,this,false)">RANK() = 1 كافي</div>
+        </div>
+        <div class="quiz-fb" id="fb4"></div>
+    </div>
+    <div class="quiz-score-box" id="score-box">
+        <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+        <p id="score-msg" style="color:#94A3B8;"></p>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <a href="views_ctes.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: Views & CTEs</a>
+    <a href="advanced_types.html" class="bnav-btn" style="color:#A78BFA;">التالي: Advanced Types <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 4: Window Functions</footer>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({duration:700,once:true,offset:80});
+    window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+    function toggleSol(btn){const sc=btn.nextElementSibling;sc.classList.toggle('open');btn.textContent=sc.classList.contains('open')?'🙈 إخفاء الحل':'👁️ اظهر الحل الكامل';}
+    const fbs={
+        1:{c:'✅ RANK: تعادل يسبب فجوة (1,1,3). DENSE_RANK: تعادل بدون فجوة (1,1,2). لـ "أعلى N" استخدم DENSE_RANK لأن RANK ممكن يتجاهل أرقام.',w:'❌ الفرق جوهري في الـ ranking. بسبب الفجوات في RANK، سؤال "أعلى 3" بيجيب أحياناً أكتر من 3 نتائج.'},
+        2:{c:'✅ OVER() بدون شيء → النافذة كل الجدول: الكل بياخدوا نفس المتوسط. OVER(PARTITION BY dept_id) → كل قسم بيحسب مستقلاً.',w:'❌ ده من أهم المفاهيم. PARTITION BY في Window Functions مثل GROUP BY لكن بدون دمج الصفوف.'},
+        3:{c:'✅ ROWS BETWEEN 2 PRECEDING AND CURRENT ROW = 3 صفوف: الحالي + الاتنين اللي قبله. مجموعهم 3.',w:'❌ "آخر 3 أشهر" = الحالي + 2 سابقين = 2 PRECEDING. لو قلت 3 PRECEDING = 4 أشهر.'},
+        4:{c:'✅ FIRST_VALUE(full_name) OVER (PARTITION BY dept_id ORDER BY salary DESC) → لكل صف في القسم يكتب اسم الأعلى راتباً في القسم.',w:'❌ RANK()=1 صح لكن محتاج subquery إضافية. FIRST_VALUE أبسط وأسرع هنا.'}
+    };
+    let answered=0,score=0;
+    function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';document.getElementById('score-text').textContent=`نتيجتك: ${score} / 4`;document.getElementById('score-msg').textContent=score===4?'🎉 Window Master!':score>=3?'👏 كويس جداً!':'💪 راجع الدرس.';document.getElementById('score-text').style.color=score===4?'#34D399':score>=3?'#FBBF24':'#F87171';}}
+</script>
+</body>
+</html>
