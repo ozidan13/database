@@ -1,103 +1,563 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth" dir="ltr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aggregation & Grouping — GROUP BY HAVING | Database Mastery</title>
     <meta name="description" content="تعلم دوال التجميع (COUNT,SUM,AVG,MAX,MIN) وGROUP BY وHAVING بالتفصيل.">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link href="../css/global-db.css" rel="stylesheet">
     <style>
-        body{background:#020617;color:#E2E8F0;font-family:'Inter',sans-serif;}
-        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.85);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.06);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
-        .nav-inner{max-width:1280px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
-        .nav-brand{display:flex;align-items:center;gap:.75rem;font-weight:700;}
-        .back-btn{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#F59E0B,#D97706);display:flex;align-items:center;justify-content:center;color:white;font-size:.85rem;transition:transform .3s;}
-        .back-btn:hover{transform:scale(1.1);}
-        .nav-links{display:flex;gap:2rem;font-size:.85rem;font-family:'Cairo',sans-serif;color:var(--text-faint);}
-        .nav-links a{transition:color .3s;direction:rtl;}
-        .nav-links a:hover{color:#FBBF24;}
-        @media(max-width:768px){.nav-links{display:none;}}
-        .lesson-hero{position:relative;padding:8rem 1.5rem 5rem;text-align:center;overflow:hidden;}
-        .glow-orb{position:absolute;width:500px;height:500px;border-radius:50%;filter:blur(128px);pointer-events:none;}
-        .glow-orb-1{top:-10%;right:-5%;background:rgba(245,158,11,.15);}
-        .glow-orb-2{bottom:-20%;left:-10%;background:rgba(239,68,68,.08);}
-        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.35rem 1rem;border-radius:50px;background:rgba(30,41,59,.6);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.78rem;color:#FBBF24;margin-bottom:1.5rem;}
-        .lesson-badge .dot{width:6px;height:6px;border-radius:50%;background:#F59E0B;animation:pulse-dot 2s ease infinite;}
-        @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
-        .lesson-hero h1{font-size:clamp(2.5rem,5vw,4rem);font-weight:800;margin-bottom:1rem;}
-        .text-gradient{background:linear-gradient(135deg,#F59E0B,#EF4444);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-        .lesson-hero .subtitle{font-family:'Cairo',sans-serif;font-size:1.6rem;font-weight:700;color:var(--text-muted);margin-bottom:1.5rem;direction:rtl;unicode-bidi:isolate;}
-        .lesson-hero .desc{color:var(--text-faint);max-width:600px;margin:0 auto;font-size:1rem;line-height:1.8;font-family:'Cairo',sans-serif;direction:rtl;unicode-bidi:isolate;}
-        .lesson-section{padding:5rem 1.5rem;max-width:960px;margin:0 auto;}
-        .lesson-section.alt-bg{background:rgba(15,23,42,.3);max-width:100%;}
-        .lesson-section.alt-bg>.section-inner{max-width:960px;margin:0 auto;}
-        .section-header{text-align:center;margin-bottom:3rem;}
-        .section-header h2{font-size:2rem;font-weight:800;margin-bottom:.5rem;font-family:'Cairo',sans-serif;direction:rtl;unicode-bidi:isolate;}
-        .section-header .en-sub{font-family:'Inter',sans-serif;color:var(--text-faint);font-size:.9rem;direction:ltr;unicode-bidi:isolate;display:block;}
-        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
-        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#F59E0B,#EF4444);width:0%;transition:width .1s ease-out;}
-        .sql-block{background:#0a0a0f;border-radius:14px;overflow:hidden;margin:1.2rem 0;border:1px solid rgba(255,255,255,.06);}
-        .sql-bar{background:#111118;padding:.6rem 1rem;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid rgba(255,255,255,.04);}
-        .sql-dot{width:10px;height:10px;border-radius:50%;}
-        .sql-dot.r{background:#FF5F57}.sql-dot.y{background:#FDBC40}.sql-dot.g{background:#27C93F}
-        .sql-label{color:#475569;font-size:.72rem;margin-right:auto;font-family:'Fira Code',monospace;}
-        .sql-body{padding:1.2rem 1.4rem;font-family:'Fira Code',monospace;font-size:.84rem;line-height:1.9;direction:ltr;overflow-x:auto;}
-        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.col{color:#60A5FA}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.fn{color:#F472B6;font-weight:600}.cn{color:#A5B4FC}
+        body {
+            background: #020617;
+            color: #E2E8F0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .lesson-nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(2, 6, 23, .85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, .06);
+            height: 64px;
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+        }
+
+        .nav-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+            font-weight: 700;
+        }
+
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: .85rem;
+            transition: transform .3s;
+        }
+
+        .back-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            font-size: .85rem;
+            font-family: 'Cairo', sans-serif;
+            color: var(--text-faint);
+        }
+
+        .nav-links a {
+            transition: color .3s;
+            direction: rtl;
+        }
+
+        .nav-links a:hover {
+            color: #FBBF24;
+        }
+
+        @media(max-width:768px) {
+            .nav-links {
+                display: none;
+            }
+        }
+
+        .lesson-hero {
+            position: relative;
+            padding: 8rem 1.5rem 5rem;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .glow-orb {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(128px);
+            pointer-events: none;
+        }
+
+        .glow-orb-1 {
+            top: -10%;
+            right: -5%;
+            background: rgba(245, 158, 11, .15);
+        }
+
+        .glow-orb-2 {
+            bottom: -20%;
+            left: -10%;
+            background: rgba(239, 68, 68, .08);
+        }
+
+        .lesson-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .35rem 1rem;
+            border-radius: 50px;
+            background: rgba(30, 41, 59, .6);
+            border: 1px solid rgba(255, 255, 255, .08);
+            font-family: 'Fira Code', monospace;
+            font-size: .78rem;
+            color: #FBBF24;
+            margin-bottom: 1.5rem;
+        }
+
+        .lesson-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #F59E0B;
+            animation: pulse-dot 2s ease infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .3
+            }
+        }
+
+        .lesson-hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #F59E0B, #EF4444);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .lesson-hero .subtitle {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            direction: rtl;
+            unicode-bidi: isolate;
+        }
+
+        .lesson-hero .desc {
+            color: var(--text-faint);
+            max-width: 600px;
+            margin: 0 auto;
+            font-size: 1rem;
+            line-height: 1.8;
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            unicode-bidi: isolate;
+        }
+
+        .lesson-section {
+            padding: 5rem 1.5rem;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .lesson-section.alt-bg {
+            background: rgba(15, 23, 42, .3);
+            max-width: 100%;
+        }
+
+        .lesson-section.alt-bg>.section-inner {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: .5rem;
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            unicode-bidi: isolate;
+        }
+
+        .section-header .en-sub {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-faint);
+            font-size: .9rem;
+            direction: ltr;
+            unicode-bidi: isolate;
+            display: block;
+        }
+
+        .progress-bar-container {
+            position: fixed;
+            top: 64px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: rgba(255, 255, 255, .05);
+            z-index: 99;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #F59E0B, #EF4444);
+            width: 0%;
+            transition: width .1s ease-out;
+        }
+
+        .sql-block {
+            background: #0a0a0f;
+            border-radius: 14px;
+            overflow: hidden;
+            margin: 1.2rem 0;
+            border: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .sql-bar {
+            background: #111118;
+            padding: .6rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, .04);
+        }
+
+        .sql-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .sql-dot.r {
+            background: #FF5F57
+        }
+
+        .sql-dot.y {
+            background: #FDBC40
+        }
+
+        .sql-dot.g {
+            background: #27C93F
+        }
+
+        .sql-label {
+            color: #475569;
+            font-size: .72rem;
+            margin-right: auto;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .sql-body {
+            padding: 1.2rem 1.4rem;
+            font-family: 'Fira Code', monospace;
+            font-size: .84rem;
+            line-height: 1.9;
+            direction: ltr;
+            overflow-x: auto;
+        }
+
+        .kw {
+            color: #C084FC;
+            font-weight: 600
+        }
+
+        .tb {
+            color: #34D399
+        }
+
+        .col {
+            color: #60A5FA
+        }
+
+        .str {
+            color: #FB923C
+        }
+
+        .num {
+            color: #FBBF24
+        }
+
+        .cmt {
+            color: #475569
+        }
+
+        .fn {
+            color: #F472B6;
+            font-weight: 600
+        }
+
+        .cn {
+            color: #A5B4FC
+        }
 
         /* Aggregate Function Cards */
-        .agg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin:2rem 0;}
-        .agg-card{background:rgba(15,23,42,.6);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:1.3rem;text-align:center;transition:all .3s;}
-        .agg-card:hover{border-color:rgba(255,255,255,.15);transform:translateY(-4px);}
-        .agg-card .fn-name{font-family:'Fira Code',monospace;font-size:1.1rem;font-weight:700;margin-bottom:.4rem;}
-        .agg-card p{font-family:'Cairo',sans-serif;direction:rtl;unicode-bidi:isolate;font-size:.82rem;color:var(--text-muted);line-height:1.8;}
+        .agg-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .agg-card {
+            background: rgba(15, 23, 42, .6);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 14px;
+            padding: 1.3rem;
+            text-align: center;
+            transition: all .3s;
+        }
+
+        .agg-card:hover {
+            border-color: rgba(255, 255, 255, .15);
+            transform: translateY(-4px);
+        }
+
+        .agg-card .fn-name {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: .4rem;
+        }
+
+        .agg-card p {
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            unicode-bidi: isolate;
+            font-size: .82rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
 
         /* SELECT clause order visual */
-        .clause-order{display:flex;flex-direction:column;gap:.5rem;margin:2rem 0;}
-        .clause-row{display:flex;align-items:center;gap:1rem;padding:.7rem 1rem;border-radius:10px;background:rgba(15,23,42,.6);border:1px solid rgba(255,255,255,.06);}
-        .clause-row .num-badge{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem;font-family:'Inter',sans-serif;flex-shrink:0;}
-        .clause-row .clause-kw{font-family:'Fira Code',monospace;font-weight:700;min-width:100px;}
-        .clause-row .clause-ar{font-family:'Cairo',sans-serif;direction:rtl;font-size:.85rem;color:var(--text-muted);}
+        .clause-order {
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+            margin: 2rem 0;
+        }
 
-        .quiz-question{background:rgba(15,23,42,.7);backdrop-filter:blur(12px);border:1px solid var(--border-light);border-radius:16px;padding:2rem;margin-bottom:1.5rem;}
-        .quiz-question h4{margin-bottom:1rem;font-family:'Cairo',sans-serif;direction:rtl;text-align:right;}
-        .quiz-options{display:flex;flex-direction:column;gap:.6rem;}
-        .quiz-option{padding:.75rem 1rem;border-radius:10px;border:1px solid var(--border-subtle);background:rgba(255,255,255,.02);cursor:pointer;transition:all .3s;font-family:'Cairo',sans-serif;direction:rtl;text-align:right;font-size:.9rem;color:var(--text-body);unicode-bidi:isolate;}
-        .quiz-option:hover{background:rgba(255,255,255,.06);}
-        .quiz-option.correct{background:rgba(16,185,129,.15);border-color:#10B981;color:#34D399;}
-        .quiz-option.wrong{background:rgba(239,68,68,.15);border-color:#EF4444;color:#F87171;}
-        .quiz-feedback{margin-top:1rem;padding:1rem;border-radius:10px;font-family:'Cairo',sans-serif;direction:rtl;text-align:right;display:none;font-size:.9rem;line-height:2;}
-        .quiz-feedback.show{display:block;}
-        .quiz-feedback.correct-fb{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:#34D399;}
-        .quiz-feedback.wrong-fb{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#F87171;}
-        .bottom-nav{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:2rem 0;border-top:1px solid var(--border-subtle);margin-top:3rem;}
-        .bottom-nav a{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--border-subtle);transition:all .3s;font-weight:600;font-size:.9rem;}
-        .bottom-nav a:hover{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);transform:translateY(-2px);}
+        .clause-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: .7rem 1rem;
+            border-radius: 10px;
+            background: rgba(15, 23, 42, .6);
+            border: 1px solid rgba(255, 255, 255, .06);
+        }
+
+        .clause-row .num-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: .8rem;
+            font-family: 'Inter', sans-serif;
+            flex-shrink: 0;
+        }
+
+        .clause-row .clause-kw {
+            font-family: 'Fira Code', monospace;
+            font-weight: 700;
+            min-width: 100px;
+        }
+
+        .clause-row .clause-ar {
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            font-size: .85rem;
+            color: var(--text-muted);
+        }
+
+        .quiz-question {
+            background: rgba(15, 23, 42, .7);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-question h4 {
+            margin-bottom: 1rem;
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: .6rem;
+        }
+
+        .quiz-option {
+            padding: .75rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-subtle);
+            background: rgba(255, 255, 255, .02);
+            cursor: pointer;
+            transition: all .3s;
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            text-align: right;
+            font-size: .9rem;
+            color: var(--text-body);
+            unicode-bidi: isolate;
+        }
+
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, .06);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, .15);
+            border-color: #10B981;
+            color: #34D399;
+        }
+
+        .quiz-option.wrong {
+            background: rgba(239, 68, 68, .15);
+            border-color: #EF4444;
+            color: #F87171;
+        }
+
+        .quiz-feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            text-align: right;
+            display: none;
+            font-size: .9rem;
+            line-height: 2;
+        }
+
+        .quiz-feedback.show {
+            display: block;
+        }
+
+        .quiz-feedback.correct-fb {
+            background: rgba(16, 185, 129, .1);
+            border: 1px solid rgba(16, 185, 129, .2);
+            color: #34D399;
+        }
+
+        .quiz-feedback.wrong-fb {
+            background: rgba(239, 68, 68, .1);
+            border: 1px solid rgba(239, 68, 68, .2);
+            color: #F87171;
+        }
+
+        .bottom-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 2rem 0;
+            border-top: 1px solid var(--border-subtle);
+            margin-top: 3rem;
+        }
+
+        .bottom-nav a {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .75rem 1.5rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid var(--border-subtle);
+            transition: all .3s;
+            font-weight: 600;
+            font-size: .9rem;
+        }
+
+        .bottom-nav a:hover {
+            background: rgba(245, 158, 11, .1);
+            border-color: rgba(245, 158, 11, .3);
+            transform: translateY(-2px);
+        }
     </style>
 </head>
+
 <body>
-    <nav class="lesson-nav-bar"><div class="nav-inner"><a href="../index.html" class="nav-brand"><div class="back-btn"><i class="fas fa-arrow-left"></i></div><span><span style="color:#F59E0B;">AGG</span></span></a><div class="nav-links"><a href="#agg-fns">دوال التجميع</a><a href="#groupby">GROUP BY</a><a href="#having">HAVING</a><a href="#quiz">اختبر نفسك</a></div></div></nav>
-    <div class="progress-bar-container"><div class="progress-bar-fill" id="reading-progress"></div></div>
+    <nav class="lesson-nav-bar">
+        <div class="nav-inner"><a href="../index.html" class="nav-brand">
+                <div class="back-btn"><i class="fas fa-arrow-left"></i></div><span><span
+                        style="color:#F59E0B;">AGG</span></span>
+            </a>
+            <div class="nav-links"><a href="#agg-fns">دوال التجميع</a><a href="#groupby">GROUP BY</a><a
+                    href="#having">HAVING</a><a href="#quiz">اختبر نفسك</a></div>
+        </div>
+    </nav>
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="reading-progress"></div>
+    </div>
 
     <header class="lesson-hero">
-        <div class="glow-orb glow-orb-1"></div><div class="glow-orb glow-orb-2"></div>
+        <div class="glow-orb glow-orb-1"></div>
+        <div class="glow-orb glow-orb-2"></div>
         <div style="position:relative;z-index:1;">
             <div class="lesson-badge" data-aos="fade-down"><span class="dot"></span> UNIT 3 • Lesson 3</div>
             <h1 data-aos="fade-up" data-aos-delay="150"><span class="text-gradient">Aggregation</span></h1>
             <div class="subtitle" data-aos="fade-up" data-aos-delay="300">دوال التجميع والتصنيف</div>
-            <p class="desc" data-aos="fade-up" data-aos-delay="450">عايز تعرف إجمالي المبيعات؟ متوسط الراتب؟ عدد الموظفين في كل قسم؟ الـ <span class="english">Aggregation</span> هو الجواب! 📊</p>
+            <p class="desc" data-aos="fade-up" data-aos-delay="450">عايز تعرف إجمالي المبيعات؟ متوسط الراتب؟ عدد
+                الموظفين في كل قسم؟ الـ <span class="english">Aggregation</span> هو الجواب! 📊</p>
         </div>
     </header>
 
     <!-- Aggregate Functions -->
     <section class="lesson-section" id="agg-fns">
-        <div class="section-header" data-aos="fade-up"><h2><i class="fas fa-calculator" style="color:#FBBF24;margin-left:.5rem;"></i> دوال التجميع الأساسية</h2><p class="en-sub">Aggregate Functions</p></div>
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-calculator" style="color:#FBBF24;margin-left:.5rem;"></i> دوال التجميع الأساسية</h2>
+            <p class="en-sub">Aggregate Functions</p>
+        </div>
         <div class="agg-grid" data-aos="fade-up">
             <div class="agg-card" style="border-top:3px solid #60A5FA;">
                 <div class="fn-name" style="color:#60A5FA;">COUNT()</div>
-                <p>بتعدّ عدد الصفوف. <span class="english">COUNT(*)</span> بتعدّ الكل، <span class="english">COUNT(col)</span> بتتجاهل الـ <span class="english">NULL</span>.</p>
+                <p>بتعدّ عدد الصفوف. <span class="english">COUNT(*)</span> بتعدّ الكل، <span
+                        class="english">COUNT(col)</span> بتتجاهل الـ <span class="english">NULL</span>.</p>
             </div>
             <div class="agg-card" style="border-top:3px solid #34D399;">
                 <div class="fn-name" style="color:#34D399;">SUM()</div>
@@ -117,156 +577,241 @@
             </div>
         </div>
         <div class="sql-block" data-aos="fade-up" data-aos-delay="100">
-            <div class="sql-bar"><span class="sql-dot r"></span><span class="sql-dot y"></span><span class="sql-dot g"></span><span class="sql-label">Aggregate Functions</span></div>
+            <div class="sql-bar"><span class="sql-dot r"></span><span class="sql-dot y"></span><span
+                    class="sql-dot g"></span><span class="sql-label">Aggregate Functions</span></div>
             <div class="sql-body"><span class="cmt">-- إحصاءات عامة عن الموظفين</span>
-<span class="kw">SELECT</span>
-    <span class="fn">COUNT</span>(*) <span class="kw">AS</span> <span class="col">total_employees</span>,
-    <span class="fn">COUNT</span>(<span class="col">dept_id</span>) <span class="kw">AS</span> <span class="col">assigned_employees</span>,  <span class="cmt">-- يتجاهل NULL</span>
-    <span class="fn">SUM</span>(<span class="col">salary</span>) <span class="kw">AS</span> <span class="col">total_payroll</span>,
-    <span class="fn">AVG</span>(<span class="col">salary</span>) <span class="kw">AS</span> <span class="col">avg_salary</span>,
-    <span class="fn">MAX</span>(<span class="col">salary</span>) <span class="kw">AS</span> <span class="col">highest_salary</span>,
-    <span class="fn">MIN</span>(<span class="col">salary</span>) <span class="kw">AS</span> <span class="col">lowest_salary</span>
-<span class="kw">FROM</span> <span class="tb">employee</span>;</div>
+                <span class="kw">SELECT</span>
+                <span class="fn">COUNT</span>(*) <span class="kw">AS</span> <span class="col">total_employees</span>,
+                <span class="fn">COUNT</span>(<span class="col">dept_id</span>) <span class="kw">AS</span> <span
+                    class="col">assigned_employees</span>, <span class="cmt">-- يتجاهل NULL</span>
+                <span class="fn">SUM</span>(<span class="col">salary</span>) <span class="kw">AS</span> <span
+                    class="col">total_payroll</span>,
+                <span class="fn">AVG</span>(<span class="col">salary</span>) <span class="kw">AS</span> <span
+                    class="col">avg_salary</span>,
+                <span class="fn">MAX</span>(<span class="col">salary</span>) <span class="kw">AS</span> <span
+                    class="col">highest_salary</span>,
+                <span class="fn">MIN</span>(<span class="col">salary</span>) <span class="kw">AS</span> <span
+                    class="col">lowest_salary</span>
+                <span class="kw">FROM</span> <span class="tb">employee</span>;
+            </div>
         </div>
     </section>
 
     <!-- GROUP BY -->
     <section class="lesson-section alt-bg" id="groupby">
         <div class="section-inner">
-            <div class="section-header" data-aos="fade-up"><h2><i class="fas fa-object-group" style="color:#34D399;margin-left:.5rem;"></i> GROUP BY — التجميع حسب فئة</h2><p class="en-sub">Grouping Records</p></div>
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-object-group" style="color:#34D399;margin-left:.5rem;"></i> GROUP BY — التجميع حسب
+                    فئة</h2>
+                <p class="en-sub">Grouping Records</p>
+            </div>
             <div class="glass-card" style="padding:1.5rem;border-radius:16px;margin-bottom:1.5rem;" data-aos="fade-up">
                 <div class="rtl-block" style="font-size:1rem;">
-                    <p style="color:#E2E8F0;margin-bottom:1rem;"><span class="english">GROUP BY</span> بتقسّم الصفوف لمجموعات حسب قيمة عمود — وبعدين بنطبق دوال التجميع على كل مجموعة.</p>
-                    <p style="color:#94A3B8;">مثال: عايز متوسط الراتب <span class="hl-amber">لكل قسم</span> — يعني بنجمّع الموظفين حسب الـ <span class="english">dept_id</span>.</p>
+                    <p style="color:#E2E8F0;margin-bottom:1rem;"><span class="english">GROUP BY</span> بتقسّم الصفوف
+                        لمجموعات حسب قيمة عمود — وبعدين بنطبق دوال التجميع على كل مجموعة.</p>
+                    <p style="color:#94A3B8;">مثال: عايز متوسط الراتب <span class="hl-amber">لكل قسم</span> — يعني
+                        بنجمّع الموظفين حسب الـ <span class="english">dept_id</span>.</p>
                 </div>
             </div>
             <div class="sql-block" data-aos="fade-up" data-aos-delay="100">
-                <div class="sql-bar"><span class="sql-dot r"></span><span class="sql-dot y"></span><span class="sql-dot g"></span><span class="sql-label">GROUP BY Examples</span></div>
+                <div class="sql-bar"><span class="sql-dot r"></span><span class="sql-dot y"></span><span
+                        class="sql-dot g"></span><span class="sql-label">GROUP BY Examples</span></div>
                 <div class="sql-body"><span class="cmt">-- عدد الموظفين وإجمالي الرواتب لكل قسم</span>
-<span class="kw">SELECT</span>
-    <span class="col">dept_id</span>,
-    <span class="fn">COUNT</span>(*) <span class="kw">AS</span> <span class="col">emp_count</span>,
-    <span class="fn">SUM</span>(<span class="col">salary</span>) <span class="kw">AS</span> <span class="col">total_salary</span>,
-    <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="col">salary</span>), <span class="num">2</span>) <span class="kw">AS</span> <span class="col">avg_salary</span>
-<span class="kw">FROM</span> <span class="tb">employee</span>
-<span class="kw">GROUP BY</span> <span class="col">dept_id</span>
-<span class="kw">ORDER BY</span> <span class="col">total_salary</span> <span class="cn">DESC</span>;
+                    <span class="kw">SELECT</span>
+                    <span class="col">dept_id</span>,
+                    <span class="fn">COUNT</span>(*) <span class="kw">AS</span> <span class="col">emp_count</span>,
+                    <span class="fn">SUM</span>(<span class="col">salary</span>) <span class="kw">AS</span> <span
+                        class="col">total_salary</span>,
+                    <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="col">salary</span>), <span
+                        class="num">2</span>) <span class="kw">AS</span> <span class="col">avg_salary</span>
+                    <span class="kw">FROM</span> <span class="tb">employee</span>
+                    <span class="kw">GROUP BY</span> <span class="col">dept_id</span>
+                    <span class="kw">ORDER BY</span> <span class="col">total_salary</span> <span class="cn">DESC</span>;
 
-<span class="cmt">-- عدد الموظفين حسب تاريخ التعيين (بالسنة)</span>
-<span class="kw">SELECT</span>
-    <span class="fn">EXTRACT</span>(<span class="cn">YEAR FROM</span> <span class="col">hire_date</span>) <span class="kw">AS</span> <span class="col">hire_year</span>,
-    <span class="fn">COUNT</span>(*) <span class="kw">AS</span> <span class="col">hired_count</span>
-<span class="kw">FROM</span> <span class="tb">employee</span>
-<span class="kw">GROUP BY</span> <span class="col">hire_year</span>
-<span class="kw">ORDER BY</span> <span class="col">hire_year</span>;
+                    <span class="cmt">-- عدد الموظفين حسب تاريخ التعيين (بالسنة)</span>
+                    <span class="kw">SELECT</span>
+                    <span class="fn">EXTRACT</span>(<span class="cn">YEAR FROM</span> <span
+                        class="col">hire_date</span>) <span class="kw">AS</span> <span class="col">hire_year</span>,
+                    <span class="fn">COUNT</span>(*) <span class="kw">AS</span> <span class="col">hired_count</span>
+                    <span class="kw">FROM</span> <span class="tb">employee</span>
+                    <span class="kw">GROUP BY</span> <span class="col">hire_year</span>
+                    <span class="kw">ORDER BY</span> <span class="col">hire_year</span>;
 
-<span class="cmt">-- GROUP BY على أكتر من عمود</span>
-<span class="kw">SELECT</span> <span class="col">dept_id</span>, <span class="col">is_active</span>, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> <span class="col">count</span>
-<span class="kw">FROM</span> <span class="tb">employee</span>
-<span class="kw">GROUP BY</span> <span class="col">dept_id</span>, <span class="col">is_active</span>;</div>
+                    <span class="cmt">-- GROUP BY على أكتر من عمود</span>
+                    <span class="kw">SELECT</span> <span class="col">dept_id</span>, <span class="col">is_active</span>,
+                    <span class="fn">COUNT</span>(*) <span class="kw">AS</span> <span class="col">count</span>
+                    <span class="kw">FROM</span> <span class="tb">employee</span>
+                    <span class="kw">GROUP BY</span> <span class="col">dept_id</span>, <span
+                        class="col">is_active</span>;
+                </div>
             </div>
         </div>
     </section>
 
     <!-- HAVING -->
     <section class="lesson-section" id="having">
-        <div class="section-header" data-aos="fade-up"><h2><i class="fas fa-filter" style="color:#F472B6;margin-left:.5rem;"></i> HAVING — فلترة المجموعات</h2><p class="en-sub">Filtering Groups (Not Rows!)</p></div>
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-filter" style="color:#F472B6;margin-left:.5rem;"></i> HAVING — فلترة المجموعات</h2>
+            <p class="en-sub">Filtering Groups (Not Rows!)</p>
+        </div>
         <div class="glass-card" style="padding:2rem;border-radius:20px;margin-bottom:2rem;" data-aos="fade-up">
             <div class="rtl-block" style="font-size:1.05rem;">
                 <p style="color:#E2E8F0;margin-bottom:1rem;"><span class="hl-pink">HAVING ≠ WHERE!</span></p>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-                    <div style="background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);border-radius:12px;padding:1rem;">
+                    <div
+                        style="background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.2);border-radius:12px;padding:1rem;">
                         <p style="color:#60A5FA;font-weight:700;margin-bottom:.5rem;">WHERE</p>
-                        <p style="font-family:'Cairo',sans-serif;direction:rtl;font-size:.88rem;color:#CBD5E1;">بيفلتر الصفوف الفردية <strong>قبل</strong> الـ GROUP BY.</p>
+                        <p style="font-family:'Cairo',sans-serif;direction:rtl;font-size:.88rem;color:#CBD5E1;">بيفلتر
+                            الصفوف الفردية <strong>قبل</strong> الـ GROUP BY.</p>
                     </div>
-                    <div style="background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.2);border-radius:12px;padding:1rem;">
+                    <div
+                        style="background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.2);border-radius:12px;padding:1rem;">
                         <p style="color:#F472B6;font-weight:700;margin-bottom:.5rem;">HAVING</p>
-                        <p style="font-family:'Cairo',sans-serif;direction:rtl;font-size:.88rem;color:#CBD5E1;">بيفلتر المجموعات <strong>بعد</strong> الـ GROUP BY. بتقدر تستخدم دوال التجميع.</p>
+                        <p style="font-family:'Cairo',sans-serif;direction:rtl;font-size:.88rem;color:#CBD5E1;">بيفلتر
+                            المجموعات <strong>بعد</strong> الـ GROUP BY. بتقدر تستخدم دوال التجميع.</p>
                     </div>
                 </div>
             </div>
         </div>
         <div class="sql-block" data-aos="fade-up" data-aos-delay="100">
-            <div class="sql-bar"><span class="sql-dot r"></span><span class="sql-dot y"></span><span class="sql-dot g"></span><span class="sql-label">HAVING + WHERE + GROUP BY</span></div>
+            <div class="sql-bar"><span class="sql-dot r"></span><span class="sql-dot y"></span><span
+                    class="sql-dot g"></span><span class="sql-label">HAVING + WHERE + GROUP BY</span></div>
             <div class="sql-body"><span class="cmt">-- الأقسام اللي عدد موظفيها أكتر من 3</span>
-<span class="kw">SELECT</span> <span class="col">dept_id</span>, <span class="fn">COUNT</span>(*) <span class="kw">AS</span> <span class="col">emp_count</span>
-<span class="kw">FROM</span> <span class="tb">employee</span>
-<span class="kw">GROUP BY</span> <span class="col">dept_id</span>
-<span class="kw">HAVING</span> <span class="fn">COUNT</span>(*) > <span class="num">3</span>;
+                <span class="kw">SELECT</span> <span class="col">dept_id</span>, <span class="fn">COUNT</span>(*) <span
+                    class="kw">AS</span> <span class="col">emp_count</span>
+                <span class="kw">FROM</span> <span class="tb">employee</span>
+                <span class="kw">GROUP BY</span> <span class="col">dept_id</span>
+                <span class="kw">HAVING</span> <span class="fn">COUNT</span>(*) > <span class="num">3</span>;
 
-<span class="cmt">-- WHERE + GROUP BY + HAVING معاً</span>
-<span class="kw">SELECT</span>
-    <span class="col">dept_id</span>,
-    <span class="fn">AVG</span>(<span class="col">salary</span>) <span class="kw">AS</span> <span class="col">avg_sal</span>
-<span class="kw">FROM</span> <span class="tb">employee</span>
-<span class="kw">WHERE</span> <span class="col">is_active</span> = <span class="cn">TRUE</span>          <span class="cmt">-- فلتر الصفوف أول</span>
-<span class="kw">GROUP BY</span> <span class="col">dept_id</span>                  <span class="cmt">-- بعدين جمّع</span>
-<span class="kw">HAVING</span> <span class="fn">AVG</span>(<span class="col">salary</span>) > <span class="num">7000</span>        <span class="cmt">-- بعدين فلتر المجموعات</span>
-<span class="kw">ORDER BY</span> <span class="col">avg_sal</span> <span class="cn">DESC</span>;</div>
+                <span class="cmt">-- WHERE + GROUP BY + HAVING معاً</span>
+                <span class="kw">SELECT</span>
+                <span class="col">dept_id</span>,
+                <span class="fn">AVG</span>(<span class="col">salary</span>) <span class="kw">AS</span> <span
+                    class="col">avg_sal</span>
+                <span class="kw">FROM</span> <span class="tb">employee</span>
+                <span class="kw">WHERE</span> <span class="col">is_active</span> = <span class="cn">TRUE</span> <span
+                    class="cmt">-- فلتر الصفوف أول</span>
+                <span class="kw">GROUP BY</span> <span class="col">dept_id</span> <span class="cmt">-- بعدين جمّع</span>
+                <span class="kw">HAVING</span> <span class="fn">AVG</span>(<span class="col">salary</span>) > <span
+                    class="num">7000</span> <span class="cmt">-- بعدين فلتر المجموعات</span>
+                <span class="kw">ORDER BY</span> <span class="col">avg_sal</span> <span class="cn">DESC</span>;
+            </div>
         </div>
 
         <!-- SELECT Clause Order -->
-        <div class="glass-card" style="padding:2rem;border-radius:20px;margin-top:2rem;" data-aos="fade-up" data-aos-delay="200">
+        <div class="glass-card" style="padding:2rem;border-radius:20px;margin-top:2rem;" data-aos="fade-up"
+            data-aos-delay="200">
             <h3 style="color:#FBBF24;text-align:center;margin-bottom:1.5rem;">📋 ترتيب كتابة الـ SELECT</h3>
             <div class="clause-order">
-                <div class="clause-row"><div class="num-badge" style="background:rgba(96,165,250,.2);color:#60A5FA;">1</div><span class="clause-kw" style="color:#C084FC;">SELECT</span><span class="clause-ar">تحديد الأعمدة</span></div>
-                <div class="clause-row"><div class="num-badge" style="background:rgba(52,211,153,.2);color:#34D399;">2</div><span class="clause-kw" style="color:#C084FC;">FROM</span><span class="clause-ar">تحديد الجدول</span></div>
-                <div class="clause-row"><div class="num-badge" style="background:rgba(251,191,36,.2);color:#FBBF24;">3</div><span class="clause-kw" style="color:#C084FC;">WHERE</span><span class="clause-ar">فلترة الصفوف (قبل التجميع)</span></div>
-                <div class="clause-row"><div class="num-badge" style="background:rgba(167,139,250,.2);color:#A78BFA;">4</div><span class="clause-kw" style="color:#C084FC;">GROUP BY</span><span class="clause-ar">تجميع الصفوف</span></div>
-                <div class="clause-row"><div class="num-badge" style="background:rgba(244,114,182,.2);color:#F472B6;">5</div><span class="clause-kw" style="color:#C084FC;">HAVING</span><span class="clause-ar">فلترة المجموعات (بعد التجميع)</span></div>
-                <div class="clause-row"><div class="num-badge" style="background:rgba(248,113,113,.2);color:#F87171;">6</div><span class="clause-kw" style="color:#C084FC;">ORDER BY</span><span class="clause-ar">ترتيب النتيجة</span></div>
-                <div class="clause-row"><div class="num-badge" style="background:rgba(148,163,184,.2);color:#94A3B8;">7</div><span class="clause-kw" style="color:#C084FC;">LIMIT</span><span class="clause-ar">تحديد عدد الصفوف</span></div>
+                <div class="clause-row">
+                    <div class="num-badge" style="background:rgba(96,165,250,.2);color:#60A5FA;">1</div><span
+                        class="clause-kw" style="color:#C084FC;">SELECT</span><span class="clause-ar">تحديد
+                        الأعمدة</span>
+                </div>
+                <div class="clause-row">
+                    <div class="num-badge" style="background:rgba(52,211,153,.2);color:#34D399;">2</div><span
+                        class="clause-kw" style="color:#C084FC;">FROM</span><span class="clause-ar">تحديد الجدول</span>
+                </div>
+                <div class="clause-row">
+                    <div class="num-badge" style="background:rgba(251,191,36,.2);color:#FBBF24;">3</div><span
+                        class="clause-kw" style="color:#C084FC;">WHERE</span><span class="clause-ar">فلترة الصفوف (قبل
+                        التجميع)</span>
+                </div>
+                <div class="clause-row">
+                    <div class="num-badge" style="background:rgba(167,139,250,.2);color:#A78BFA;">4</div><span
+                        class="clause-kw" style="color:#C084FC;">GROUP BY</span><span class="clause-ar">تجميع
+                        الصفوف</span>
+                </div>
+                <div class="clause-row">
+                    <div class="num-badge" style="background:rgba(244,114,182,.2);color:#F472B6;">5</div><span
+                        class="clause-kw" style="color:#C084FC;">HAVING</span><span class="clause-ar">فلترة المجموعات
+                        (بعد التجميع)</span>
+                </div>
+                <div class="clause-row">
+                    <div class="num-badge" style="background:rgba(248,113,113,.2);color:#F87171;">6</div><span
+                        class="clause-kw" style="color:#C084FC;">ORDER BY</span><span class="clause-ar">ترتيب
+                        النتيجة</span>
+                </div>
+                <div class="clause-row">
+                    <div class="num-badge" style="background:rgba(148,163,184,.2);color:#94A3B8;">7</div><span
+                        class="clause-kw" style="color:#C084FC;">LIMIT</span><span class="clause-ar">تحديد عدد
+                        الصفوف</span>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Quiz -->
     <section class="lesson-section" id="quiz">
-        <div class="section-header" data-aos="fade-up"><h2><i class="fas fa-brain" style="color:#D946EF;margin-left:.5rem;"></i> اختبر نفسك!</h2><p class="en-sub">Quick Knowledge Check</p></div>
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-brain" style="color:#D946EF;margin-left:.5rem;"></i> اختبر نفسك!</h2>
+            <p class="en-sub">Quick Knowledge Check</p>
+        </div>
         <div data-aos="fade-up" data-aos-delay="100">
             <div class="quiz-question" id="q1">
                 <h4>❓ سؤال ١: عايز أعرف عدد الموظفين في كل قسم — إيه الأمر؟</h4>
                 <div class="quiz-options">
-                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">SELECT dept_id, COUNT(*) FROM employee;</div>
-                    <div class="quiz-option" onclick="checkAnswer(1,this,true)">SELECT dept_id, COUNT(*) FROM employee GROUP BY dept_id;</div>
-                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">SELECT dept_id, COUNT(*) FROM employee HAVING dept_id;</div>
-                </div><div class="quiz-feedback" id="q1-feedback"></div>
+                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">SELECT dept_id, COUNT(*) FROM employee;
+                    </div>
+                    <div class="quiz-option" onclick="checkAnswer(1,this,true)">SELECT dept_id, COUNT(*) FROM employee
+                        GROUP BY dept_id;</div>
+                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">SELECT dept_id, COUNT(*) FROM employee
+                        HAVING dept_id;</div>
+                </div>
+                <div class="quiz-feedback" id="q1-feedback"></div>
             </div>
             <div class="quiz-question" id="q2">
                 <h4>❓ سؤال ٢: ما الفرق بين WHERE و HAVING؟</h4>
                 <div class="quiz-options">
                     <div class="quiz-option" onclick="checkAnswer(2,this,false)">مفيش فرق — استخدم أي واحد</div>
-                    <div class="quiz-option" onclick="checkAnswer(2,this,true)">WHERE بيفلتر الصفوف قبل GROUP BY — HAVING بيفلتر المجموعات بعده</div>
+                    <div class="quiz-option" onclick="checkAnswer(2,this,true)">WHERE بيفلتر الصفوف قبل GROUP BY —
+                        HAVING بيفلتر المجموعات بعده</div>
                     <div class="quiz-option" onclick="checkAnswer(2,this,false)">WHERE للأرقام — HAVING للنصوص</div>
-                </div><div class="quiz-feedback" id="q2-feedback"></div>
+                </div>
+                <div class="quiz-feedback" id="q2-feedback"></div>
             </div>
             <div class="quiz-question" id="q3">
                 <h4>❓ سؤال ٣: COUNT(*) و COUNT(column) بيختلفوا إزاي؟</h4>
                 <div class="quiz-options">
                     <div class="quiz-option" onclick="checkAnswer(3,this,false)">مفيش فرق</div>
-                    <div class="quiz-option" onclick="checkAnswer(3,this,true)">COUNT(*) بيعدّ كل الصفوف — COUNT(col) بيتجاهل الـ NULL</div>
-                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">COUNT(*) بطيء — COUNT(col) أسرع دايماً</div>
-                </div><div class="quiz-feedback" id="q3-feedback"></div>
+                    <div class="quiz-option" onclick="checkAnswer(3,this,true)">COUNT(*) بيعدّ كل الصفوف — COUNT(col)
+                        بيتجاهل الـ NULL</div>
+                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">COUNT(*) بطيء — COUNT(col) أسرع دايماً
+                    </div>
+                </div>
+                <div class="quiz-feedback" id="q3-feedback"></div>
             </div>
         </div>
-        <div id="quiz-score" style="text-align:center;margin-top:2rem;display:none;"><div class="glass-card" style="padding:2rem;border-radius:20px;display:inline-block;"><div class="rtl-block"><h3 style="color:#34D399;margin-bottom:.5rem;" id="score-text"></h3><p style="color:#94A3B8;" id="score-msg"></p></div></div></div>
+        <div id="quiz-score" style="text-align:center;margin-top:2rem;display:none;">
+            <div class="glass-card" style="padding:2rem;border-radius:20px;display:inline-block;">
+                <div class="rtl-block">
+                    <h3 style="color:#34D399;margin-bottom:.5rem;" id="score-text"></h3>
+                    <p style="color:#94A3B8;" id="score-msg"></p>
+                </div>
+            </div>
+        </div>
     </section>
 
     <div style="max-width:960px;margin:0 auto;padding:0 1.5rem;">
         <div class="bottom-nav">
             <a href="dml_crud.html"><i class="fas fa-arrow-right"></i><span>الدرس السابق</span></a>
-            <a href="joins_mastery.html" style="color:#FBBF24;"><span>الدرس التالي: JOIN Mastery</span><i class="fas fa-arrow-left"></i></a>
+            <a href="joins_mastery.html" style="color:#FBBF24;"><span>الدرس التالي: JOIN Mastery</span><i
+                    class="fas fa-arrow-left"></i></a>
         </div>
     </div>
-    <footer style="text-align:center;padding:3rem 1.5rem;color:var(--text-ghost);font-size:.85rem;border-top:1px solid var(--border-subtle);"><p>Database Mastery — Unit 3: SQL Fundamentals</p></footer>
+    <footer
+        style="text-align:center;padding:3rem 1.5rem;color:var(--text-ghost);font-size:.85rem;border-top:1px solid var(--border-subtle);">
+        <p>Database Mastery — Unit 3: SQL Fundamentals</p>
+    </footer>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        AOS.init({duration:800,once:true,offset:100});
-        window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-document.documentElement.clientHeight))*100;document.getElementById('reading-progress').style.width=p+'%';});
-        let quizScore=0,answered=0;const total=3;
-        const fb={1:{correct:'🎉 GROUP BY dept_id — لازم تجمّع عشان تحسب لكل قسم!',wrong:'❌ لازم GROUP BY dept_id عشان تحسب COUNT لكل قسم منفصل.'},2:{correct:'✅ WHERE قبل GROUP BY — HAVING بعده على المجموعات!',wrong:'❌ WHERE للصفوف الفردية (قبل التجميع), HAVING للمجموعات (بعد التجميع).'},3:{correct:'💪 COUNT(*) = كل الصفوف, COUNT(col) = بيتجاهل NULL!',wrong:'❌ الفرق الأساسي: COUNT(col) بيتجاهل الـ NULL في العمود.'}};
-        function checkAnswer(q,el,correct){const qEl=document.getElementById('q'+q);if(qEl.classList.contains('answered'))return;qEl.classList.add('answered');answered++;qEl.querySelectorAll('.quiz-option').forEach(o=>o.style.pointerEvents='none');const f=document.getElementById('q'+q+'-feedback');if(correct){el.classList.add('correct');f.className='quiz-feedback show correct-fb';f.textContent=fb[q].correct;quizScore++;}else{el.classList.add('wrong');f.className='quiz-feedback show wrong-fb';f.textContent=fb[q].wrong;qEl.querySelectorAll('.quiz-option').forEach(o=>{if(o.getAttribute('onclick').includes('true'))o.classList.add('correct');});}if(answered===total){const sd=document.getElementById('quiz-score');sd.style.display='block';document.getElementById('score-text').textContent=`🏆 النتيجة: ${quizScore} / ${total}`;const msg=document.getElementById('score-msg');if(quizScore===total){msg.textContent='📊 Data Analyst في الطريق!';msg.style.color='#34D399';}else{msg.textContent='💪 راجع وحاول!';msg.style.color='#FBBF24';}}}
+        AOS.init({ duration: 800, once: true, offset: 100 });
+        window.addEventListener('scroll', () => { const p = (document.documentElement.scrollTop / (document.documentElement.scrollHeight - document.documentElement.clientHeight)) * 100; document.getElementById('reading-progress').style.width = p + '%'; });
+        let quizScore = 0, answered = 0; const total = 3;
+        const fb = { 1: { correct: '🎉 GROUP BY dept_id — لازم تجمّع عشان تحسب لكل قسم!', wrong: '❌ لازم GROUP BY dept_id عشان تحسب COUNT لكل قسم منفصل.' }, 2: { correct: '✅ WHERE قبل GROUP BY — HAVING بعده على المجموعات!', wrong: '❌ WHERE للصفوف الفردية (قبل التجميع), HAVING للمجموعات (بعد التجميع).' }, 3: { correct: '💪 COUNT(*) = كل الصفوف, COUNT(col) = بيتجاهل NULL!', wrong: '❌ الفرق الأساسي: COUNT(col) بيتجاهل الـ NULL في العمود.' } };
+        function checkAnswer(q, el, correct) { const qEl = document.getElementById('q' + q); if (qEl.classList.contains('answered')) return; qEl.classList.add('answered'); answered++; qEl.querySelectorAll('.quiz-option').forEach(o => o.style.pointerEvents = 'none'); const f = document.getElementById('q' + q + '-feedback'); if (correct) { el.classList.add('correct'); f.className = 'quiz-feedback show correct-fb'; f.textContent = fb[q].correct; quizScore++; } else { el.classList.add('wrong'); f.className = 'quiz-feedback show wrong-fb'; f.textContent = fb[q].wrong; qEl.querySelectorAll('.quiz-option').forEach(o => { if (o.getAttribute('onclick').includes('true')) o.classList.add('correct'); }); } if (answered === total) { const sd = document.getElementById('quiz-score'); sd.style.display = 'block'; document.getElementById('score-text').textContent = `🏆 النتيجة: ${quizScore} / ${total}`; const msg = document.getElementById('score-msg'); if (quizScore === total) { msg.textContent = '📊 Data Analyst في الطريق!'; msg.style.color = '#34D399'; } else { msg.textContent = '💪 راجع وحاول!'; msg.style.color = '#FBBF24'; } } }
     </script>
 </body>
+
 </html>

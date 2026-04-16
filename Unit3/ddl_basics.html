@@ -1,996 +1,725 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth" dir="ltr">
-
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DDL Basics — CREATE ALTER DROP | Database Mastery</title>
-    <meta name="description"
-        content="تعلم أوامر DDL: CREATE TABLE, ALTER TABLE, DROP, CONSTRAINTS بالتفصيل مع أمثلة عملية.">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
-        rel="stylesheet">
+    <title>DDL — Data Definition Language | Database Mastery</title>
+    <meta name="description" content="دليل شامل لـ DDL: CREATE TABLE بكل خياراتها، أنواع البيانات، الـ Constraints، ALTER/DROP بأمان، Schema و Tablespace، مع أمثلة نظام المستشفى الكامل.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link href="../css/global-db.css" rel="stylesheet">
     <style>
-        body {
-            background: #020617;
-            color: #E2E8F0;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .lesson-nav-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            background: rgba(2, 6, 23, 0.85);
-            backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            height: 64px;
-            display: flex;
-            align-items: center;
-            padding: 0 1.5rem;
-        }
-
-        .nav-inner {
-            max-width: 1280px;
-            margin: 0 auto;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .nav-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-weight: 700;
-        }
-
-        .nav-brand .back-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #EC4899, #BE185D);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.85rem;
-            transition: transform 0.3s;
-        }
-
-        .nav-brand .back-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            font-size: 0.85rem;
-            font-family: 'Cairo', sans-serif;
-            color: var(--text-faint);
-        }
-
-        .nav-links a {
-            transition: color 0.3s;
-            direction: rtl;
-        }
-
-        .nav-links a:hover {
-            color: #F472B6;
-        }
-
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-        }
-
-        .lesson-hero {
-            position: relative;
-            padding: 8rem 1.5rem 5rem;
-            text-align: center;
-            overflow: hidden;
-        }
-
-        .glow-orb {
-            position: absolute;
-            width: 500px;
-            height: 500px;
-            border-radius: 50%;
-            filter: blur(128px);
-            pointer-events: none;
-        }
-
-        .glow-orb-1 {
-            top: -10%;
-            right: -5%;
-            background: rgba(236, 72, 153, 0.15);
-        }
-
-        .glow-orb-2 {
-            bottom: -20%;
-            left: -10%;
-            background: rgba(59, 130, 246, 0.08);
-        }
-
-        .lesson-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.35rem 1rem;
-            border-radius: 50px;
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            font-family: 'Fira Code', monospace;
-            font-size: 0.78rem;
-            color: #F472B6;
-            margin-bottom: 1.5rem;
-        }
-
-        .lesson-badge .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #EC4899;
-            animation: pulse-dot 2s ease infinite;
-        }
-
-        @keyframes pulse-dot {
-
-            0%,
-            100% {
-                opacity: 1
-            }
-
-            50% {
-                opacity: .3
-            }
-        }
-
-        .lesson-hero h1 {
-            font-size: clamp(2.5rem, 5vw, 4rem);
-            font-weight: 800;
-            margin-bottom: 1rem;
-        }
-
-        .text-gradient {
-            background: linear-gradient(135deg, #EC4899, #8B5CF6);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .lesson-hero .subtitle {
-            font-family: 'Cairo', sans-serif;
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            margin-bottom: 1.5rem;
-            direction: rtl;
-            unicode-bidi: isolate;
-        }
-
-        .lesson-hero .desc {
-            color: var(--text-faint);
-            max-width: 600px;
-            margin: 0 auto;
-            font-size: 1rem;
-            line-height: 1.8;
-            font-family: 'Cairo', sans-serif;
-            direction: rtl;
-            unicode-bidi: isolate;
-        }
-
-        .lesson-section {
-            padding: 5rem 1.5rem;
-            max-width: 960px;
-            margin: 0 auto;
-        }
-
-        .lesson-section.alt-bg {
-            background: rgba(15, 23, 42, 0.3);
-            max-width: 100%;
-        }
-
-        .lesson-section.alt-bg>.section-inner {
-            max-width: 960px;
-            margin: 0 auto;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        .section-header h2 {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-            font-family: 'Cairo', sans-serif;
-            direction: rtl;
-            unicode-bidi: isolate;
-        }
-
-        .section-header .en-sub {
-            font-family: 'Inter', sans-serif;
-            color: var(--text-faint);
-            font-size: 0.9rem;
-            direction: ltr;
-            unicode-bidi: isolate;
-            display: block;
-        }
-
-        .progress-bar-container {
-            position: fixed;
-            top: 64px;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.05);
-            z-index: 99;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #EC4899, #8B5CF6);
-            width: 0%;
-            transition: width .1s ease-out;
-        }
-
-        /* SQL Code blocks */
-        .sql-block {
-            background: #0a0a0f;
-            border-radius: 14px;
-            overflow: hidden;
-            margin: 1.2rem 0;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .sql-bar {
-            background: #111118;
-            padding: 0.6rem 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-        }
-
-        .sql-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-
-        .sql-dot.r {
-            background: #FF5F57;
-        }
-
-        .sql-dot.y {
-            background: #FDBC40;
-        }
-
-        .sql-dot.g {
-            background: #27C93F;
-        }
-
-        .sql-label {
-            color: #475569;
-            font-size: 0.72rem;
-            margin-right: auto;
-            font-family: 'Fira Code', monospace;
-        }
-
-        .sql-body {
-            padding: 1.2rem 1.4rem;
-            font-family: 'Fira Code', monospace;
-            font-size: 0.84rem;
-            line-height: 1.9;
-            direction: ltr;
-            overflow-x: auto;
-        }
-
-        .kw {
-            color: #C084FC;
-            font-weight: 600;
-        }
-
-        .tb {
-            color: #34D399;
-        }
-
-        .col {
-            color: #60A5FA;
-        }
-
-        .str {
-            color: #FB923C;
-        }
-
-        .num {
-            color: #FBBF24;
-        }
-
-        .cmt {
-            color: #475569;
-        }
-
-        .pk {
-            color: #F472B6;
-            font-weight: 600;
-        }
-
-        .cn {
-            color: #A5B4FC;
-        }
-
-        /* DDL command tabs */
-        .cmd-tabs {
-            display: flex;
-            gap: 0.5rem;
-            margin: 2rem 0 1rem;
-            flex-wrap: wrap;
-        }
-
-        .cmd-tab {
-            padding: 0.6rem 1.2rem;
-            border-radius: 10px;
-            border: 1px solid var(--border-subtle);
-            background: rgba(255, 255, 255, 0.02);
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.85rem;
-            font-family: 'Fira Code', monospace;
-            transition: all 0.3s;
-        }
-
-        .cmd-tab:hover {
-            background: rgba(255, 255, 255, 0.06);
-        }
-
-        .cmd-tab.active {
-            background: rgba(236, 72, 153, 0.15);
-            border-color: #EC4899;
-            color: #F472B6;
-        }
-
-        .cmd-panel {
-            display: none;
-        }
-
-        .cmd-panel.active {
-            display: block;
-        }
-
-        /* Constraint pills */
-        .constraints-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 1rem;
-            margin: 2rem 0;
-        }
-
-        .con-pill {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-            padding: 1.4rem;
-            transition: all 0.3s;
-        }
-
-        .con-pill:hover {
-            border-color: rgba(255, 255, 255, 0.15);
-            transform: translateY(-3px);
-        }
-
-        .con-pill .cp-name {
-            font-family: 'Fira Code', monospace;
-            font-size: 0.85rem;
-            font-weight: 700;
-            margin-bottom: 0.4rem;
-        }
-
-        .con-pill p {
-            font-family: 'Cairo', sans-serif;
-            direction: rtl;
-            unicode-bidi: isolate;
-            font-size: 0.88rem;
-            color: var(--text-muted);
-            line-height: 1.9;
-        }
-
-        /* Data Types Table */
-        .dt-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1.5rem 0;
-            font-size: 0.87rem;
-        }
-
-        .dt-table th {
-            background: rgba(236, 72, 153, 0.08);
-            color: #F472B6;
-            padding: 0.7rem 1rem;
-            border: 1px solid var(--border-subtle);
-            text-align: left;
-            font-family: 'Fira Code', monospace;
-        }
-
-        .dt-table td {
-            padding: 0.65rem 1rem;
-            border: 1px solid var(--border-subtle);
-        }
-
-        .dt-table tr:hover {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .dt-table .dtype {
-            color: #C084FC;
-            font-family: 'Fira Code', monospace;
-            font-weight: 600;
-        }
-
-        .dt-table .dex {
-            color: #94A3B8;
-            font-family: 'Cairo', sans-serif;
-            direction: rtl;
-            font-size: 0.82rem;
-        }
-
-        .quiz-question {
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--border-light);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .quiz-question h4 {
-            margin-bottom: 1rem;
-            font-family: 'Cairo', sans-serif;
-            direction: rtl;
-            text-align: right;
-        }
-
-        .quiz-options {
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-        }
-
-        .quiz-option {
-            padding: 0.75rem 1rem;
-            border-radius: 10px;
-            border: 1px solid var(--border-subtle);
-            background: rgba(255, 255, 255, 0.02);
-            cursor: pointer;
-            transition: all 0.3s;
-            font-family: 'Cairo', sans-serif;
-            direction: rtl;
-            text-align: right;
-            font-size: 0.9rem;
-            color: var(--text-body);
-            unicode-bidi: isolate;
-        }
-
-        .quiz-option:hover {
-            background: rgba(255, 255, 255, 0.06);
-        }
-
-        .quiz-option.correct {
-            background: rgba(16, 185, 129, 0.15);
-            border-color: #10B981;
-            color: #34D399;
-        }
-
-        .quiz-option.wrong {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: #EF4444;
-            color: #F87171;
-        }
-
-        .quiz-feedback {
-            margin-top: 1rem;
-            padding: 1rem;
-            border-radius: 10px;
-            font-family: 'Cairo', sans-serif;
-            direction: rtl;
-            text-align: right;
-            display: none;
-            font-size: 0.9rem;
-            line-height: 2;
-        }
-
-        .quiz-feedback.show {
-            display: block;
-        }
-
-        .quiz-feedback.correct-fb {
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            color: #34D399;
-        }
-
-        .quiz-feedback.wrong-fb {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            color: #F87171;
-        }
-
-        .bottom-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            padding: 2rem 0;
-            border-top: 1px solid var(--border-subtle);
-            margin-top: 3rem;
-        }
-
-        .bottom-nav a {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border-subtle);
-            transition: all 0.3s;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
-        .bottom-nav a:hover {
-            background: rgba(236, 72, 153, 0.1);
-            border-color: rgba(236, 72, 153, 0.3);
-            transform: translateY(-2px);
-        }
+        :root{--accent:#06B6D4;--accent-lt:#22D3EE;}
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#06B6D4,#0E7490);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#22D3EE;}
+        .nav-toc{display:flex;gap:1.5rem;font-size:.82rem;color:#64748B;}
+        .nav-toc a:hover{color:#22D3EE;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#06B6D4,#8B5CF6);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(6,182,212,.1),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#22D3EE;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#06B6D4;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#06B6D4,#8B5CF6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.1rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1.05rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);font-size:.78rem;color:#67E8F9;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-title .icon{font-size:1.4rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .highlight{color:#22D3EE;font-weight:700;}
+        .en-term{font-family:'Inter',sans-serif;color:#60A5FA;font-weight:600;unicode-bidi:isolate;direction:ltr;display:inline-block;}
+        .en-inline{font-family:'Fira Code',monospace;color:#A78BFA;font-size:.9em;unicode-bidi:isolate;direction:ltr;display:inline-block;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.why{background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);}
+        .callout.why .chead{color:#22D3EE;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);}
+        .callout.realworld .chead{color:#34D399;font-weight:800;margin-bottom:.5rem;}
+        .callout.tip{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);}
+        .callout.tip .chead{color:#FBBF24;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
+
+        /* DATA TYPE TABLE */
+        .dtype-table{width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:.87rem;}
+        .dtype-table th{padding:.7rem 1rem;background:rgba(6,182,212,.08);border:1px solid rgba(255,255,255,.06);color:#22D3EE;font-weight:700;text-align:right;}
+        .dtype-table td{padding:.65rem 1rem;border:1px solid rgba(255,255,255,.05);color:#CBD5E1;line-height:1.9;}
+        .dtype-table tr:hover td{background:rgba(255,255,255,.02);}
+        .dtype-table .tc{font-family:'Fira Code',monospace;color:#A78BFA;font-size:.82rem;}
+
+        /* CONSTRAINT SECTIONS */
+        .constraint-block{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:1.8rem;margin:1.5rem 0;}
+        .constraint-block h3{font-size:1.05rem;font-weight:800;margin-bottom:.8rem;}
+        .constraint-block p{font-size:.93rem;line-height:2;color:#CBD5E1;}
+
+        /* SQL BLOCKS */
+        .sql-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:1rem 0;border:1px solid rgba(255,255,255,.05);}
+        .sql-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .sdot{width:9px;height:9px;border-radius:50%;}
+        .sdot.r{background:#FF5F57}.sdot.y{background:#FDBC40}.sdot.g{background:#27C93F}
+        .slabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .sbody{padding:1rem 1.2rem;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.col{color:#60A5FA}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.pk{color:#F472B6;font-weight:600}.fk{color:#F87171}.cn{color:#A5B4FC}.fn{color:#22D3EE}
+
+        /* PRACTICE & QUIZ */
+        .practice-block{background:rgba(15,23,42,.8);border:1px solid rgba(255,255,255,.07);border-radius:18px;overflow:hidden;margin:2rem 0;}
+        .practice-header{background:rgba(6,182,212,.1);padding:1.2rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.06);}
+        .practice-header h3{font-size:1.1rem;font-weight:800;color:#22D3EE;margin:0;}
+        .practice-body{padding:1.8rem;}
+        .task-list{list-style:none;padding:0;margin-bottom:1.5rem;}
+        .task-list li{padding:.5rem 0;font-size:.93rem;color:#CBD5E1;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:.5rem;align-items:flex-start;}
+        .tnum{background:rgba(6,182,212,.15);color:#22D3EE;font-weight:800;font-size:.78rem;padding:.1rem .5rem;border-radius:5px;flex-shrink:0;font-family:'Inter',sans-serif;margin-top:.2rem;}
+        .sol-btn{width:100%;padding:.9rem;border-radius:10px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);color:#22D3EE;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:.3s;}
+        .sol-btn:hover{background:rgba(6,182,212,.18);}
+        .sol-content{display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.05);}
+        .sol-content.open{display:block;}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;}
+        .bnav-btn:hover{background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.3);transform:translateY(-2px);}
     </style>
 </head>
-
 <body>
     <nav class="lesson-nav-bar">
         <div class="nav-inner">
-            <a href="../index.html" class="nav-brand">
-                <div class="back-btn"><i class="fas fa-arrow-left"></i></div><span><span
-                        style="color:#EC4899;">DDL</span>Basics</span>
-            </a>
-            <div class="nav-links"><a href="#create">CREATE</a><a href="#alter">ALTER</a><a
-                    href="#constraints">Constraints</a><a href="#quiz">اختبر نفسك</a></div>
+            <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-arrow-right"></i></div>العودة للبوابة</a>
+            <div class="nav-toc">
+                <a href="#what-is-ddl">ما هو DDL؟</a>
+                <a href="#data-types">أنواع البيانات</a>
+                <a href="#create">CREATE TABLE</a>
+                <a href="#constraints">Constraints</a>
+                <a href="#alter">ALTER TABLE</a>
+                <a href="#drop">DROP & TRUNCATE</a>
+                <a href="#full-example">مثال كامل</a>
+                <a href="#quiz">اختبار</a>
+            </div>
         </div>
     </nav>
-    <div class="progress-bar-container">
-        <div class="progress-bar-fill" id="reading-progress"></div>
-    </div>
+    <div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
 
-    <header class="lesson-hero">
-        <div class="glow-orb glow-orb-1"></div>
-        <div class="glow-orb glow-orb-2"></div>
-        <div style="position:relative;z-index:1;">
-            <div class="lesson-badge" data-aos="fade-down"><span class="dot"></span> UNIT 3 • Lesson 1</div>
-            <h1 data-aos="fade-up" data-aos-delay="150"><span class="text-gradient">DDL</span> Basics</h1>
-            <div class="subtitle" data-aos="fade-up" data-aos-delay="300">أوامر تعريف البيانات</div>
-            <p class="desc" data-aos="fade-up" data-aos-delay="450">الـ <span class="english">DDL</span> هو اللي بنبني
-                بيه هيكل الـ <span class="english">Database</span> — الجداول والأعمدة والقيود! 🏗️</p>
+    <header class="hero" data-aos="fade-up">
+        <div class="lesson-badge"><span class="pulse"></span>الوحدة 3 — الدرس 1</div>
+        <h1>الـ <span class="grad">DDL</span> — بناء قاعدة البيانات</h1>
+        <p class="en-title">Data Definition Language — CREATE, ALTER, DROP and Everything Between</p>
+        <p class="desc">قبل إنك تدخّل بيانات أو تعمل queries، لازم تبني الهيكل. DDL هو "المنيح" اللي بيبني الـ Schema.</p>
+        <div class="learn-pills">
+            <span class="pill">DDL vs DML vs DCL</span>
+            <span class="pill">اختيار نوع البيانات الصح</span>
+            <span class="pill">6 أنواع Constraints</span>
+            <span class="pill">ALTER TABLE بكل عملياتها</span>
+            <span class="pill">DROP vs TRUNCATE vs DELETE</span>
+            <span class="pill">Schema Management</span>
+            <span class="pill">Hospital Schema مع Migration</span>
         </div>
     </header>
 
-    <!-- DDL Overview -->
-    <section class="lesson-section" id="intro">
-        <div class="section-header" data-aos="fade-up">
-            <h2><i class="fas fa-info-circle" style="color:#F472B6;margin-left:0.5rem;"></i> إيه هو الـ DDL؟</h2>
-            <p class="en-sub">Data Definition Language</p>
-        </div>
-        <div class="glass-card" style="padding:2rem;border-radius:20px;margin-bottom:2rem;" data-aos="fade-up">
-            <div class="rtl-block" style="font-size:1.05rem;">
-                <p style="color:#E2E8F0;margin-bottom:1.5rem;">الـ <span class="english">SQL</span> بتتقسم لكذا نوع —
-                    أشهرها:</p>
-                <div
-                    style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:1rem;">
-                    <div
-                        style="background:rgba(236,72,153,0.1);border:1px solid rgba(236,72,153,0.3);border-radius:12px;padding:1rem;text-align:center;">
-                        <div
-                            style="font-family:'Fira Code',monospace;font-size:1.1rem;font-weight:700;color:#F472B6;margin-bottom:0.3rem;">
-                            DDL</div>
-                        <div style="font-family:'Cairo',sans-serif;font-size:0.82rem;color:#94A3B8;">Data Definition
-                            Language</div>
-                        <div style="font-family:'Cairo',sans-serif;font-size:0.8rem;color:#E2E8F0;margin-top:0.3rem;">
-                            CREATE, ALTER, DROP</div>
-                    </div>
-                    <div
-                        style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);border-radius:12px;padding:1rem;text-align:center;">
-                        <div
-                            style="font-family:'Fira Code',monospace;font-size:1.1rem;font-weight:700;color:#60A5FA;margin-bottom:0.3rem;">
-                            DML</div>
-                        <div style="font-family:'Cairo',sans-serif;font-size:0.82rem;color:#94A3B8;">Data Manipulation
-                            Lang</div>
-                        <div style="font-family:'Cairo',sans-serif;font-size:0.8rem;color:#E2E8F0;margin-top:0.3rem;">
-                            INSERT, SELECT, UPDATE, DELETE</div>
-                    </div>
-                    <div
-                        style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:12px;padding:1rem;text-align:center;">
-                        <div
-                            style="font-family:'Fira Code',monospace;font-size:1.1rem;font-weight:700;color:#34D399;margin-bottom:0.3rem;">
-                            DCL</div>
-                        <div style="font-family:'Cairo',sans-serif;font-size:0.82rem;color:#94A3B8;">Data Control
-                            Language</div>
-                        <div style="font-family:'Cairo',sans-serif;font-size:0.8rem;color:#E2E8F0;margin-top:0.3rem;">
-                            GRANT, REVOKE</div>
-                    </div>
-                </div>
-                <div class="note" style="margin-top:1.5rem;">💡 النهاردة بنركز على الـ <span class="hl-pink">DDL</span>
-                    — الأوامر اللي بتبني وتعدّل وتحذف هيكل الـ <span class="english">Database</span>.</div>
-            </div>
-        </div>
-    </section>
+    <div class="lesson-body">
 
-    <!-- Data Types -->
-    <section class="lesson-section alt-bg">
-        <div class="section-inner">
-            <div class="section-header" data-aos="fade-up">
-                <h2><i class="fas fa-database" style="color:#C084FC;margin-left:0.5rem;"></i> أنواع البيانات في
-                    PostgreSQL</h2>
-                <p class="en-sub">PostgreSQL Data Types</p>
-            </div>
-            <div class="glass-card" style="padding:1.5rem;border-radius:16px;" data-aos="fade-up">
-                <div class="ltr-island">
-                    <table class="dt-table">
-                        <thead>
-                            <tr>
-                                <th>Data Type</th>
-                                <th>Size</th>
-                                <th style="font-family:'Cairo',sans-serif;direction:rtl;">الاستخدام</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="dtype">INTEGER / INT</td>
-                                <td>4 bytes</td>
-                                <td class="dex">أرقام صحيحة — IDs، العمر، الكميات</td>
-                            </tr>
-                            <tr>
-                                <td class="dtype">BIGINT</td>
-                                <td>8 bytes</td>
-                                <td class="dex">أرقام صحيحة كبيرة جداً — phone numbers</td>
-                            </tr>
-                            <tr>
-                                <td class="dtype">SERIAL</td>
-                                <td>4 bytes</td>
-                                <td class="dex">Auto-increment — مثالي للـ Primary Keys</td>
-                            </tr>
-                            <tr>
-                                <td class="dtype">DECIMAL(p,s)</td>
-                                <td>variable</td>
-                                <td class="dex">أرقام كسرية دقيقة — الأسعار والـ GPA</td>
-                            </tr>
-                            <tr>
-                                <td class="dtype">REAL / FLOAT</td>
-                                <td>4/8 bytes</td>
-                                <td class="dex">أرقام عشرية تقريبية — الإحصاءات</td>
-                            </tr>
-                            <tr>
-                                <td class="dtype">VARCHAR(n)</td>
-                                <td>variable</td>
-                                <td class="dex">نص بطول متغير — الأسماء، العناوين</td>
-                            </tr>
-                            <tr>
-                                <td class="dtype">CHAR(n)</td>
-                                <td>n bytes</td>
-                                <td class="dex">نص بطول ثابت — رموز الدول، الجنس</td>
-                            </tr>
-                            <tr>
-                                <td class="dtype">TEXT</td>
-                                <td>variable</td>
-                                <td class="dex">نص طويل غير محدود — الوصف</td>
-                            </tr>
-                            <tr>
-                                <td class="dtype">BOOLEAN</td>
-                                <td>1 byte</td>
-                                <td class="dex">TRUE / FALSE — is_active, is_deleted</td>
-                            </tr>
-                            <tr>
-                                <td class="dtype">DATE</td>
-                                <td>4 bytes</td>
-                                <td class="dex">تاريخ بدون وقت — تاريخ الميلاد</td>
-                            </tr>
-                            <tr>
-                                <td class="dtype">TIMESTAMP</td>
-                                <td>8 bytes</td>
-                                <td class="dex">تاريخ ووقت — created_at, updated_at</td>
-                            </tr>
-                            <tr>
-                                <td class="dtype">JSONB</td>
-                                <td>variable</td>
-                                <td class="dex">بيانات JSON مضغوطة — flexible data</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- WHAT IS DDL -->
+    <div class="section-block" id="what-is-ddl" data-aos="fade-up">
+        <div class="section-title"><span class="icon">📋</span> ما هو DDL؟</div>
+        <p class="section-en">DDL — Data Definition Language in the SQL Family</p>
+        <p class="body-text">الـ SQL مش جملة واحدة — هو عائلة من اللغات الفرعية، كل واحدة لها هدف مختلف:</p>
 
-    <!-- DDL Commands -->
-    <section class="lesson-section" id="create">
-        <div class="section-header" data-aos="fade-up">
-            <h2><i class="fas fa-code" style="color:#F472B6;margin-left:0.5rem;"></i> أوامر الـ DDL</h2>
-            <p class="en-sub">CREATE • ALTER • DROP • TRUNCATE</p>
-        </div>
-        <div class="cmd-tabs" data-aos="fade-up">
-            <div class="cmd-tab active" onclick="switchCmd('create',this)">CREATE TABLE</div>
-            <div class="cmd-tab" onclick="switchCmd('alter',this)" id="alter">ALTER TABLE</div>
-            <div class="cmd-tab" onclick="switchCmd('drop',this)">DROP TABLE</div>
-            <div class="cmd-tab" onclick="switchCmd('truncate',this)">TRUNCATE</div>
-        </div>
-
-        <!-- CREATE -->
-        <div class="cmd-panel active" id="panel-create" data-aos="fade-up" data-aos-delay="100">
-            <div class="glass-card" style="padding:1.5rem;border-radius:16px;margin-bottom:1rem;">
-                <div class="rtl-block" style="font-size:0.95rem;color:#CBD5E1;margin-bottom:1rem;"><span
-                        class="english">CREATE TABLE</span> بننشئ بيه جدول جديد. بنحدد اسم الجدول والأعمدة وأنواع
-                    البيانات والقيود.</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin:1.5rem 0;">
+            <div class="constraint-block" style="border-top:3px solid #22D3EE;">
+                <h3 style="color:#22D3EE;">DDL — Definition</h3>
+                <p>بيعرّف هيكل البيانات. الأوامر: CREATE, ALTER, DROP, TRUNCATE, RENAME, COMMENT.</p>
+                <p style="font-size:.83rem;color:#475569;margin-top:.5rem;font-family:'Fira Code',monospace;">Auto-commits — مش ممكن ROLLBACK</p>
             </div>
-            <div class="sql-block">
-                <div class="sql-bar"><span class="sql-dot r"></span><span class="sql-dot y"></span><span
-                        class="sql-dot g"></span><span class="sql-label">PostgreSQL — CREATE TABLE</span></div>
-                <div class="sql-body"><span class="cmt">-- إنشاء جدول الأقسام</span>
-                    <span class="kw">CREATE TABLE</span> <span class="tb">department</span> (
-                    <span class="pk">dept_id</span> <span class="cn">SERIAL PRIMARY KEY</span>,
-                    <span class="col">dept_name</span> <span class="cn">VARCHAR(100) NOT NULL UNIQUE</span>,
-                    <span class="col">location</span> <span class="cn">VARCHAR(100)</span>,
-                    <span class="col">budget</span> <span class="cn">DECIMAL(12,2) DEFAULT 0</span>,
-                    <span class="col">created_at</span> <span class="cn">TIMESTAMP DEFAULT NOW()</span>
-                    );
-
-                    <span class="cmt">-- إنشاء جدول الموظفين مع FK</span>
-                    <span class="kw">CREATE TABLE</span> <span class="tb">employee</span> (
-                    <span class="pk">emp_id</span> <span class="cn">SERIAL PRIMARY KEY</span>,
-                    <span class="col">first_name</span> <span class="cn">VARCHAR(50) NOT NULL</span>,
-                    <span class="col">last_name</span> <span class="cn">VARCHAR(50) NOT NULL</span>,
-                    <span class="col">email</span> <span class="cn">VARCHAR(100) UNIQUE NOT NULL</span>,
-                    <span class="col">salary</span> <span class="cn">DECIMAL(10,2) CHECK (salary > 0)</span>,
-                    <span class="col">hire_date</span> <span class="cn">DATE DEFAULT CURRENT_DATE</span>,
-                    <span class="col">is_active</span> <span class="cn">BOOLEAN DEFAULT TRUE</span>,
-                    <span class="col">dept_id</span> <span class="cn">INT REFERENCES department(dept_id) ON DELETE SET
-                        NULL</span>
-                    );
-                </div>
+            <div class="constraint-block" style="border-top:3px solid #34D399;">
+                <h3 style="color:#34D399;">DML — Manipulation</h3>
+                <p>بيتعامل مع البيانات. الأوامر: SELECT, INSERT, UPDATE, DELETE, MERGE.</p>
+                <p style="font-size:.83rem;color:#475569;margin-top:.5rem;font-family:'Fira Code',monospace;">Transactional — ممكن ROLLBACK</p>
+            </div>
+            <div class="constraint-block" style="border-top:3px solid #FBBF24;">
+                <h3 style="color:#FBBF24;">DCL — Control</h3>
+                <p>بيتحكم في الصلاحيات. الأوامر: GRANT, REVOKE.</p>
+                <p style="font-size:.83rem;color:#475569;margin-top:.5rem;font-family:'Fira Code',monospace;">Security Layer</p>
+            </div>
+            <div class="constraint-block" style="border-top:3px solid #A78BFA;">
+                <h3 style="color:#A78BFA;">TCL — Transaction</h3>
+                <p>بيتحكم في الـ Transactions. الأوامر: COMMIT, ROLLBACK, SAVEPOINT.</p>
+                <p style="font-size:.83rem;color:#475569;margin-top:.5rem;font-family:'Fira Code',monospace;">ACID Compliance</p>
             </div>
         </div>
 
-        <!-- ALTER -->
-        <div class="cmd-panel" id="panel-alter">
-            <div class="glass-card" style="padding:1.5rem;border-radius:16px;margin-bottom:1rem;">
-                <div class="rtl-block" style="font-size:0.95rem;color:#CBD5E1;margin-bottom:1rem;"><span
-                        class="english">ALTER TABLE</span> بنعدل بيه جدول موجود — نضيف أعمدة، نحذف، نغير نوع البيانات.
-                </div>
-            </div>
-            <div class="sql-block">
-                <div class="sql-bar"><span class="sql-dot r"></span><span class="sql-dot y"></span><span
-                        class="sql-dot g"></span><span class="sql-label">PostgreSQL — ALTER TABLE</span></div>
-                <div class="sql-body"><span class="cmt">-- إضافة عمود جديد</span>
-                    <span class="kw">ALTER TABLE</span> <span class="tb">employee</span>
-                    <span class="kw">ADD COLUMN</span> <span class="col">phone</span> <span
-                        class="cn">VARCHAR(20)</span>;
-
-                    <span class="cmt">-- تغيير نوع عمود</span>
-                    <span class="kw">ALTER TABLE</span> <span class="tb">employee</span>
-                    <span class="kw">ALTER COLUMN</span> <span class="col">phone</span> <span class="kw">TYPE</span>
-                    <span class="cn">VARCHAR(30)</span>;
-
-                    <span class="cmt">-- إضافة قيد</span>
-                    <span class="kw">ALTER TABLE</span> <span class="tb">employee</span>
-                    <span class="kw">ADD CONSTRAINT</span> <span class="col">chk_salary</span> <span class="cn">CHECK
-                        (salary BETWEEN 1000 AND 1000000)</span>;
-
-                    <span class="cmt">-- حذف عمود</span>
-                    <span class="kw">ALTER TABLE</span> <span class="tb">employee</span>
-                    <span class="kw">DROP COLUMN</span> <span class="col">phone</span>;
-
-                    <span class="cmt">-- إعادة تسمية جدول</span>
-                    <span class="kw">ALTER TABLE</span> <span class="tb">employee</span>
-                    <span class="kw">RENAME TO</span> <span class="tb">staff</span>;
-                </div>
-            </div>
-        </div>
-
-        <!-- DROP -->
-        <div class="cmd-panel" id="panel-drop">
-            <div class="glass-card" style="padding:1.5rem;border-radius:16px;margin-bottom:1rem;">
-                <div class="rtl-block" style="font-size:0.95rem;color:#F87171;margin-bottom:1rem;">⚠️ <span
-                        class="english">DROP TABLE</span> بيحذف الجدول بالكامل مع كل البيانات — <span
-                        class="hl-red">مفيش رجعة!</span></div>
-            </div>
-            <div class="sql-block">
-                <div class="sql-bar"><span class="sql-dot r"></span><span class="sql-dot y"></span><span
-                        class="sql-dot g"></span><span class="sql-label">PostgreSQL — DROP TABLE</span></div>
-                <div class="sql-body"><span class="cmt">-- حذف جدول</span>
-                    <span class="kw">DROP TABLE</span> <span class="tb">employee</span>;
-
-                    <span class="cmt">-- حذف لو موجود (مش بيطلع error لو مش موجود)</span>
-                    <span class="kw">DROP TABLE IF EXISTS</span> <span class="tb">employee</span>;
-
-                    <span class="cmt">-- حذف مع كل الـ Dependencies (FK وغيره)</span>
-                    <span class="kw">DROP TABLE</span> <span class="tb">department</span> <span
-                        class="cn">CASCADE</span>;
-
-                    <span class="cmt">-- حذف Database كاملة</span>
-                    <span class="kw">DROP DATABASE</span> <span class="tb">mastery_db</span>;
-                </div>
-            </div>
-            <div class="note" style="margin-top:1rem;">💡 دايماً استخدم <span class="english">IF EXISTS</span> في الـ
-                Scripts عشان متكسرش لو الجدول مش موجود.</div>
-        </div>
-
-        <!-- TRUNCATE -->
-        <div class="cmd-panel" id="panel-truncate">
-            <div class="glass-card" style="padding:1.5rem;border-radius:16px;margin-bottom:1rem;">
-                <div class="rtl-block" style="font-size:0.95rem;color:#CBD5E1;margin-bottom:1rem;"><span
-                        class="english">TRUNCATE</span> بيحذف <strong>كل البيانات</strong> من الجدول بس بيسيب الهيكل.
-                    أسرع من <span class="english">DELETE</span> بكتير!</div>
-            </div>
-            <div class="sql-block">
-                <div class="sql-bar"><span class="sql-dot r"></span><span class="sql-dot y"></span><span
-                        class="sql-dot g"></span><span class="sql-label">PostgreSQL — TRUNCATE</span></div>
-                <div class="sql-body"><span class="cmt">-- حذف كل البيانات وإعادة الـ SERIAL لـ 1</span>
-                    <span class="kw">TRUNCATE TABLE</span> <span class="tb">employee</span> <span class="cn">RESTART
-                        IDENTITY</span>;
-
-                    <span class="cmt">-- الفرق بين TRUNCATE و DELETE</span>
-                    <span class="cmt">-- DELETE: بطيئة، قابلة للـ ROLLBACK، بتنشط الـ Triggers</span>
-                    <span class="cmt">-- TRUNCATE: سريعة جداً، مش قابلة للـ ROLLBACK بسهولة</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Constraints -->
-    <section class="lesson-section alt-bg" id="constraints">
-        <div class="section-inner">
-            <div class="section-header" data-aos="fade-up">
-                <h2><i class="fas fa-shield-halved" style="color:#A5B4FC;margin-left:0.5rem;"></i> القيود — Constraints
-                </h2>
-                <p class="en-sub">Enforcing Data Integrity</p>
-            </div>
-            <div class="constraints-grid" data-aos="fade-up" data-aos-delay="100">
-                <div class="con-pill" style="border-top:3px solid #34D399;">
-                    <div class="cp-name" style="color:#34D399;">PRIMARY KEY</div>
-                    <p>يميز كل صف بشكل فريد. مش <span class="english">NULL</span> + <span class="english">UNIQUE</span>
-                        تلقائياً. كل جدول ليه <span class="english">PK</span> واحد بس.</p>
-                </div>
-                <div class="con-pill" style="border-top:3px solid #F472B6;">
-                    <div class="cp-name" style="color:#F472B6;">FOREIGN KEY</div>
-                    <p>بيربط الجدول بجدول تاني. القيمة لازم تكون موجودة في الجدول الأصلي أو <span
-                            class="english">NULL</span>.</p>
-                </div>
-                <div class="con-pill" style="border-top:3px solid #FBBF24;">
-                    <div class="cp-name" style="color:#FBBF24;">NOT NULL</div>
-                    <p>مينفعش الحقل يبقى فاضي. دايماً استخدمه على الحقول الأساسية زي <span class="english">name</span>.
-                    </p>
-                </div>
-                <div class="con-pill" style="border-top:3px solid #60A5FA;">
-                    <div class="cp-name" style="color:#60A5FA;">UNIQUE</div>
-                    <p>كل القيم في العمود لازم تكون مختلفة. مثال: <span class="english">email</span> — مينفعش يتكرر.</p>
-                </div>
-                <div class="con-pill" style="border-top:3px solid #A78BFA;">
-                    <div class="cp-name" style="color:#A78BFA;">CHECK</div>
-                    <p>شرط لازم يتحقق. مثال: <span class="english">salary > 0</span> أو <span class="english">age
-                            BETWEEN 18 AND 65</span>.</p>
-                </div>
-                <div class="con-pill" style="border-top:3px solid #94A3B8;">
-                    <div class="cp-name" style="color:#94A3B8;">DEFAULT</div>
-                    <p>قيمة افتراضية لو مش حددنا حاجة. مثال: <span class="english">is_active DEFAULT TRUE</span>.</p>
-                </div>
-            </div>
-
-            <!-- ON DELETE behavior -->
-            <div class="glass-card" style="padding:2rem;border-radius:20px;margin-top:2rem;" data-aos="fade-up"
-                data-aos-delay="200">
-                <h3 style="color:#F472B6;margin-bottom:1rem;text-align:center;">⚙️ سلوك الـ Foreign Key عند الحذف</h3>
-                <div class="sql-block">
-                    <div class="sql-bar"><span class="sql-dot r"></span><span class="sql-dot y"></span><span
-                            class="sql-dot g"></span><span class="sql-label">ON DELETE Options</span></div>
-                    <div class="sql-body"><span class="cmt">-- CASCADE: احذف الصفوف المرتبطة تلقائياً</span>
-                        <span class="col">dept_id</span> <span class="cn">INT REFERENCES department(dept_id) ON DELETE
-                            CASCADE</span>
-
-                        <span class="cmt">-- SET NULL: بدّل الـ FK بـ NULL</span>
-                        <span class="col">dept_id</span> <span class="cn">INT REFERENCES department(dept_id) ON DELETE
-                            SET NULL</span>
-
-                        <span class="cmt">-- RESTRICT: منع الحذف لو في بيانات مرتبطة</span>
-                        <span class="col">dept_id</span> <span class="cn">INT REFERENCES department(dept_id) ON DELETE
-                            RESTRICT</span>
-
-                        <span class="cmt">-- NO ACTION: زي RESTRICT بس بيتأكد في آخر التعاملة</span>
-                        <span class="col">dept_id</span> <span class="cn">INT REFERENCES department(dept_id) ON DELETE
-                            NO ACTION</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Quiz -->
-    <section class="lesson-section" id="quiz">
-        <div class="section-header" data-aos="fade-up">
-            <h2><i class="fas fa-brain" style="color:#D946EF;margin-left:0.5rem;"></i> اختبر نفسك!</h2>
-            <p class="en-sub">Quick Knowledge Check</p>
-        </div>
-        <div data-aos="fade-up" data-aos-delay="100">
-            <div class="quiz-question" id="q1">
-                <h4>❓ سؤال ١: إيه الفرق بين TRUNCATE وDELETE؟</h4>
-                <div class="quiz-options">
-                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">مفيش فرق — نفس الحاجة</div>
-                    <div class="quiz-option" onclick="checkAnswer(1,this,true)">TRUNCATE أسرع وبتحذف كل البيانات —
-                        DELETE ممكن تحذف صفوف معينة وأبطأ</div>
-                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">DELETE بتحذف الجدول نفسه</div>
-                </div>
-                <div class="quiz-feedback" id="q1-feedback"></div>
-            </div>
-            <div class="quiz-question" id="q2">
-                <h4>❓ سؤال ٢: نوع البيانات المناسب لتخزين سعر المنتج (مثلاً 99.99) إيه؟</h4>
-                <div class="quiz-options">
-                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">INTEGER</div>
-                    <div class="quiz-option" onclick="checkAnswer(2,this,true)">DECIMAL(10,2)</div>
-                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">VARCHAR(10)</div>
-                </div>
-                <div class="quiz-feedback" id="q2-feedback"></div>
-            </div>
-            <div class="quiz-question" id="q3">
-                <h4>❓ سؤال ٣: ON DELETE CASCADE معناه إيه؟</h4>
-                <div class="quiz-options">
-                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">منع الحذف لو في بيانات مرتبطة</div>
-                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">بدّل الـ FK بـ NULL</div>
-                    <div class="quiz-option" onclick="checkAnswer(3,this,true)">احذف الصفوف المرتبطة تلقائياً لما الـ
-                        Parent يتحذف</div>
-                </div>
-                <div class="quiz-feedback" id="q3-feedback"></div>
-            </div>
-        </div>
-        <div id="quiz-score" style="text-align:center;margin-top:2rem;display:none;">
-            <div class="glass-card" style="padding:2rem;border-radius:20px;display:inline-block;">
-                <div class="rtl-block">
-                    <h3 style="color:#34D399;margin-bottom:0.5rem;" id="score-text"></h3>
-                    <p style="color:#94A3B8;" id="score-msg"></p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <div style="max-width:960px;margin:0 auto;padding:0 1.5rem;">
-        <div class="bottom-nav">
-            <a href="../Unit2/er_to_relational.html"><i class="fas fa-arrow-right"></i><span>الوحدة السابقة</span></a>
-            <a href="dml_crud.html" style="color:#F472B6;"><span>الدرس التالي: CRUD</span><i
-                    class="fas fa-arrow-left"></i></a>
+        <div class="callout why">
+            <div class="chead">🎯 لماذا DDL مهم للـ Database Developer؟</div>
+            <p>أي تغيير في الـ Schema في Production يحتاج تخطيط دقيق. DELETE بالغلط → ROLLBACK. DROP TABLE بالغلط → بيانات ضايعة للأبد. الـ DDL هو اللي بيحدّد كل قيود الـ Business Logic على مستوى الـ Database.</p>
         </div>
     </div>
-    <footer
-        style="text-align:center;padding:3rem 1.5rem;color:var(--text-ghost);font-size:0.85rem;border-top:1px solid var(--border-subtle);">
-        <p>Database Mastery — Unit 3: SQL Fundamentals</p>
-    </footer>
+
+    <!-- DATA TYPES -->
+    <div class="section-block" id="data-types" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🔤</span> أنواع البيانات في PostgreSQL</div>
+        <p class="section-en">PostgreSQL Data Types — Choosing the Right Type</p>
+        <p class="body-text">اختيار نوع البيانات الغلط بيأثر على الـ Performance والـ Storage والـ Data Integrity. سيبنا نتعلم كل نوع ومتى نستخدمه:</p>
+
+        <h3 style="color:#22D3EE;margin:1.5rem 0 .8rem;">النصوص والحروف</h3>
+        <table class="dtype-table">
+            <thead><tr><th>النوع</th><th>الوصف</th><th>متى تستخدمه؟</th><th>مثال</th></tr></thead>
+            <tbody>
+                <tr><td class="tc">CHAR(n)</td><td>نص بطول ثابت — بيُكمَّل بمسافات</td><td>رموز ثابتة الطول: رقم قومي، VIN، كود ISO</td><td>CHAR(14) للرقم القومي</td></tr>
+                <tr><td class="tc">VARCHAR(n)</td><td>نص بطول متغيّر بحد أقصى</td><td>أسماء، emails، عناوين</td><td>VARCHAR(100) للاسم</td></tr>
+                <tr><td class="tc">TEXT</td><td>نص بدون حد أقصى</td><td>محتوى طويل: مقالات، ملاحظات، أوصاف</td><td>TEXT للـ bio أو description</td></tr>
+            </tbody>
+        </table>
+
+        <div class="callout tip">
+            <div class="chead">💡 CHAR vs VARCHAR — الفرق العملي</div>
+            <p>
+            <span class="en-inline">CHAR(5)</span> + قيمة "Hi" → تُخزَّن كـ "Hi   " (3 مسافات). لما بتعمل مقارنة، PostgreSQL بيتجاهل الـ trailing spaces.<br>
+            <span class="en-inline">VARCHAR(5)</span> + قيمة "Hi" → تُخزَّن كـ "Hi" (2 bytes بس).<br>
+            <strong>الخلاصة:</strong> استخدم CHAR فقط للبيانات اللي طولها ثابت دايماً (رقم قومي = 14 حرف دايماً). لكل حاجة تانية استخدم VARCHAR أو TEXT.
+            </p>
+        </div>
+
+        <h3 style="color:#22D3EE;margin:1.5rem 0 .8rem;">الأرقام</h3>
+        <table class="dtype-table">
+            <thead><tr><th>النوع</th><th>النطاق</th><th>الحجم</th><th>متى تستخدمه؟</th></tr></thead>
+            <tbody>
+                <tr><td class="tc">SMALLINT</td><td>-32,768 لـ 32,767</td><td>2 bytes</td><td>تقييمات (1-5)، عمر، أعداد صغيرة</td></tr>
+                <tr><td class="tc">INTEGER / INT</td><td>-2.1B لـ 2.1B</td><td>4 bytes</td><td>معظم الـ IDs والأرقام العادية</td></tr>
+                <tr><td class="tc">BIGINT</td><td>-9.2Q لـ 9.2Q</td><td>8 bytes</td><td>IDs في أنظمة كبيرة، timestamps</td></tr>
+                <tr><td class="tc">SERIAL</td><td>1 لـ ~2.1B أو ~9.2Q</td><td>4/8 bytes</td><td>Auto-increment PK (مش حقيقي في PG 10+)</td></tr>
+                <tr><td class="tc">DECIMAL(p,s)</td><td>حسب precision</td><td>variable</td><td>مبالغ مالية — دقيق</td></tr>
+                <tr><td class="tc">NUMERIC(p,s)</td><td>حسب precision</td><td>variable</td><td>نفس DECIMAL</td></tr>
+                <tr><td class="tc">REAL / FLOAT4</td><td>~6 decimal digits</td><td>4 bytes</td><td>حسابات علمية — مش مالية!</td></tr>
+                <tr><td class="tc">DOUBLE PRECISION</td><td>~15 decimal digits</td><td>8 bytes</td><td>حسابات علمية أكثر دقة</td></tr>
+            </tbody>
+        </table>
+
+        <div class="callout mistake">
+            <div class="chead">⚠️ لا تستخدم FLOAT/REAL للمبالغ المالية!</div>
+            <p>FLOAT(1.1) + FLOAT(2.2) قد تساوي 3.3000000000000003 بسبب IEEE 754 floating point.<br>
+            استخدم <span class="en-inline">DECIMAL(15,2)</span> أو <span class="en-inline">NUMERIC(15,2)</span> للمبالغ المالية. دايماً.</p>
+        </div>
+
+        <h3 style="color:#22D3EE;margin:1.5rem 0 .8rem;">التاريخ والوقت</h3>
+        <table class="dtype-table">
+            <thead><tr><th>النوع</th><th>الوصف</th><th>متى تستخدمه؟</th></tr></thead>
+            <tbody>
+                <tr><td class="tc">DATE</td><td>تاريخ فقط (YYYY-MM-DD) — 4 bytes</td><td>تواريخ الميلاد، تواريخ الأحداث بدون وقت</td></tr>
+                <tr><td class="tc">TIME</td><td>وقت فقط — 8 bytes</td><td>أوقات الجداول، ساعات العمل</td></tr>
+                <tr><td class="tc">TIMESTAMP</td><td>تاريخ + وقت (محلي) — 8 bytes</td><td>وقت الإنشاء، الأحداث في نفس timezone</td></tr>
+                <tr><td class="tc">TIMESTAMPTZ</td><td>تاريخ + وقت + timezone — 8 bytes</td><td>تطبيقات متعددة الـ timezones — الأفضل دايماً</td></tr>
+                <tr><td class="tc">INTERVAL</td><td>فترة زمنية</td><td>مدة عقد، فترة إجازة</td></tr>
+            </tbody>
+        </table>
+
+        <h3 style="color:#22D3EE;margin:1.5rem 0 .8rem;">أنواع خاصة</h3>
+        <table class="dtype-table">
+            <thead><tr><th>النوع</th><th>الوصف</th><th>متى تستخدمه؟</th></tr></thead>
+            <tbody>
+                <tr><td class="tc">BOOLEAN</td><td>true / false / null — 1 byte</td><td>الأعلام، الحالات الثنائية</td></tr>
+                <tr><td class="tc">UUID</td><td>Universally Unique ID — 16 bytes</td><td>Distributed systems، APIs</td></tr>
+                <tr><td class="tc">JSONB</td><td>JSON مُحسَّن للبحث — variable</td><td>بيانات semi-structured، metadata</td></tr>
+                <tr><td class="tc">ARRAY</td><td>مصفوفة من أي نوع</td><td>قائمة tags، أرقام هواتف (بديل بسيط)</td></tr>
+                <tr><td class="tc">ENUM</td><td>مجموعة قيم محددة</td><td>status column، نوع المستخدم</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- CREATE TABLE -->
+    <div class="section-block" id="create" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🏗️</span> CREATE TABLE — بالتفصيل</div>
+        <p class="section-en">CREATE TABLE — Full Syntax and Options</p>
+
+        <div class="sql-block">
+            <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">CREATE TABLE Complete Syntax</span></div>
+            <div class="sbody">
+<span class="cmt">-- الشكل الكامل لـ CREATE TABLE</span>
+<span class="kw">CREATE TABLE</span> [<span class="cn">IF NOT EXISTS</span>] <span class="tb">table_name</span> (
+    <span class="cmt">-- عمود بسيط</span>
+    column_name  data_type [<span class="cn">column_constraints</span>],
+
+    <span class="cmt">-- column constraints (بجانب التعريف)</span>
+    <span class="pk">col1</span>  <span class="cn">INT PRIMARY KEY</span>,
+    col2  <span class="cn">VARCHAR(100) NOT NULL UNIQUE</span>,
+    col3  <span class="cn">DECIMAL(10,2) DEFAULT 0.00 CHECK (col3 >= 0)</span>,
+    col4  <span class="cn">TIMESTAMPTZ NOT NULL DEFAULT NOW()</span>,
+
+    <span class="cmt">-- table constraints (منفصلة في الأسفل)</span>
+    <span class="kw">CONSTRAINT</span> <span class="cn">pk_name</span>    <span class="kw">PRIMARY KEY</span> (col1, col2),
+    <span class="kw">CONSTRAINT</span> <span class="cn">uq_email</span>   <span class="kw">UNIQUE</span> (email),
+    <span class="kw">CONSTRAINT</span> <span class="cn">fk_dept</span>    <span class="kw">FOREIGN KEY</span> (dept_id)
+                                <span class="kw">REFERENCES</span> <span class="tb">department</span>(dept_id)
+                                <span class="kw">ON DELETE RESTRICT ON UPDATE CASCADE</span>,
+    <span class="kw">CONSTRAINT</span> <span class="cn">chk_salary</span> <span class="kw">CHECK</span> (salary > 0 <span class="kw">AND</span> salary <= <span class="num">1000000</span>)
+);
+
+<span class="cmt">-- CREATE TABLE IF NOT EXISTS (مش بيدي error لو موجود)</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> <span class="tb">logs</span> (
+    <span class="pk">log_id</span>    <span class="cn">BIGSERIAL PRIMARY KEY</span>,
+    created   <span class="cn">TIMESTAMPTZ NOT NULL DEFAULT NOW()</span>,
+    message   <span class="cn">TEXT NOT NULL</span>
+);
+
+<span class="cmt">-- CREATE TABLE AS (نسخة من query)</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">high_gpa_students</span> <span class="kw">AS</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">student</span> <span class="kw">WHERE</span> gpa > <span class="num">3.5</span>;
+<span class="cmt">-- ⚠️ بينسخ البيانات بدون الـ constraints!</span>
+            </div>
+        </div>
+
+        <div class="callout tip">
+            <div class="chead">💡 CONSTRAINT بالاسم — ليه مهم؟</div>
+            <p>لما تعمل CONSTRAINT مسمّاه، لو في violation جاتك رسالة الخطأ بتقولك <span class="en-inline">violates constraint "chk_salary"</span> — بتعرف على طول المشكلة. لو مش مسمّية، PostgreSQL يوّلد اسم تلقائي زي <span class="en-inline">employee_salary_check</span> — أصعب تتعامل معاه في ALTER TABLE.</p>
+        </div>
+    </div>
+
+    <!-- CONSTRAINTS -->
+    <div class="section-block" id="constraints" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🔒</span> الـ Constraints الستة</div>
+        <p class="section-en">The 6 SQL Constraints — Full Reference</p>
+
+        <div class="sql-block">
+            <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">All 6 Constraints — Reference with Real Examples</span></div>
+            <div class="sbody">
+<span class="cmt">══════════════════════════════════════
+  ① NOT NULL
+══════════════════════════════════════</span>
+<span class="cmt">-- يمنع تخزين NULL في العمود. أبسط constraint وأكثرها استخداماً.</span>
+full_name   <span class="cn">VARCHAR(100) NOT NULL</span>,
+email       <span class="cn">VARCHAR(150) NOT NULL</span>,
+hire_date   <span class="cn">DATE NOT NULL</span>,
+
+<span class="cmt">-- ❌ INSERT INTO employee (full_name) VALUES (NULL) → ERROR</span>
+
+<span class="cmt">══════════════════════════════════════
+  ② UNIQUE
+══════════════════════════════════════</span>
+<span class="cmt">-- يضمن إن القيمة لا تتكرر. يسمح بـ NULL واحدة أو أكتر (NULL ≠ NULL)</span>
+email       <span class="cn">VARCHAR(150) UNIQUE</span>,
+national_id <span class="cn">CHAR(14) UNIQUE</span>,
+
+<span class="cmt">-- UNIQUE مركّب: الاتنين مع بعض فريد</span>
+<span class="kw">CONSTRAINT</span> <span class="cn">uq_emp_project</span> <span class="kw">UNIQUE</span> (<span class="col">emp_id</span>, <span class="col">project_id</span>)
+
+<span class="cmt">══════════════════════════════════════
+  ③ PRIMARY KEY
+══════════════════════════════════════</span>
+<span class="cmt">-- = NOT NULL + UNIQUE. واحد بس في الجدول.</span>
+<span class="pk">emp_id</span>      <span class="cn">SERIAL PRIMARY KEY</span>,
+
+<span class="cmt">-- Composite PK</span>
+<span class="kw">PRIMARY KEY</span> (<span class="col">student_id</span>, <span class="col">course_id</span>),
+
+<span class="cmt">══════════════════════════════════════
+  ④ FOREIGN KEY
+══════════════════════════════════════</span>
+<span class="fk">dept_id</span>     <span class="cn">INT REFERENCES department(dept_id)</span>
+            <span class="kw">ON DELETE RESTRICT</span>
+            <span class="kw">ON UPDATE CASCADE</span>,
+
+<span class="cmt">-- With named constraint:</span>
+<span class="kw">CONSTRAINT</span> <span class="cn">fk_employee_dept</span>
+    <span class="kw">FOREIGN KEY</span> (<span class="col">dept_id</span>)
+    <span class="kw">REFERENCES</span> <span class="tb">department</span>(<span class="col">dept_id</span>)
+    <span class="kw">ON DELETE RESTRICT</span>,
+
+<span class="cmt">══════════════════════════════════════
+  ⑤ CHECK
+══════════════════════════════════════</span>
+<span class="cmt">-- يتحقق من شرط منطقي</span>
+salary      <span class="cn">DECIMAL(10,2) CHECK (salary > 0)</span>,
+gpa         <span class="cn">DECIMAL(3,2) CHECK (gpa BETWEEN 0.0 AND 4.0)</span>,
+status      <span class="cn">VARCHAR(20) CHECK (status IN ('active','inactive','suspended'))</span>,
+end_date    <span class="cn">DATE CHECK (end_date > start_date)</span>,
+
+<span class="cmt">-- CHECK مركّب (Table-level)</span>
+<span class="kw">CONSTRAINT</span> <span class="cn">chk_dates</span> <span class="kw">CHECK</span> (end_date > start_date),
+<span class="kw">CONSTRAINT</span> <span class="cn">chk_discount</span> <span class="kw">CHECK</span> (discount_pct >= <span class="num">0</span> <span class="kw">AND</span> discount_pct <= <span class="num">100</span>),
+
+<span class="cmt">══════════════════════════════════════
+  ⑥ DEFAULT
+══════════════════════════════════════</span>
+<span class="cmt">-- قيمة افتراضية لو ما اتبعتش قيمة</span>
+created_at  <span class="cn">TIMESTAMPTZ NOT NULL DEFAULT NOW()</span>,
+status      <span class="cn">VARCHAR(20) NOT NULL DEFAULT 'active'</span>,
+is_active   <span class="cn">BOOLEAN NOT NULL DEFAULT TRUE</span>,
+sort_order  <span class="cn">INT NOT NULL DEFAULT 0</span>,
+stock_qty   <span class="cn">INT NOT NULL DEFAULT 0 CHECK (stock_qty >= 0)</span>,
+            </div>
+        </div>
+    </div>
+
+    <!-- ALTER TABLE -->
+    <div class="section-block" id="alter" data-aos="fade-up">
+        <div class="section-title"><span class="icon">✏️</span> ALTER TABLE — تعديل الجداول</div>
+        <p class="section-en">ALTER TABLE — Every Operation You Need</p>
+        <p class="body-text">في Production، مش هتحذف الجدول وتعيده. هتستخدم ALTER TABLE عشان تعدّل الهيكل بأمان. فيه types كتيرة:</p>
+
+        <div class="sql-block">
+            <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">ALTER TABLE Reference Guide</span></div>
+            <div class="sbody">
+<span class="cmt">-- ══ إضافة عمود ══</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">employee</span>
+<span class="kw">ADD COLUMN</span> middle_name <span class="cn">VARCHAR(50)</span>;         <span class="cmt">-- nullable جديدة</span>
+
+<span class="kw">ALTER TABLE</span> <span class="tb">employee</span>
+<span class="kw">ADD COLUMN</span> is_remote <span class="cn">BOOLEAN NOT NULL DEFAULT FALSE</span>;  <span class="cmt">-- مع DEFAULT يشتغل في Prod</span>
+
+<span class="cmt">-- ⚠️ ADD COLUMN NOT NULL بدون DEFAULT = ERROR في Production لو في data!</span>
+
+<span class="cmt">-- ══ حذف عمود ══</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">employee</span> <span class="kw">DROP COLUMN</span> middle_name;
+<span class="kw">ALTER TABLE</span> <span class="tb">employee</span> <span class="kw">DROP COLUMN</span> old_col <span class="kw">CASCADE</span>;  <span class="cmt">-- بيحذف الـ views المعتمدة عليه</span>
+
+<span class="cmt">-- ══ تعديل نوع عمود ══</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">employee</span>
+<span class="kw">ALTER COLUMN</span> phone <span class="kw">TYPE</span> <span class="cn">VARCHAR(25)</span>;  <span class="cmt">-- ممكن لو الـ data قابلة للتحويل</span>
+
+<span class="kw">ALTER TABLE</span> <span class="tb">orders</span>
+<span class="kw">ALTER COLUMN</span> total_amount <span class="kw">TYPE</span> <span class="cn">DECIMAL(15,4)</span>;  <span class="cmt">-- زيادة precision ← آمن</span>
+
+<span class="cmt">-- ══ إضافة / حذف NOT NULL ══</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">student</span>
+<span class="kw">ALTER COLUMN</span> email <span class="kw">SET NOT NULL</span>;     <span class="cmt">-- يفشل لو فيه NULLs موجودة</span>
+
+<span class="kw">ALTER TABLE</span> <span class="tb">student</span>
+<span class="kw">ALTER COLUMN</span> phone <span class="kw">DROP NOT NULL</span>;   <span class="cmt">-- آمن دايماً</span>
+
+<span class="cmt">-- ══ تعديل DEFAULT ══</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">orders</span>
+<span class="kw">ALTER COLUMN</span> status <span class="kw">SET DEFAULT</span> <span class="str">'pending'</span>;
+
+<span class="kw">ALTER TABLE</span> <span class="tb">orders</span>
+<span class="kw">ALTER COLUMN</span> status <span class="kw">DROP DEFAULT</span>;
+
+<span class="cmt">-- ══ إضافة constraint ══</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">employee</span>
+<span class="kw">ADD CONSTRAINT</span> <span class="cn">chk_salary</span> <span class="kw">CHECK</span> (salary > <span class="num">0</span>);
+
+<span class="kw">ALTER TABLE</span> <span class="tb">employee</span>
+<span class="kw">ADD CONSTRAINT</span> <span class="cn">fk_dept</span> <span class="kw">FOREIGN KEY</span> (dept_id)
+    <span class="kw">REFERENCES</span> <span class="tb">department</span>(dept_id);
+
+<span class="kw">ALTER TABLE</span> <span class="tb">customer</span>
+<span class="kw">ADD CONSTRAINT</span> <span class="cn">uq_email</span> <span class="kw">UNIQUE</span> (email);
+
+<span class="cmt">-- ══ حذف constraint ══</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">employee</span> <span class="kw">DROP CONSTRAINT</span> <span class="cn">chk_salary</span>;
+
+<span class="cmt">-- ══ إعادة تسمية ══</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">employee</span> <span class="kw">RENAME COLUMN</span> emp_num <span class="kw">TO</span> employee_code;
+<span class="kw">ALTER TABLE</span> <span class="tb">employee</span> <span class="kw">RENAME TO</span> staff;
+            </div>
+        </div>
+
+        <div class="callout realworld">
+            <div class="chead">🏢 في Production — كيف تضيف عمود NOT NULL آمن؟</div>
+            <p>
+            مش ممكن تضيف عمود NOT NULL مباشرة لو في جدول عنده بيانات:<br><br>
+            ✅ الطريقة الآمنة:<br>
+            <span class="en-inline">Step 1:</span> <span class="en-inline">ADD COLUMN new_col TEXT</span> (nullable) ←آمن<br>
+            <span class="en-inline">Step 2:</span> <span class="en-inline">UPDATE table SET new_col = 'default_value'</span> ← ملا القديم<br>
+            <span class="en-inline">Step 3:</span> <span class="en-inline">ALTER COLUMN new_col SET NOT NULL</span> ← بعد ما كل حاجة اتملت
+            </p>
+        </div>
+    </div>
+
+    <!-- DROP & TRUNCATE -->
+    <div class="section-block" id="drop" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🗑️</span> DROP وTRUNCATE والفرق بينهم</div>
+        <p class="section-en">DROP vs TRUNCATE vs DELETE — Know the Difference</p>
+
+        <div class="sql-block">
+            <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">DROP vs TRUNCATE vs DELETE</span></div>
+            <div class="sbody">
+<span class="cmt">══ DROP TABLE — يحذف الجدول وهيكله وبياناته ══</span>
+<span class="kw">DROP TABLE</span> <span class="tb">old_logs</span>;                     <span class="cmt">-- يفشل لو فيه FK بيشير إليه</span>
+<span class="kw">DROP TABLE IF EXISTS</span> <span class="tb">old_logs</span>;            <span class="cmt">-- لا يدي error لو مش موجود</span>
+<span class="kw">DROP TABLE</span> <span class="tb">category</span> <span class="kw">CASCADE</span>;             <span class="cmt">-- يحذف الجداول المرتبطة به أيضاً!</span>
+
+<span class="cmt">-- ⚠️ DDL = Auto-commit = مش ممكن ROLLBACK</span>
+
+<span class="cmt">══ TRUNCATE — يحذف كل البيانات بسرعة ══</span>
+<span class="kw">TRUNCATE TABLE</span> <span class="tb">logs</span>;                     <span class="cmt">-- أسرع من DELETE لأن مش بتعمل rows</span>
+<span class="kw">TRUNCATE TABLE</span> <span class="tb">orders</span> <span class="kw">RESTART IDENTITY</span>;  <span class="cmt">-- يعيد عداد الـ SERIAL لـ 1</span>
+<span class="kw">TRUNCATE TABLE</span> <span class="tb">orders</span>, <span class="tb">order_items</span>;     <span class="cmt">-- عدة جداول مع بعض</span>
+<span class="kw">TRUNCATE TABLE</span> <span class="tb">parent</span> <span class="kw">CASCADE</span>;           <span class="cmt">-- TRUNCATE الـ children أيضاً</span>
+
+<span class="cmt">══ DELETE — يحذف rows بشرط ══</span>
+<span class="kw">DELETE FROM</span> <span class="tb">logs</span> <span class="kw">WHERE</span> created < <span class="str">'2023-01-01'</span>;
+<span class="kw">DELETE FROM</span> <span class="tb">logs</span>;                          <span class="cmt">-- أبطأ من TRUNCATE لكن ممكن ROLLBACK</span>
+<span class="cmt">-- DELETE = DML = Transactional = ممكن ROLLBACK</span>
+            </div>
+        </div>
+
+        <div style="overflow-x:auto;"><table class="dtype-table">
+            <thead><tr><th>المقارنة</th><th>DROP TABLE</th><th>TRUNCATE</th><th>DELETE (بدون WHERE)</th></tr></thead>
+            <tbody>
+                <tr><td style="font-weight:700;">حذف الهيكل؟</td><td style="color:#F87171;font-weight:600;">نعم</td><td style="color:#94A3B8;">لا</td><td style="color:#94A3B8;">لا</td></tr>
+                <tr><td style="font-weight:700;">حذف البيانات؟</td><td style="color:#F87171;font-weight:600;">نعم</td><td style="color:#F87171;font-weight:600;">نعم</td><td style="color:#F87171;font-weight:600;">نعم</td></tr>
+                <tr><td style="font-weight:700;">ROLLBACK ممكن؟</td><td style="color:#F87171;font-weight:600;">لا (DDL)</td><td style="color:#FBBF24;font-weight:600;">محدود</td><td style="color:#34D399;font-weight:600;">نعم (DML)</td></tr>
+                <tr><td style="font-weight:700;">السرعة</td><td>—</td><td style="color:#34D399;font-weight:600;">سريع جداً</td><td style="color:#F87171;font-weight:600;">بطيء</td></tr>
+                <tr><td style="font-weight:700;">WHERE clause؟</td><td style="color:#94A3B8;">لا</td><td style="color:#94A3B8;">لا</td><td style="color:#34D399;font-weight:600;">نعم</td></tr>
+                <tr><td style="font-weight:700;">يرجع SERIAL؟</td><td>—</td><td style="color:#34D399;font-weight:600;">اختياري (RESTART)</td><td style="color:#F87171;font-weight:600;">لا</td></tr>
+            </tbody>
+        </table></div>
+    </div>
+
+    <!-- SCHEMA MANAGEMENT -->
+    <div class="section-block" data-aos="fade-up">
+        <div class="section-title"><span class="icon">📦</span> Schema Management</div>
+        <p class="section-en">Organizing Tables with Schemas</p>
+        <p class="body-text">الـ Schema في PostgreSQL هو namespace — بيتيح لك تنظيم الجداول في مجموعات منطقية.</p>
+
+        <div class="sql-block">
+            <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Schema Management</span></div>
+            <div class="sbody">
+<span class="cmt">-- إنشاء schema</span>
+<span class="kw">CREATE SCHEMA</span> hr;
+<span class="kw">CREATE SCHEMA</span> sales;
+<span class="kw">CREATE SCHEMA</span> audit;
+
+<span class="cmt">-- إنشاء جدول في schema معين</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">hr.employee</span> ( ... );
+<span class="kw">CREATE TABLE</span> <span class="tb">sales.order</span> ( ... );
+<span class="kw">CREATE TABLE</span> <span class="tb">audit.change_log</span> ( ... );
+
+<span class="cmt">-- تعيين search path (الافتراضي = public)</span>
+<span class="kw">SET</span> search_path = hr, sales, public;
+
+<span class="cmt">-- الاستعلام بدون ذكر الـ schema (يستخدم search_path)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">employee</span>;  <span class="cmt">-- بيدوّر في hr أولاً ثم sales ثم public</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- FULL EXAMPLE -->
+    <div class="section-block" id="full-example" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🏥</span> مثال كامل — Hospital DDL Migration</div>
+        <p class="section-en">Complete Schema with Migration Script</p>
+        <div class="sql-block">
+            <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">hospital_schema.sql — Production Ready</span></div>
+            <div class="sbody">
+<span class="cmt">-- ══════════════════════════════════════
+   Hospital Management System
+   Migration V1 — 2024
+   ══════════════════════════════════════</span>
+
+<span class="kw">CREATE SCHEMA IF NOT EXISTS</span> hospital;
+<span class="kw">SET</span> search_path = hospital;
+
+<span class="cmt">-- Custom Types</span>
+<span class="kw">CREATE TYPE</span> gender_t <span class="kw">AS ENUM</span> (<span class="str">'M'</span>, <span class="str">'F'</span>, <span class="str">'Other'</span>);
+<span class="kw">CREATE TYPE</span> appt_status_t <span class="kw">AS ENUM</span> (<span class="str">'scheduled'</span>,<span class="str">'completed'</span>,<span class="str">'cancelled'</span>,<span class="str">'no_show'</span>);
+
+<span class="cmt">-- Department</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> <span class="tb">department</span> (
+    <span class="pk">dept_id</span>    <span class="cn">SERIAL PRIMARY KEY</span>,
+    dept_name  <span class="cn">VARCHAR(100) NOT NULL UNIQUE</span>,
+    floor_num  <span class="cn">SMALLINT CHECK (floor_num BETWEEN 1 AND 20)</span>,
+    created_at <span class="cn">TIMESTAMPTZ NOT NULL DEFAULT NOW()</span>
+);
+
+<span class="cmt">-- Doctor</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> <span class="tb">doctor</span> (
+    <span class="pk">doctor_id</span>    <span class="cn">SERIAL PRIMARY KEY</span>,
+    license_no   <span class="cn">VARCHAR(30) UNIQUE NOT NULL</span>,
+    full_name    <span class="cn">VARCHAR(100) NOT NULL</span>,
+    specialty    <span class="cn">VARCHAR(80) NOT NULL</span>,
+    gender       gender_t,
+    hire_date    <span class="cn">DATE NOT NULL DEFAULT CURRENT_DATE</span>,
+    <span class="fk">dept_id</span>      <span class="cn">INT NOT NULL</span>,
+    <span class="kw">CONSTRAINT</span> <span class="cn">fk_doctor_dept</span> <span class="kw">FOREIGN KEY</span> (<span class="col">dept_id</span>)
+        <span class="kw">REFERENCES</span> <span class="tb">department</span>(<span class="col">dept_id</span>) <span class="kw">ON DELETE RESTRICT</span>
+);
+
+<span class="cmt">-- Department head (1:1) — added after doctor to avoid circular ref</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">department</span>
+<span class="kw">ADD COLUMN</span> head_doctor_id <span class="cn">INT UNIQUE</span>
+<span class="cn">REFERENCES</span> <span class="tb">doctor</span>(doctor_id) <span class="kw">ON DELETE SET NULL</span>;
+
+<span class="cmt">-- Patient</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> <span class="tb">patient</span> (
+    <span class="pk">patient_id</span>  <span class="cn">SERIAL PRIMARY KEY</span>,
+    national_id <span class="cn">CHAR(14) UNIQUE NOT NULL</span>,
+    full_name   <span class="cn">VARCHAR(100) NOT NULL</span>,
+    gender      gender_t NOT NULL,
+    birth_date  <span class="cn">DATE NOT NULL</span>,
+    blood_type  <span class="cn">CHAR(3) CHECK (blood_type IN ('A+','A-','B+','B-','AB+','AB-','O+','O-'))</span>,
+    insurance_no <span class="cn">VARCHAR(30)</span>
+);
+
+<span class="cmt">-- Appointment (M:N Doctor × Patient)</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> <span class="tb">appointment</span> (
+    <span class="pk">appt_id</span>     <span class="cn">BIGSERIAL PRIMARY KEY</span>,
+    <span class="fk">doctor_id</span>   <span class="cn">INT NOT NULL REFERENCES doctor(doctor_id)</span>,
+    <span class="fk">patient_id</span>  <span class="cn">INT NOT NULL REFERENCES patient(patient_id)</span>,
+    scheduled_at <span class="cn">TIMESTAMPTZ NOT NULL</span>,
+    status      appt_status_t <span class="cn">NOT NULL DEFAULT 'scheduled'</span>,
+    diagnosis   <span class="cn">TEXT</span>,
+    notes       <span class="cn">TEXT</span>,
+    <span class="kw">CONSTRAINT</span> <span class="cn">uq_doctor_time</span> <span class="kw">UNIQUE</span> (<span class="col">doctor_id</span>, scheduled_at),
+    <span class="kw">CONSTRAINT</span> <span class="cn">chk_future_appt</span> <span class="kw">CHECK</span> (scheduled_at > NOW() - <span class="kw">INTERVAL</span> <span class="str">'1 day'</span>)
+);
+            </div>
+        </div>
+    </div>
+
+    <!-- PRACTICE -->
+    <div class="section-block" id="practice" data-aos="fade-up">
+        <div class="section-title"><span class="icon">✍️</span> تمرين عملي</div>
+        <div class="practice-block">
+            <div class="practice-header"><h3>🏦 تمرين: نظام بنكي بسيط</h3></div>
+            <div class="practice-body">
+                <div class="callout tip">
+                    <div class="chead">المتطلبات</div>
+                    <p>بنك عنده فروع (branch). كل فرع فيه حسابات (account). الحساب عنده IBAN، رصيد، نوع (checking/savings/business). صاحب الحساب customer. الـ Customer عنده أكتر من رقم هاتف.</p>
+                </div>
+                <ul class="task-list">
+                    <li><span class="tnum">A</span>اكتب كل الجداول بـ DDL مع كل الـ Constraints المناسبة.</li>
+                    <li><span class="tnum">B</span>بعد الإنشاء — اكتشفنا إن IBAN لازم يكون exactly 34 حرف. اكتب الـ ALTER TABLE المناسب.</li>
+                    <li><span class="tnum">C</span>عايزين نتتبّع تغييرات الرصيد — أضف عمود balance_updated_at.</li>
+                </ul>
+                <button class="sol-btn" onclick="toggleSol(this)">👁️ اظهر الحل الكامل</button>
+                <div class="sol-content">
+                    <div class="sql-block">
+                        <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Bank System DDL Solution</span></div>
+                        <div class="sbody">
+<span class="cmt">-- A: الجداول الأساسية</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">branch</span> (
+    <span class="pk">branch_id</span>   <span class="cn">SERIAL PRIMARY KEY</span>,
+    branch_name <span class="cn">VARCHAR(100) NOT NULL UNIQUE</span>,
+    city        <span class="cn">VARCHAR(50) NOT NULL</span>,
+    address     <span class="cn">TEXT</span>
+);
+
+<span class="kw">CREATE TABLE</span> <span class="tb">customer</span> (
+    <span class="pk">customer_id</span> <span class="cn">SERIAL PRIMARY KEY</span>,
+    national_id <span class="cn">CHAR(14) UNIQUE NOT NULL</span>,
+    full_name   <span class="cn">VARCHAR(100) NOT NULL</span>,
+    email       <span class="cn">VARCHAR(150) UNIQUE</span>,
+    created_at  <span class="cn">TIMESTAMPTZ NOT NULL DEFAULT NOW()</span>
+);
+
+<span class="kw">CREATE TABLE</span> <span class="tb">customer_phone</span> (
+    <span class="fk">customer_id</span> <span class="cn">INT NOT NULL REFERENCES customer(customer_id)</span> <span class="kw">ON DELETE CASCADE</span>,
+    phone       <span class="cn">VARCHAR(20) NOT NULL</span>,
+    phone_type  <span class="cn">VARCHAR(10) DEFAULT 'mobile'</span>,
+    <span class="kw">PRIMARY KEY</span>(<span class="fk">customer_id</span>, phone)
+);
+
+<span class="kw">CREATE TABLE</span> <span class="tb">account</span> (
+    <span class="pk">account_id</span>  <span class="cn">SERIAL PRIMARY KEY</span>,
+    iban        <span class="cn">VARCHAR(34) UNIQUE NOT NULL</span>,
+    balance     <span class="cn">DECIMAL(15,2) NOT NULL DEFAULT 0 CHECK (balance >= 0)</span>,
+    acc_type    <span class="cn">VARCHAR(10) NOT NULL CHECK (acc_type IN ('checking','savings','business'))</span>,
+    opened_at   <span class="cn">DATE NOT NULL DEFAULT CURRENT_DATE</span>,
+    is_active   <span class="cn">BOOLEAN NOT NULL DEFAULT TRUE</span>,
+    <span class="fk">customer_id</span> <span class="cn">INT NOT NULL REFERENCES customer(customer_id) ON DELETE RESTRICT</span>,
+    <span class="fk">branch_id</span>   <span class="cn">INT NOT NULL REFERENCES branch(branch_id) ON DELETE RESTRICT</span>
+);
+
+<span class="cmt">-- B: IBAN لازم CHAR(34) مش VARCHAR</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">account</span>
+<span class="kw">ALTER COLUMN</span> iban <span class="kw">TYPE</span> <span class="cn">CHAR(34)</span>;
+
+<span class="cmt">-- C: إضافة balance_updated_at</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">account</span>
+<span class="kw">ADD COLUMN</span> balance_updated_at <span class="cn">TIMESTAMPTZ</span>;
+<span class="cmt">-- Nullable لأن الحسابات القديمة مايعرفوش آخر تعديل</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="section-block" id="quiz" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🧠</span> اختبار الفهم</div>
+        <div class="quiz-card" id="qq1">
+            <div class="quiz-q">١. عايز تخزّن سعر المنتج. ما النوع الأنسب؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="ans(1,this,false)">FLOAT</div>
+                <div class="quiz-opt" onclick="ans(1,this,true)">DECIMAL(10,2)</div>
+                <div class="quiz-opt" onclick="ans(1,this,false)">INTEGER</div>
+            </div>
+            <div class="quiz-fb" id="fb1"></div>
+        </div>
+        <div class="quiz-card" id="qq2">
+            <div class="quiz-q">٢. الفرق بين TRUNCATE وDELETE (بدون WHERE)؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="ans(2,this,false)">مفيش فرق — نفس النتيجة</div>
+                <div class="quiz-opt" onclick="ans(2,this,true)">TRUNCATE أسرع وDDL (مش ممكن ROLLBACK). DELETE أبطأ وDML (ممكن ROLLBACK).</div>
+                <div class="quiz-opt" onclick="ans(2,this,false)">TRUNCATE بيحذف الهيكل أيضاً</div>
+            </div>
+            <div class="quiz-fb" id="fb2"></div>
+        </div>
+        <div class="quiz-card" id="qq3">
+            <div class="quiz-q">٣. عايز تضيف عمود NOT NULL في Production جدول فيه بيانات. الخطوات الصحيحة؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="ans(3,this,false)">ALTER TABLE ADD COLUMN new_col INT NOT NULL</div>
+                <div class="quiz-opt" onclick="ans(3,this,true)">ADD COLUMN nullable → UPDATE fill values → SET NOT NULL</div>
+                <div class="quiz-opt" onclick="ans(3,this,false)">DROP TABLE وأعيد إنشاءها مع العمود الجديد</div>
+            </div>
+            <div class="quiz-fb" id="fb3"></div>
+        </div>
+        <div class="quiz-card" id="qq4">
+            <div class="quiz-q">٤. ليه بنستخدم CONSTRAINT مسمّاة بدل constraint مجهولة؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="ans(4,this,false)">مفيش فرق في الأداء</div>
+                <div class="quiz-opt" onclick="ans(4,this,true)">لتمييز الخطأ في رسالة الـ Error ولاستخدامه في DROP/ALTER CONSTRAINT بالاسم</div>
+                <div class="quiz-opt" onclick="ans(4,this,false)">الاسم بيحسّن الأداء</div>
+            </div>
+            <div class="quiz-fb" id="fb4"></div>
+        </div>
+        <div class="quiz-score-box" id="score-box">
+            <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+            <p id="score-msg" style="color:#94A3B8;"></p>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="../Unit2/er_to_relational.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: ER Mapping</a>
+        <a href="dml_crud.html" class="bnav-btn" style="color:#22D3EE;">التالي: DML <i class="fas fa-arrow-left"></i></a>
+    </div>
+    </div>
+    <footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 3: DDL</footer>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        AOS.init({ duration: 800, once: true, offset: 100 });
-        window.addEventListener('scroll', () => { const p = (document.documentElement.scrollTop / (document.documentElement.scrollHeight - document.documentElement.clientHeight)) * 100; document.getElementById('reading-progress').style.width = p + '%'; });
-        function switchCmd(id, el) {
-            document.querySelectorAll('.cmd-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.cmd-panel').forEach(p => p.classList.remove('active'));
-            el.classList.add('active');
-            document.getElementById('panel-' + id).classList.add('active');
-        }
-        let quizScore = 0, answered = 0; const total = 3;
-        const fb = { 1: { correct: '🎉 صح! TRUNCATE سريعة وبتمسح كل حاجة، DELETE أبطأ وانتقائية.', wrong: '❌ TRUNCATE أسرع وبتمسح كل البيانات، DELETE قابلة للـ ROLLBACK وانتقائية.' }, 2: { correct: '✅ DECIMAL(10,2) للأسعار — دقة عالية!', wrong: '❌ للأسعار لازم DECIMAL(p,s) بدقة كسرية.' }, 3: { correct: '💪 CASCADE = احذف الأبناء لما تحذف الأب!', wrong: '❌ CASCADE معناه الحذف بيتناقل للصفوف المرتبطة.' } };
-        function checkAnswer(q, el, correct) { const qEl = document.getElementById('q' + q); if (qEl.classList.contains('answered')) return; qEl.classList.add('answered'); answered++; qEl.querySelectorAll('.quiz-option').forEach(o => o.style.pointerEvents = 'none'); const f = document.getElementById('q' + q + '-feedback'); if (correct) { el.classList.add('correct'); f.className = 'quiz-feedback show correct-fb'; f.textContent = fb[q].correct; quizScore++; } else { el.classList.add('wrong'); f.className = 'quiz-feedback show wrong-fb'; f.textContent = fb[q].wrong; qEl.querySelectorAll('.quiz-option').forEach(o => { if (o.getAttribute('onclick').includes('true')) o.classList.add('correct'); }); } if (answered === total) { const sd = document.getElementById('quiz-score'); sd.style.display = 'block'; document.getElementById('score-text').textContent = `🏆 النتيجة: ${quizScore} / ${total}`; const msg = document.getElementById('score-msg'); if (quizScore === total) { msg.textContent = '🔥 ممتاز! DDL خلص!'; msg.style.color = '#34D399'; } else { msg.textContent = '💪 راجع وحاول!'; msg.style.color = '#FBBF24'; } } }
+        AOS.init({duration:700,once:true,offset:80});
+        window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+        function toggleSol(btn){const sc=btn.nextElementSibling;sc.classList.toggle('open');btn.textContent=sc.classList.contains('open')?'🙈 إخفاء الحل':'👁️ اظهر الحل الكامل';}
+        const fbs={
+            1:{c:'✅ DECIMAL(10,2) هو الصح للأموال — دقيق رياضياً. FLOAT بيدي floating point errors عشان IEEE 754.',w:'❌ FLOAT يدي نتائج غلط للمبالغ المالية. (1.1 + 2.2 = 3.3000000000000003). استخدم DECIMAL دايماً.'},
+            2:{c:'✅ TRUNCATE = DDL = سريع = مش ممكن ROLLBACK. DELETE = DML = أبطأ = ممكن ROLLBACK لو في Transaction.',w:'❌ الفرق مهم جداً في Production. TRUNCATE مش قابل للـ Rollback.'},
+            3:{c:'✅ الطريقة الآمنة: 1) ADD COLUMN nullable. 2) UPDATE fill values. 3) SET NOT NULL. ده يشتغل بدون downtime.',w:'❌ ADD COLUMN NOT NULL في Production مباشرة بيفشل لو في rows موجودة بدون قيمة.'},
+            4:{c:'✅ CONSTRAINT مسمّاة بتوفر: Error messages واضحة + ALTER TABLE DROP CONSTRAINT by_name.',w:'❌ الاسم مهمش للأداء — لكن للـ DX (Developer Experience) مهم جداً في debugging وfuture migrations.'}
+        };
+        let answered=0,score=0;
+        function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';const st=document.getElementById('score-text');const sm=document.getElementById('score-msg');st.textContent=`نتيجتك: ${score} / 4`;if(score===4){st.style.color='#34D399';sm.textContent='🎉 DDL Expert!';}else if(score>=3){st.style.color='#FBBF24';sm.textContent='👏 كويس جداً!';}else{st.style.color='#F87171';sm.textContent='💪 راجع الـ DDL.';}}}
     </script>
 </body>
-
 </html>

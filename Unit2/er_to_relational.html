@@ -1,269 +1,730 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ER to Relational — تحويل ER لجداول | Database Mastery</title>
-    <meta name="description" content="خطوات تحويل الـ ER Diagram لجداول علائقية — من التصميم للتنفيذ!">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <title>ER to Relational Mapping — التحويل لـ SQL | Database Mastery</title>
+    <meta name="description" content="خوارزمية التحويل الكاملة من ER Diagram لـ SQL Tables — 7 خطوات بالتفصيل مع أمثلة SQL لكل حالة.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link href="../css/global-db.css" rel="stylesheet">
     <style>
-        body { background: #020617; color: #E2E8F0; font-family: 'Inter', sans-serif; }
-        .lesson-nav-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(2,6,23,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.06); height: 64px; display: flex; align-items: center; padding: 0 1.5rem; }
-        .nav-inner { max-width: 1280px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; }
-        .nav-brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; }
-        .nav-brand .back-btn { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #10B981, #059669); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; transition: transform 0.3s; }
-        .nav-brand .back-btn:hover { transform: scale(1.1); }
-        .nav-links { display: flex; gap: 2rem; font-size: 0.85rem; font-family: 'Cairo', sans-serif; color: var(--text-faint); }
-        .nav-links a { transition: color 0.3s; direction: rtl; }
-        .nav-links a:hover { color: #34D399; }
-        @media (max-width: 768px) { .nav-links { display: none; } }
-        .lesson-hero { position: relative; padding: 8rem 1.5rem 5rem; text-align: center; overflow: hidden; }
-        .lesson-hero .glow-orb { position: absolute; width: 500px; height: 500px; border-radius: 50%; filter: blur(128px); pointer-events: none; }
-        .glow-orb-1 { top: -10%; right: -5%; background: rgba(16,185,129,0.15); }
-        .glow-orb-2 { bottom: -20%; left: -10%; background: rgba(59,130,246,0.08); }
-        .lesson-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 1rem; border-radius: 50px; background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08); font-family: 'Fira Code', monospace; font-size: 0.78rem; color: #34D399; margin-bottom: 1.5rem; }
-        .lesson-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; animation: pulse-dot 2s ease infinite; }
-        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-        .lesson-hero h1 { font-size: clamp(2.5rem,5vw,4rem); font-weight: 800; margin-bottom: 1rem; }
-        .lesson-hero h1 .text-gradient { background: linear-gradient(135deg, #10B981, #3B82F6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-        .lesson-hero .subtitle { font-family: 'Cairo', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1.5rem; direction: rtl; unicode-bidi: isolate; }
-        .lesson-hero .desc { color: var(--text-faint); max-width: 600px; margin: 0 auto; font-size: 1rem; line-height: 1.8; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
-        .lesson-section { padding: 5rem 1.5rem; max-width: 960px; margin: 0 auto; }
-        .lesson-section.alt-bg { background: rgba(15,23,42,0.3); max-width: 100%; }
-        .lesson-section.alt-bg > .section-inner { max-width: 960px; margin: 0 auto; }
-        .section-header { text-align: center; margin-bottom: 3rem; }
-        .section-header h2 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
-        .section-header .en-sub { font-family: 'Inter', sans-serif; color: var(--text-faint); font-size: 0.9rem; direction: ltr; unicode-bidi: isolate; display: block; }
-        .progress-bar-container { position: fixed; top: 64px; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.05); z-index: 99; }
-        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #10B981, #3B82F6); width: 0%; transition: width 0.1s ease-out; }
+        :root{--accent:#EC4899;--accent-lt:#F9A8D4;}
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#EC4899,#9D174D);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#F9A8D4;}
+        .nav-toc{display:flex;gap:1.5rem;font-size:.82rem;color:#64748B;}
+        .nav-toc a:hover{color:#F9A8D4;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#EC4899,#8B5CF6);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(236,72,153,.1),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#F9A8D4;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#EC4899;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#EC4899,#8B5CF6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.1rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1.05rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(236,72,153,.1);border:1px solid rgba(236,72,153,.2);font-size:.78rem;color:#F9A8D4;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-title .icon{font-size:1.4rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .highlight{color:#F9A8D4;font-weight:700;}
+        .en-term{font-family:'Inter',sans-serif;color:#60A5FA;font-weight:600;unicode-bidi:isolate;direction:ltr;display:inline-block;}
+        .en-inline{font-family:'Fira Code',monospace;color:#A78BFA;font-size:.9em;unicode-bidi:isolate;direction:ltr;display:inline-block;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.why{background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);}
+        .callout.why .chead{color:#22D3EE;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);}
+        .callout.realworld .chead{color:#34D399;font-weight:800;margin-bottom:.5rem;}
+        .callout.tip{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);}
+        .callout.tip .chead{color:#FBBF24;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
 
-        /* Mapping Steps */
-        .mapping-step { background: rgba(15,23,42,0.6); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 2rem; margin-bottom: 2rem; position: relative; overflow: hidden; transition: all 0.3s; }
-        .mapping-step:hover { border-color: rgba(255,255,255,0.12); }
-        .mapping-step::before { content: attr(data-step); position: absolute; top: 0; left: 0; background: linear-gradient(135deg,var(--step-clr,#10B981),rgba(0,0,0,0)); padding: 0.4rem 1rem; border-radius: 0 0 12px 0; font-weight: 800; font-size: 0.8rem; color: white; font-family: 'Inter',sans-serif; }
-        .mapping-step h3 { margin-top: 0.5rem; margin-bottom: 0.5rem; font-size: 1.1rem; }
-        .mapping-step .step-ar { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 1rem; color: var(--text-muted); line-height: 2; margin-bottom: 1rem; }
-        .mapping-step .example-box { background: rgba(0,0,0,0.3); border-radius: 10px; padding: 1rem 1.2rem; font-family: 'Fira Code', monospace; font-size: 0.82rem; line-height: 1.9; direction: ltr; border: 1px solid rgba(255,255,255,0.05); overflow-x: auto; }
-        .mapping-step .example-box .kw { color: #A78BFA; font-weight: 600; }
-        .mapping-step .example-box .tb { color: #34D399; }
-        .mapping-step .example-box .col { color: #60A5FA; }
-        .mapping-step .example-box .pk { color: #FBBF24; font-weight: 600; }
-        .mapping-step .example-box .fk { color: #F87171; }
-        .mapping-step .example-box .cmt { color: #64748B; }
+        /* STEP CARDS */
+        .step-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:2rem;margin:2rem 0;transition:.3s;}
+        .step-card:hover{border-color:rgba(255,255,255,.13);}
+        .step-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;flex-wrap:wrap;}
+        .step-badge{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.2rem;font-family:'Inter',sans-serif;flex-shrink:0;}
+        .step-header h3{font-size:1.15rem;font-weight:800;}
+        .step-body p{font-size:.95rem;line-height:2;color:#CBD5E1;margin-bottom:.8rem;}
+        .step-body ul{padding-right:1.5rem;color:#CBD5E1;font-size:.9rem;line-height:2;}
+        .step-body ul li{margin:.2rem 0;}
 
-        .quiz-question { background: rgba(15,23,42,0.7); backdrop-filter: blur(12px); border: 1px solid var(--border-light); border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem; }
-        .quiz-question h4 { margin-bottom: 1rem; color: var(--text-primary); font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; }
-        .quiz-options { display: flex; flex-direction: column; gap: 0.6rem; }
-        .quiz-option { padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.3s; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; font-size: 0.92rem; color: var(--text-body); unicode-bidi: isolate; }
-        .quiz-option:hover { background: rgba(255,255,255,0.06); }
-        .quiz-option.correct { background: rgba(16,185,129,0.15); border-color: #10B981; color: #34D399; }
-        .quiz-option.wrong { background: rgba(239,68,68,0.15); border-color: #EF4444; color: #F87171; }
-        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: 10px; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; display: none; font-size: 0.92rem; line-height: 2; }
-        .quiz-feedback.show { display: block; }
-        .quiz-feedback.correct-fb { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #34D399; }
-        .quiz-feedback.wrong-fb { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #F87171; }
-        .lesson-bottom-nav { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 2rem 0; border-top: 1px solid var(--border-subtle); margin-top: 3rem; }
-        .lesson-bottom-nav a { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); transition: all 0.3s; font-weight: 600; font-size: 0.9rem; }
-        .lesson-bottom-nav a:hover { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); transform: translateY(-2px); }
+        /* SQL BLOCKS */
+        .sql-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:1rem 0;border:1px solid rgba(255,255,255,.05);}
+        .sql-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .sdot{width:9px;height:9px;border-radius:50%;}
+        .sdot.r{background:#FF5F57}.sdot.y{background:#FDBC40}.sdot.g{background:#27C93F}
+        .slabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .sbody{padding:1rem 1.2rem;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.col{color:#60A5FA}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.pk{color:#F472B6;font-weight:600}.fk{color:#F87171}.cn{color:#A5B4FC}
+
+        /* CASE COMPARISON */
+        .cases-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0;}
+        @media(max-width:680px){.cases-grid{grid-template-columns:1fr;}}
+        .case-box{background:rgba(0,0,0,.3);border-radius:12px;padding:1rem;}
+        .case-box strong{display:block;font-size:.85rem;margin-bottom:.5rem;}
+
+        /* ALGORITHM OVERVIEW */
+        .algo-steps{display:flex;flex-direction:column;gap:.5rem;margin:1.5rem 0;}
+        .algo-step{display:flex;align-items:center;gap:1rem;padding:.8rem 1rem;background:rgba(15,23,42,.6);border-radius:10px;border:1px solid rgba(255,255,255,.05);}
+        .algo-step .an{font-family:'Inter',sans-serif;font-weight:900;font-size:.9rem;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+        .algo-step .at{font-size:.9rem;font-weight:700;}
+        .algo-step .ad{font-size:.82rem;color:#64748B;margin-right:.5rem;}
+
+        /* PRACTICE & QUIZ */
+        .practice-block{background:rgba(15,23,42,.8);border:1px solid rgba(255,255,255,.07);border-radius:18px;overflow:hidden;margin:2rem 0;}
+        .practice-header{background:rgba(236,72,153,.1);padding:1.2rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.06);}
+        .practice-header h3{font-size:1.1rem;font-weight:800;color:#F9A8D4;margin:0;}
+        .practice-body{padding:1.8rem;}
+        .task-list{list-style:none;padding:0;margin-bottom:1.5rem;}
+        .task-list li{padding:.5rem 0;font-size:.93rem;color:#CBD5E1;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:.5rem;}
+        .tnum{background:rgba(236,72,153,.15);color:#F9A8D4;font-weight:800;font-size:.78rem;padding:.1rem .5rem;border-radius:5px;flex-shrink:0;font-family:'Inter',sans-serif;}
+        .sol-btn{width:100%;padding:.9rem;border-radius:10px;background:rgba(236,72,153,.1);border:1px solid rgba(236,72,153,.2);color:#F9A8D4;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:.3s;}
+        .sol-btn:hover{background:rgba(236,72,153,.18);}
+        .sol-content{display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.05);}
+        .sol-content.open{display:block;}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;}
+        .bnav-btn:hover{background:rgba(236,72,153,.1);border-color:rgba(236,72,153,.3);transform:translateY(-2px);}
     </style>
 </head>
 <body>
-    <nav class="lesson-nav-bar"><div class="nav-inner"><a href="../index.html" class="nav-brand"><div class="back-btn"><i class="fas fa-arrow-left"></i></div><span>ER→<span style="color:#10B981;">Tables</span></span></a><div class="nav-links"><a href="#steps">الخطوات</a><a href="#quiz">اختبر نفسك</a></div></div></nav>
-    <div class="progress-bar-container"><div class="progress-bar-fill" id="reading-progress"></div></div>
+    <nav class="lesson-nav-bar">
+        <div class="nav-inner">
+            <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-arrow-right"></i></div>العودة للبوابة</a>
+            <div class="nav-toc">
+                <a href="#why-map">لماذا التحويل؟</a>
+                <a href="#algorithm">الخوارزمية</a>
+                <a href="#step1">Step 1-3</a>
+                <a href="#step4">Step 4-5</a>
+                <a href="#step6">Step 6-7</a>
+                <a href="#full-example">مثال كامل</a>
+                <a href="#quiz">اختبار</a>
+            </div>
+        </div>
+    </nav>
+    <div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
 
-    <header class="lesson-hero">
-        <div class="glow-orb glow-orb-1"></div><div class="glow-orb glow-orb-2"></div>
-        <div style="position:relative;z-index:1;">
-            <div class="lesson-badge" data-aos="fade-down"><span class="dot"></span> UNIT 2 • Lesson 5</div>
-            <h1 data-aos="fade-up" data-aos-delay="150">ER → <span class="text-gradient">Tables</span></h1>
-            <div class="subtitle" data-aos="fade-up" data-aos-delay="300">تحويل الـ ER Diagram لجداول</div>
-            <p class="desc" data-aos="fade-up" data-aos-delay="450">الخطوة الأخيرة — نحوّل الرسم لجداول حقيقية نقدر ننشئها بـ SQL! 🏗️</p>
+    <header class="hero" data-aos="fade-up">
+        <div class="lesson-badge"><span class="pulse"></span>الوحدة 2 — الدرس 5</div>
+        <h1><span class="grad">ER → SQL</span> Mapping</h1>
+        <p class="en-title">The 7-Step Algorithm: From ER Diagram to SQL Schema</p>
+        <p class="desc">الـ ER Diagram جميل على الورق — لكن الـ database أو بيفهم SQL. هنتعلم كيف نحوّل كل خطوة بخطوة.</p>
+        <div class="learn-pills">
+            <span class="pill">لماذا المهارة دي حاسمة</span>
+            <span class="pill">7 خطوات كاملة</span>
+            <span class="pill">3 حالات الـ 1:1</span>
+            <span class="pill">Multivalued Attribute → Table</span>
+            <span class="pill">Specialization → 3 approaches</span>
+            <span class="pill">University Schema كامل</span>
         </div>
     </header>
 
-    <!-- Mapping Steps -->
-    <section class="lesson-section" id="steps">
-        <div class="section-header" data-aos="fade-up">
-            <h2><i class="fas fa-diagram-project" style="color:#34D399;margin-left:0.5rem;"></i> خطوات التحويل السبعة</h2>
-            <p class="en-sub">The 7-Step ER-to-Relational Mapping Algorithm</p>
+    <div class="lesson-body">
+
+    <!-- WHY MAPPING MATTERS -->
+    <div class="section-block" id="why-map" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🎯</span> ليه التحويل مهارة؟</div>
+        <p class="section-en">Why Mapping is a Core Skill</p>
+        <p class="body-text">الـ ER Diagram هو التصميم والـ SQL Schema هو التنفيذ. التحويل الغلط بيسبّب:</p>
+        <div class="callout mistake">
+            <div class="chead">💥 عواقب التحويل الغلط</div>
+            <p>
+            ◆ <strong>Data Redundancy</strong>: نفس البيانات متخزّنة أكتر من مرة → مشاكل عند التحديث.<br>
+            ◆ <strong>Update Anomalies</strong>: تعدّل في مكان وتنسى التاني → بيانات متناقضة.<br>
+            ◆ <strong>Delete Anomalies</strong>: حذف صف بتحذف معاه بيانات تانية محتاجها.<br>
+            ◆ <strong>Insert Anomalies</strong>: مش قادر تضيف بيانات إلا لو جبت بيانات تانية مش موجودة.<br><br>
+            ده كله بيؤدي لـ Database Design Error وبيحتاج Refactoring مؤلم بعد كده.
+            </p>
         </div>
+    </div>
+
+    <!-- ALGORITHM OVERVIEW -->
+    <div class="section-block" id="algorithm" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🗺️</span> نظرة عامة على الخوارزمية</div>
+        <p class="section-en">7-Step Mapping Algorithm Overview</p>
+        <div class="algo-steps">
+            <div class="algo-step"><div class="an" style="background:rgba(96,165,250,.15);color:#60A5FA;">1</div><div class="at" style="color:#60A5FA;">Strong Entities</div><div class="ad">→ جدول لكل Entity قوية</div></div>
+            <div class="algo-step"><div class="an" style="background:rgba(244,114,182,.15);color:#F472B6;">2</div><div class="at" style="color:#F472B6;">Weak Entities</div><div class="ad">→ جدول مع Composite PK</div></div>
+            <div class="algo-step"><div class="an" style="background:rgba(52,211,153,.15);color:#34D399;">3</div><div class="at" style="color:#34D399;">1:1 Relationships</div><div class="ad">→ 3 حالات مختلفة</div></div>
+            <div class="algo-step"><div class="an" style="background:rgba(251,191,36,.15);color:#FBBF24;">4</div><div class="at" style="color:#FBBF24;">1:N Relationships</div><div class="ad">→ FK في جانب الـ N</div></div>
+            <div class="algo-step"><div class="an" style="background:rgba(139,92,246,.15);color:#A78BFA;">5</div><div class="at" style="color:#A78BFA;">M:N Relationships</div><div class="ad">→ Junction Table جديد</div></div>
+            <div class="algo-step"><div class="an" style="background:rgba(248,113,113,.15);color:#F87171;">6</div><div class="at" style="color:#F87171;">Multivalued Attributes</div><div class="ad">→ جدول منفصل</div></div>
+            <div class="algo-step"><div class="an" style="background:rgba(236,72,153,.15);color:#F9A8D4;">7</div><div class="at" style="color:#F9A8D4;">Specialization</div><div class="ad">→ 3 approaches للاختيار</div></div>
+        </div>
+    </div>
+
+    <!-- STEPS 1-3 -->
+    <div class="section-block" id="step1" data-aos="fade-up">
+        <div class="section-title"><span class="icon">📐</span> الخطوات 1 إلى 3</div>
 
         <!-- Step 1 -->
-        <div class="mapping-step" data-step="Step 1" style="--step-clr:#34D399;" data-aos="fade-up">
-            <h3 style="color:#34D399;">Strong Entities → Tables</h3>
-            <div class="step-ar">كل <span class="english">Strong Entity</span> بيبقى جدول. الصفات البسيطة بتبقى أعمدة. الـ <span class="english">Primary Key</span> بتاع الكيان يبقى <span class="english">PK</span> بتاع الجدول.</div>
-            <div class="example-box">
-<span class="cmt">-- Entity: DEPARTMENT (Dept_ID, Name, Location)</span>
-<span class="kw">CREATE TABLE</span> <span class="tb">department</span> (
-    <span class="pk">dept_id</span>    <span class="col">INT PRIMARY KEY</span>,
-    <span class="col">name</span>       <span class="col">VARCHAR(100) NOT NULL</span>,
-    <span class="col">location</span>   <span class="col">VARCHAR(100)</span>
-);</div>
+        <div class="step-card" style="border-right:3px solid #60A5FA;">
+            <div class="step-header">
+                <div class="step-badge" style="background:rgba(96,165,250,.15);color:#60A5FA;">1</div>
+                <div><h3 style="color:#60A5FA;">Strong Entities → Tables</h3><p style="font-size:.82rem;color:#475569;margin:0;font-family:'Inter',sans-serif;">Each Strong Entity → One Table</p></div>
+            </div>
+            <div class="step-body">
+                <p>كل Strong Entity بتتحوّل لجدول. اسم الجدول = اسم الـ Entity. الصفات البسيطة بتتحوّل لأعمدة. Key Attribute بيبقى PRIMARY KEY.</p>
+                <ul>
+                    <li>كل صفة من صفات الـ Entity = عمود في الجدول</li>
+                    <li>Key Attribute = PRIMARY KEY</li>
+                    <li>الصفات المركّبة (Composite): اختار - إما افردها لأعمدة منفصلة أو خزّنها كعمود واحد حسب احتياج البحث</li>
+                    <li>الصفات المشتقة (Derived): لا تُخزَّن — تُحسب في الاستعلام</li>
+                </ul>
+            </div>
+            <div class="sql-block">
+                <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Step 1 — STUDENT Entity</span></div>
+                <div class="sbody">
+<span class="cmt">-- ER Entity: STUDENT(student_id, first_name, last_name, birth_date, gpa, phone*)</span>
+<span class="cmt">-- *phone = Multivalued → هيتطاق في Step 6</span>
+<span class="cmt">-- *age = Derived → مش هنخزّنها</span>
+
+<span class="kw">CREATE TABLE</span> <span class="tb">student</span> (
+    <span class="pk">student_id</span>   <span class="cn">SERIAL PRIMARY KEY</span>,
+    first_name   <span class="cn">VARCHAR(50) NOT NULL</span>,  <span class="cmt">-- Composite name مفردة</span>
+    last_name    <span class="cn">VARCHAR(50) NOT NULL</span>,
+    birth_date   <span class="cn">DATE NOT NULL</span>,          <span class="cmt">-- خزّن هذا</span>
+    <span class="cmt">-- age لا تُخزَّن: EXTRACT(year FROM AGE(birth_date))</span>
+    gpa          <span class="cn">DECIMAL(3,2) CHECK (gpa BETWEEN 0 AND 4)</span>
+);
+                </div>
+            </div>
         </div>
 
         <!-- Step 2 -->
-        <div class="mapping-step" data-step="Step 2" style="--step-clr:#60A5FA;" data-aos="fade-up">
-            <h3 style="color:#60A5FA;">Weak Entities → Tables + FK</h3>
-            <div class="step-ar">كل <span class="english">Weak Entity</span> بيبقى جدول — بس الـ <span class="english">Primary Key</span> بتاعه بيكون <span class="hl-red">مركب</span>: الـ <span class="english">Partial Key</span> + الـ <span class="english">FK</span> من الـ <span class="english">Owner Entity</span>.</div>
-            <div class="example-box">
-<span class="cmt">-- Weak Entity: DEPENDENT (depends on EMPLOYEE)</span>
+        <div class="step-card" style="border-right:3px solid #F472B6;">
+            <div class="step-header">
+                <div class="step-badge" style="background:rgba(244,114,182,.15);color:#F472B6;">2</div>
+                <div><h3 style="color:#F472B6;">Weak Entities → Tables with Composite PK</h3><p style="font-size:.82rem;color:#475569;margin:0;font-family:'Inter',sans-serif;">Partial Key + Owner FK = Composite PK</p></div>
+            </div>
+            <div class="step-body">
+                <p>الـ Weak Entity بتتحوّل لجدول. الـ Primary Key بيكون مركّب = Partial Key + FK من الـ Owner. العلاقة Identifying بتتحوّل لـ FK بـ ON DELETE CASCADE.</p>
+                <ul>
+                    <li>أضف FK للـ Owner Entity (NOT NULL)</li>
+                    <li>Primary Key = (FK + Partial Key)</li>
+                    <li>ON DELETE CASCADE — لو الـ Owner اتحذف، الـ Weak Entity بتحذف معاه</li>
+                </ul>
+            </div>
+            <div class="sql-block">
+                <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Step 2 — DEPENDENT (Weak Entity of EMPLOYEE)</span></div>
+                <div class="sbody">
+<span class="cmt">-- ER: DEPENDENT (dep_name [partial], relationship) — Owner: EMPLOYEE</span>
 <span class="kw">CREATE TABLE</span> <span class="tb">dependent</span> (
-    <span class="fk">emp_id</span>     <span class="col">INT REFERENCES employee(emp_id)</span>,
-    <span class="pk">dep_name</span>   <span class="col">VARCHAR(100)</span>,
-    <span class="col">birth_date</span> <span class="col">DATE</span>,
-    <span class="kw">PRIMARY KEY</span> (<span class="fk">emp_id</span>, <span class="pk">dep_name</span>)
-);</div>
+    <span class="fk">emp_id</span>       <span class="cn">INT NOT NULL REFERENCES employee(emp_id)</span>
+                 <span class="kw">ON DELETE CASCADE</span>,  <span class="cmt">-- الموظف اتحذف → التبعيين بيتحذفوا</span>
+    dep_name     <span class="cn">VARCHAR(100) NOT NULL</span>,   <span class="cmt">-- Partial Key</span>
+    relationship <span class="cn">VARCHAR(30) NOT NULL</span>,    <span class="cmt">-- e.g. 'son','wife'</span>
+    birth_date   <span class="cn">DATE</span>,
+    <span class="kw">PRIMARY KEY</span> (<span class="fk">emp_id</span>, dep_name)        <span class="cmt">-- Composite PK</span>
+);
+                </div>
+            </div>
         </div>
 
         <!-- Step 3 -->
-        <div class="mapping-step" data-step="Step 3" style="--step-clr:#FBBF24;" data-aos="fade-up">
-            <h3 style="color:#FBBF24;">1:1 Relationships → FK in One Side</h3>
-            <div class="step-ar">في علاقة <span class="english">1:1</span>، بنضيف الـ <span class="english">FK</span> في جانب الـ <span class="english">Total Participation</span> (اللي لازم يشارك). لو الاتنين <span class="english">Total</span> — بنختار أي جانب.</div>
-            <div class="example-box">
-<span class="cmt">-- 1:1 → EMPLOYEE manages DEPARTMENT</span>
+        <div class="step-card" style="border-right:3px solid #34D399;">
+            <div class="step-header">
+                <div class="step-badge" style="background:rgba(52,211,153,.15);color:#34D399;">3</div>
+                <div><h3 style="color:#34D399;">1:1 Relationships — 3 Cases</h3><p style="font-size:.82rem;color:#475569;margin:0;font-family:'Inter',sans-serif;">Which side gets the FK?</p></div>
+            </div>
+            <div class="step-body">
+                <p>الـ 1:1 عندها 3 حالات مختلفة بناءً على الـ Participation:</p>
+            </div>
+            <div class="cases-grid">
+                <div class="case-box" style="border:1px solid rgba(52,211,153,.2);">
+                    <strong style="color:#34D399;">Case A — Total/Total</strong>
+                    <p style="font-size:.85rem;color:#94A3B8;line-height:1.9;">الكيانين مرتبطين إلزامياً. ممكن تدمجهم في جدول واحد. أو ضع FK في أي من الجانبين (UNIQUE + NOT NULL).</p>
+                    <p style="font-size:.78rem;color:#475569;font-family:'Fira Code',monospace;">COUNTRY — CAPITAL_CITY</p>
+                </div>
+                <div class="case-box" style="border:1px solid rgba(251,191,36,.2);">
+                    <strong style="color:#FBBF24;">Case B — Total/Partial</strong>
+                    <p style="font-size:.85rem;color:#94A3B8;line-height:1.9;">ضع الـ FK في جانب الـ Total (NOT NULL). الجانب Partial ممكن مش يشتغلش.</p>
+                    <p style="font-size:.78rem;color:#475569;font-family:'Fira Code',monospace;">DEPARTMENT (Total) — MANAGER (Partial)</p>
+                </div>
+                <div class="case-box" style="border:1px solid rgba(96,165,250,.2);">
+                    <strong style="color:#60A5FA;">Case C — Partial/Partial</strong>
+                    <p style="font-size:.85rem;color:#94A3B8;line-height:1.9;">ضع الـ FK في الجانب الأكثر احتمالاً للمشاركة. الـ FK nullable.</p>
+                    <p style="font-size:.78rem;color:#475569;font-family:'Fira Code',monospace;">EMPLOYEE — COMPANY_CAR</p>
+                </div>
+            </div>
+            <div class="sql-block">
+                <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Step 3 — 1:1 Mapping Cases</span></div>
+                <div class="sbody">
+<span class="cmt">-- Case A: COUNTRY (1:1, Total-Total) CAPITAL_CITY</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">country</span> (
+    <span class="pk">country_id</span>   <span class="cn">SERIAL PRIMARY KEY</span>,
+    country_name <span class="cn">VARCHAR(100) NOT NULL</span>,
+    <span class="fk">capital_id</span>   <span class="cn">INT NOT NULL UNIQUE REFERENCES capital_city(city_id)</span>
+    <span class="cmt">-- Total+Total → ممكن FK في أي جانب. UNIQUE يضمن 1:1</span>
+);
+
+<span class="cmt">-- Case B: DEPARTMENT (Total) HEADS (1:1) EMPLOYEE (Partial)</span>
+<span class="cmt">-- الـ FK بيروح في DEPARTMENT لأنه Total (كل قسم لازم له رئيس)</span>
 <span class="kw">ALTER TABLE</span> <span class="tb">department</span>
-<span class="kw">ADD</span> <span class="fk">manager_id</span> <span class="col">INT UNIQUE REFERENCES employee(emp_id)</span>;</div>
+<span class="kw">ADD COLUMN</span> <span class="fk">head_emp_id</span> <span class="cn">INT NOT NULL UNIQUE</span>
+     <span class="cn">REFERENCES employee(emp_id)</span> <span class="kw">ON DELETE RESTRICT</span>;
+
+<span class="cmt">-- Case C: EMPLOYEE (Partial) DRIVES (1:1) COMPANY_CAR (Partial)</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">company_car</span>
+<span class="kw">ADD COLUMN</span> <span class="fk">assigned_emp_id</span> <span class="cn">INT UNIQUE</span>  <span class="cmt">-- NULL = سيارة غير معيّنة</span>
+     <span class="cn">REFERENCES employee(emp_id)</span> <span class="kw">ON DELETE SET NULL</span>;
+                </div>
+            </div>
         </div>
+    </div>
+
+    <!-- STEPS 4-5 -->
+    <div class="section-block" id="step4" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🔗</span> الخطوات 4 و 5</div>
 
         <!-- Step 4 -->
-        <div class="mapping-step" data-step="Step 4" style="--step-clr:#A78BFA;" data-aos="fade-up">
-            <h3 style="color:#A78BFA;">1:N Relationships → FK in the N Side</h3>
-            <div class="step-ar"><span class="hl-purple">أسهل خطوة!</span> في علاقة <span class="english">1:N</span>، بنضيف الـ <span class="english">FK</span> في جدول الجانب الـ <span class="english">N</span> (الكتير). مثال: كل موظف في قسم واحد → نضيف <span class="english">dept_id</span> في جدول الموظف.</div>
-            <div class="example-box">
-<span class="cmt">-- 1:N → DEPARTMENT (1) has EMPLOYEE (N)</span>
+        <div class="step-card" style="border-right:3px solid #FBBF24;">
+            <div class="step-header">
+                <div class="step-badge" style="background:rgba(251,191,36,.15);color:#FBBF24;">4</div>
+                <div><h3 style="color:#FBBF24;">1:N Relationships → FK in N side</h3><p style="font-size:.82rem;color:#475569;margin:0;font-family:'Inter',sans-serif;">Foreign Key always goes to the "Many" side</p></div>
+            </div>
+            <div class="step-body">
+                <p>الـ FK بيروح دايماً في جانب الـ N (الأبناء). الـ Total Participation من جانب N = NOT NULL على الـ FK. صفات العلاقة (لو موجودة) بتروح في جانب الـ N أيضاً.</p>
+            </div>
+            <div class="sql-block">
+                <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Step 4 — 1:N Examples</span></div>
+                <div class="sbody">
+<span class="cmt">-- DEPARTMENT (1) EMPLOYS (N) EMPLOYEE</span>
+<span class="cmt">-- كل موظف في قسم واحد (Total) → NOT NULL</span>
 <span class="kw">ALTER TABLE</span> <span class="tb">employee</span>
-<span class="kw">ADD</span> <span class="fk">dept_id</span> <span class="col">INT REFERENCES department(dept_id)</span>;</div>
+<span class="kw">ADD COLUMN</span> <span class="fk">dept_id</span> <span class="cn">INT NOT NULL</span>  <span class="cmt">-- Total Participation</span>
+     <span class="cn">REFERENCES department(dept_id)</span>
+     <span class="kw">ON DELETE RESTRICT</span>;             <span class="cmt">-- لا تحذف القسم لو فيه موظفين</span>
+
+<span class="cmt">-- EMPLOYEE (1) SUPERVISES (N) EMPLOYEE — Unary 1:N</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">employee</span>
+<span class="kw">ADD COLUMN</span> <span class="fk">supervisor_id</span> <span class="cn">INT</span>  <span class="cmt">-- Nullable: بعض الموظفين مش عندهم مشرف</span>
+     <span class="cn">REFERENCES employee(emp_id)</span>
+     <span class="kw">ON DELETE SET NULL</span>;
+
+<span class="cmt">-- CUSTOMER (1) PLACES (N) ORDER — مع صفة العلاقة</span>
+<span class="cmt">-- لو العلاقة عندها صفات، بتروح في جانب الـ N</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">orders</span> (
+    <span class="pk">order_id</span>    <span class="cn">SERIAL PRIMARY KEY</span>,
+    <span class="fk">customer_id</span> <span class="cn">INT NOT NULL REFERENCES customer(customer_id)</span>,
+    order_date  <span class="cn">TIMESTAMPTZ NOT NULL DEFAULT NOW()</span>,
+    status      <span class="cn">VARCHAR(20) NOT NULL DEFAULT 'pending'</span>
+);
+                </div>
+            </div>
         </div>
 
         <!-- Step 5 -->
-        <div class="mapping-step" data-step="Step 5" style="--step-clr:#F87171;" data-aos="fade-up">
-            <h3 style="color:#F87171;">M:N Relationships → Junction Table</h3>
-            <div class="step-ar"><span class="hl-red">مهم جداً!</span> علاقة <span class="english">M:N</span> بتحتاج <span class="hl-blue">جدول وسيط جديد</span>. الـ <span class="english">PK</span> بتاعه = مفتاحين أجنبيين من الجدولين. ولو العلاقة عليها صفات — بتضاف كأعمدة في الجدول الوسيط.</div>
-            <div class="example-box">
-<span class="cmt">-- M:N → STUDENT enrolls COURSE (with grade attribute)</span>
+        <div class="step-card" style="border-right:3px solid #A78BFA;">
+            <div class="step-header">
+                <div class="step-badge" style="background:rgba(139,92,246,.15);color:#A78BFA;">5</div>
+                <div><h3 style="color:#A78BFA;">M:N Relationships → Junction Table</h3><p style="font-size:.82rem;color:#475569;margin:0;font-family:'Inter',sans-serif;">New Table with FKs from both sides</p></div>
+            </div>
+            <div class="step-body">
+                <p>أي M:N بتحتاج جدول جديد (وسيط). الجدول الجديد بيحتوي على FK من كل جانب + أي صفات للعلاقة. الـ PK = مركّب من الـ FK-in.</p>
+            </div>
+            <div class="sql-block">
+                <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Step 5 — M:N Mapping with Relationship Attributes</span></div>
+                <div class="sbody">
+<span class="cmt">-- STUDENT (M) ENROLLS (N) COURSE</span>
+<span class="cmt">-- صفات العلاقة: grade, semester, enrollment_date</span>
 <span class="kw">CREATE TABLE</span> <span class="tb">enrollment</span> (
-    <span class="fk">student_id</span>  <span class="col">INT REFERENCES student(student_id)</span>,
-    <span class="fk">course_id</span>   <span class="col">INT REFERENCES course(course_id)</span>,
-    <span class="col">grade</span>       <span class="col">CHAR(2)</span>,       <span class="cmt">-- relationship attribute</span>
-    <span class="col">semester</span>    <span class="col">VARCHAR(20)</span>,
-    <span class="kw">PRIMARY KEY</span> (<span class="fk">student_id</span>, <span class="fk">course_id</span>)
-);</div>
+    <span class="fk">student_id</span>      <span class="cn">INT NOT NULL REFERENCES student(student_id)</span>
+                    <span class="kw">ON DELETE CASCADE</span>,
+    <span class="fk">course_id</span>       <span class="cn">INT NOT NULL REFERENCES course(course_id)</span>
+                    <span class="kw">ON DELETE RESTRICT</span>,
+    grade           <span class="cn">CHAR(2) CHECK (grade IN ('A+','A','B+','B','C+','C','D','F'))</span>,
+    semester        <span class="cn">VARCHAR(20) NOT NULL</span>,  <span class="cmt">-- '2024-Spring'</span>
+    enrollment_date <span class="cn">DATE NOT NULL DEFAULT CURRENT_DATE</span>,
+    <span class="kw">PRIMARY KEY</span> (<span class="fk">student_id</span>, <span class="fk">course_id</span>, semester) <span class="cmt">-- طالب ممكن يكرر كورس</span>
+);
+
+<span class="cmt">-- DOCTOR (M) TREATS (N) PATIENT — Appointment</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">appointment</span> (
+    <span class="pk">appt_id</span>    <span class="cn">SERIAL PRIMARY KEY</span>,  <span class="cmt">-- surrogate PK أبسط هنا</span>
+    <span class="fk">doctor_id</span>  <span class="cn">INT NOT NULL REFERENCES doctor(doctor_id)</span>,
+    <span class="fk">patient_id</span> <span class="cn">INT NOT NULL REFERENCES patient(patient_id)</span>,
+    appt_dt    <span class="cn">TIMESTAMPTZ NOT NULL</span>,
+    diagnosis  <span class="cn">TEXT</span>,
+    notes      <span class="cn">TEXT</span>,
+    <span class="cn">UNIQUE</span> (<span class="fk">doctor_id</span>, <span class="fk">patient_id</span>, appt_dt)  <span class="cmt">-- نفس الطبيب والمريض مش في نفس الوقت</span>
+);
+                </div>
+            </div>
         </div>
+    </div>
+
+    <!-- STEPS 6-7 -->
+    <div class="section-block" id="step6" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🔧</span> الخطوات 6 و 7</div>
 
         <!-- Step 6 -->
-        <div class="mapping-step" data-step="Step 6" style="--step-clr:#22D3EE;" data-aos="fade-up">
-            <h3 style="color:#22D3EE;">Multivalued Attributes → Separate Table</h3>
-            <div class="step-ar">كل صفة متعددة القيم بتبقى جدول منفصل. الـ <span class="english">PK</span> = الـ <span class="english">FK</span> من الكيان الأصلي + القيمة نفسها.</div>
-            <div class="example-box">
-<span class="cmt">-- Multivalued: Employee has multiple phone numbers</span>
-<span class="kw">CREATE TABLE</span> <span class="tb">emp_phone</span> (
-    <span class="fk">emp_id</span>  <span class="col">INT REFERENCES employee(emp_id)</span>,
-    <span class="pk">phone</span>   <span class="col">VARCHAR(20)</span>,
-    <span class="kw">PRIMARY KEY</span> (<span class="fk">emp_id</span>, <span class="pk">phone</span>)
-);</div>
+        <div class="step-card" style="border-right:3px solid #F87171;">
+            <div class="step-header">
+                <div class="step-badge" style="background:rgba(248,113,113,.15);color:#F87171;">6</div>
+                <div><h3 style="color:#F87171;">Multivalued Attributes → Separate Table</h3><p style="font-size:.82rem;color:#475569;margin:0;font-family:'Inter',sans-serif;">Never store multivalued in same table</p></div>
+            </div>
+            <div class="step-body">
+                <p>كل Multivalued Attribute بيتحوّل لجدول جديد. الجدول الجديد بيحتوي على FK من الـ Entity الأصلية + قيمة الـ Attribute. الـ PK = مركّب من الـ FK + القيمة.</p>
+            </div>
+            <div class="sql-block">
+                <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Step 6 — Multivalued Attributes</span></div>
+                <div class="sbody">
+<span class="cmt">-- STUDENT.phone (Multivalued) </span>
+<span class="kw">CREATE TABLE</span> <span class="tb">student_phone</span> (
+    <span class="fk">student_id</span> <span class="cn">INT NOT NULL REFERENCES student(student_id)</span>
+               <span class="kw">ON DELETE CASCADE</span>,
+    phone      <span class="cn">VARCHAR(20) NOT NULL</span>,
+    phone_type <span class="cn">VARCHAR(20) DEFAULT 'mobile'</span>,  <span class="cmt">-- mobile / home / work</span>
+    <span class="kw">PRIMARY KEY</span> (<span class="fk">student_id</span>, phone)            <span class="cmt">-- نفس الطالب مش عنده نفس الرقم مرتين</span>
+);
+
+<span class="cmt">-- EMPLOYEE.skills (Multivalued)</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">employee_skill</span> (
+    <span class="fk">emp_id</span>     <span class="cn">INT NOT NULL REFERENCES employee(emp_id)</span>
+               <span class="kw">ON DELETE CASCADE</span>,
+    skill_name <span class="cn">VARCHAR(50) NOT NULL</span>,
+    level      <span class="cn">VARCHAR(20) CHECK (level IN ('beginner','intermediate','expert'))</span>,
+    <span class="kw">PRIMARY KEY</span> (<span class="fk">emp_id</span>, skill_name)
+);
+
+<span class="cmt">-- DEPARTMENT.locations (Multivalued Complex — city + address)</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">dept_location</span> (
+    <span class="fk">dept_id</span>   <span class="cn">INT NOT NULL REFERENCES department(dept_id)</span>
+              <span class="kw">ON DELETE CASCADE</span>,
+    city      <span class="cn">VARCHAR(50) NOT NULL</span>,
+    address   <span class="cn">VARCHAR(200)</span>,
+    <span class="kw">PRIMARY KEY</span> (<span class="fk">dept_id</span>, city)
+);
+                </div>
+            </div>
         </div>
 
         <!-- Step 7 -->
-        <div class="mapping-step" data-step="Step 7" style="--step-clr:#E879F9;" data-aos="fade-up">
-            <h3 style="color:#E879F9;">Specialization/Generalization → Multiple Options</h3>
-            <div class="step-ar">عندنا كذا طريقة:</div>
-            <div style="display:grid;gap:0.8rem;margin-top:1rem;">
-                <div class="glass-card" style="padding:1rem;border-radius:12px;border-right:3px solid #60A5FA;">
-                    <div class="rtl-block" style="font-size:0.88rem;color:#CBD5E1;">
-                        <strong style="color:#60A5FA;">Option A:</strong> جدول للـ <span class="english">Superclass</span> + جدول لكل <span class="english">Subclass</span> (بيشاركوا نفس الـ PK). <span style="color:#94A3B8;">✅ الأفضل في أغلب الحالات.</span>
-                    </div>
-                </div>
-                <div class="glass-card" style="padding:1rem;border-radius:12px;border-right:3px solid #FBBF24;">
-                    <div class="rtl-block" style="font-size:0.88rem;color:#CBD5E1;">
-                        <strong style="color:#FBBF24;">Option B:</strong> جدول لكل <span class="english">Subclass</span> بس — كل واحد فيه كل أعمدة الـ <span class="english">Superclass</span>. <span style="color:#94A3B8;">⚠️ بيسبب تكرار.</span>
-                    </div>
-                </div>
-                <div class="glass-card" style="padding:1rem;border-radius:12px;border-right:3px solid #34D399;">
-                    <div class="rtl-block" style="font-size:0.88rem;color:#CBD5E1;">
-                        <strong style="color:#34D399;">Option C:</strong> جدول واحد بس فيه كل الأعمدة + <span class="english">Type</span> column. <span style="color:#94A3B8;">⚠️ هيبقى في NULLs كتير.</span>
-                    </div>
-                </div>
+        <div class="step-card" style="border-right:3px solid #F9A8D4;">
+            <div class="step-header">
+                <div class="step-badge" style="background:rgba(249,168,212,.15);color:#F9A8D4;">7</div>
+                <div><h3 style="color:#F9A8D4;">Specialization / Generalization → 3 Approaches</h3><p style="font-size:.82rem;color:#475569;margin:0;font-family:'Inter',sans-serif;">Choose based on access patterns</p></div>
             </div>
-        </div>
-    </section>
+            <div class="step-body">
+                <p>فيه 3 طرق لتمثيل التخصص في SQL — اخترت في الدرس السابق. البرسنة: Approach A للـ Disjoint Total، Approach B للـ Overlapping أو Partial.</p>
+            </div>
+            <div class="sql-block">
+                <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Step 7 — Specialization Approaches</span></div>
+                <div class="sbody">
+<span class="cmt">-- Approach A: Single Table (Disjoint Total — e.g. EMPLOYEE types)</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">employee</span> (
+    <span class="pk">emp_id</span>       <span class="cn">SERIAL PRIMARY KEY</span>,
+    full_name    <span class="cn">VARCHAR(100) NOT NULL</span>,
+    emp_type     <span class="cn">VARCHAR(10) NOT NULL CHECK (emp_type IN ('salaried','hourly'))</span>,
+    <span class="cmt">-- salaried attrs:</span>
+    monthly_sal  <span class="cn">DECIMAL(10,2) CHECK (monthly_sal > 0)</span>,
+    <span class="cmt">-- hourly attrs:</span>
+    hourly_rate  <span class="cn">DECIMAL(8,2) CHECK (hourly_rate > 0)</span>
+);
 
-    <!-- Summary -->
-    <section class="lesson-section alt-bg">
-        <div class="section-inner">
-            <div class="section-header" data-aos="fade-up"><h2><i class="fas fa-flag-checkered" style="color:#10B981;margin-left:0.5rem;"></i> 🎉 مبروك! خلصت الوحدة الثانية!</h2><p class="en-sub">Unit 2 Complete!</p></div>
-            <div class="glass-card" style="padding:2rem;border-radius:20px;border:1px solid rgba(59,130,246,0.2);background:linear-gradient(135deg,rgba(59,130,246,0.05),rgba(139,92,246,0.05));" data-aos="fade-up">
-                <div class="rtl-block" style="font-size:1.05rem;">
-                    <p style="color:#60A5FA;font-weight:700;font-size:1.2rem;margin-bottom:1rem;text-align:center;">🏆 الوحدة الثانية خلصت!</p>
-                    <p style="color:#E2E8F0;margin-bottom:1.5rem;">إنت دلوقتي تعرف:</p>
-                    <div class="step-box" style="border-color:#3B82F6;margin-bottom:0.8rem;"><p style="color:#60A5FA;">✅ أساسيات الـ ER: كيانات، صفات، وأشكالهم</p></div>
-                    <div class="step-box" style="border-color:#FBBF24;margin-bottom:0.8rem;"><p style="color:#FBBF24;">✅ العلاقات: 1:1, 1:N, M:N + المشاركة الكلية والجزئية</p></div>
-                    <div class="step-box" style="border-color:#8B5CF6;margin-bottom:0.8rem;"><p style="color:#A78BFA;">✅ EER: التخصيص، التعميم، والقيود (Disjoint/Overlapping)</p></div>
-                    <div class="step-box" style="border-color:#F59E0B;margin-bottom:0.8rem;"><p style="color:#FBBF24;">✅ النموذج العلائقي: المفاتيح والقيود الأربعة</p></div>
-                    <div class="step-box" style="border-color:#10B981;"><p style="color:#34D399;">✅ تحويل الـ ER لجداول بالخطوات السبعة</p></div>
-                    <div class="note" style="margin-top:1.5rem;">🚀 الوحدة الجاية: <span class="hl-purple">SQL Fundamentals</span> — هنبدأ نكتب SQL بجد على PostgreSQL!</div>
+<span class="cmt">-- Approach B: Class Table Inheritance (recommended for Partial/Overlapping)</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">person</span> (
+    <span class="pk">person_id</span>   <span class="cn">SERIAL PRIMARY KEY</span>,
+    national_id <span class="cn">CHAR(14) UNIQUE NOT NULL</span>,
+    full_name   <span class="cn">VARCHAR(100) NOT NULL</span>
+);
+<span class="kw">CREATE TABLE</span> <span class="tb">employee</span> (
+    <span class="pk">person_id</span>  <span class="cn">INT PRIMARY KEY REFERENCES person(person_id)</span>,
+    hire_date  <span class="cn">DATE NOT NULL</span>,
+    salary     <span class="cn">DECIMAL(10,2) NOT NULL</span>
+);
+<span class="kw">CREATE TABLE</span> <span class="tb">student</span> (
+    <span class="pk">person_id</span>  <span class="cn">INT PRIMARY KEY REFERENCES person(person_id)</span>,
+    student_id <span class="cn">VARCHAR(20) UNIQUE NOT NULL</span>,
+    gpa        <span class="cn">DECIMAL(3,2)</span>
+);
+<span class="cmt">-- لو Overlapping: شخص ممكن يبقى في employee AND student</span>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <!-- Quiz -->
-    <section class="lesson-section" id="quiz">
-        <div class="section-header" data-aos="fade-up"><h2><i class="fas fa-brain" style="color:#D946EF;margin-left:0.5rem;"></i> اختبر نفسك!</h2><p class="en-sub">Quick Knowledge Check</p></div>
-        <div data-aos="fade-up" data-aos-delay="100">
-            <div class="quiz-question" id="q1">
-                <h4>❓ سؤال ١: في علاقة 1:N — الـ Foreign Key بنحطه فين؟</h4>
-                <div class="quiz-options">
-                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">في جانب الـ 1</div>
-                    <div class="quiz-option" onclick="checkAnswer(1,this,true)">في جانب الـ N (الكتير)</div>
-                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">بنعمل جدول وسيط</div>
-                </div><div class="quiz-feedback" id="q1-feedback"></div>
-            </div>
-            <div class="quiz-question" id="q2">
-                <h4>❓ سؤال ٢: علاقة M:N بتتحول لإيه؟</h4>
-                <div class="quiz-options">
-                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">FK في أي جانب</div>
-                    <div class="quiz-option" onclick="checkAnswer(2,this,true)">جدول وسيط جديد (Junction Table) فيه FK من الجانبين</div>
-                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">بنحذف العلاقة</div>
-                </div><div class="quiz-feedback" id="q2-feedback"></div>
-            </div>
-            <div class="quiz-question" id="q3">
-                <h4>❓ سؤال ٣: الصفة المتعددة القيم (Multivalued) بنعمل بيها إيه؟</h4>
-                <div class="quiz-options">
-                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">بنسيبها في نفس الجدول</div>
-                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">بنحذفها</div>
-                    <div class="quiz-option" onclick="checkAnswer(3,this,true)">بنعمل جدول منفصل (FK + القيمة = PK مركب)</div>
-                </div><div class="quiz-feedback" id="q3-feedback"></div>
-            </div>
-            <div class="quiz-question" id="q4">
-                <h4>❓ سؤال ٤: الـ Weak Entity لما بيتحول لجدول — الـ PK بتاعه بيبقى إيه؟</h4>
-                <div class="quiz-options">
-                    <div class="quiz-option" onclick="checkAnswer(4,this,false)">الـ Partial Key لوحده</div>
-                    <div class="quiz-option" onclick="checkAnswer(4,this,true)">Partial Key + FK من الـ Owner Entity (مركب)</div>
-                    <div class="quiz-option" onclick="checkAnswer(4,this,false)">بيتعمله ID جديد تلقائي</div>
-                </div><div class="quiz-feedback" id="q4-feedback"></div>
-            </div>
-        </div>
-        <div id="quiz-score" style="text-align:center;margin-top:2rem;display:none;"><div class="glass-card" style="padding:2rem;border-radius:20px;display:inline-block;"><div class="rtl-block"><h3 style="color:#34D399;margin-bottom:0.5rem;" id="score-text"></h3><p style="color:#94A3B8;" id="score-msg"></p></div></div></div>
-    </section>
-
-    <div style="max-width:960px;margin:0 auto;padding:0 1.5rem;">
-        <div class="lesson-bottom-nav">
-            <a href="relational_model.html"><i class="fas fa-arrow-right"></i><span>الدرس السابق</span></a>
-            <a href="../index.html" style="color:#34D399;"><span>🏠 العودة للبوابة</span><i class="fas fa-arrow-left"></i></a>
         </div>
     </div>
-    <footer style="text-align:center;padding:3rem 1.5rem;color:var(--text-ghost);font-size:0.85rem;border-top:1px solid var(--border-subtle);"><p>Database Mastery — Unit 2: Data Modeling & ER ✅</p><p style="font-family:'Cairo',sans-serif;margin-top:0.3rem;">إتقان قواعد البيانات — الوحدة ٢ (مكتملة)</p></footer>
+
+    <!-- FULL EXAMPLE -->
+    <div class="section-block" id="full-example" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🏛️</span> مثال كامل — University Schema</div>
+        <p class="section-en">Complete ER to SQL — University Management System</p>
+        <p class="body-text">بنطبّق كل الـ 7 خطوات على نظام الجامعة اللي صمّمناه في الدروس السابقة:</p>
+
+        <div class="sql-block">
+            <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">University Complete Schema — 7 Steps Applied</span></div>
+            <div class="sbody">
+<span class="cmt">-- ══════════════════════════════════════════
+   STEP 1: Strong Entities
+   ══════════════════════════════════════════</span>
+
+<span class="kw">CREATE TABLE</span> <span class="tb">department</span> (
+    <span class="pk">dept_id</span>    <span class="cn">SERIAL PRIMARY KEY</span>,
+    dept_name  <span class="cn">VARCHAR(100) NOT NULL UNIQUE</span>,
+    budget     <span class="cn">DECIMAL(15,2) CHECK (budget >= 0)</span>
+);
+
+<span class="kw">CREATE TABLE</span> <span class="tb">instructor</span> (
+    <span class="pk">inst_id</span>        <span class="cn">SERIAL PRIMARY KEY</span>,
+    national_id    <span class="cn">CHAR(14) UNIQUE NOT NULL</span>,
+    full_name      <span class="cn">VARCHAR(100) NOT NULL</span>,
+    specialization <span class="cn">VARCHAR(100)</span>,
+    <span class="cmt">-- Step 4: dept_id FK (instructor belongs to dept 1:N)</span>
+    <span class="fk">dept_id</span>        <span class="cn">INT NOT NULL REFERENCES department(dept_id)</span>
+                   <span class="kw">ON DELETE RESTRICT</span>
+);
+
+<span class="kw">CREATE TABLE</span> <span class="tb">course</span> (
+    <span class="pk">course_code</span>  <span class="cn">VARCHAR(10) PRIMARY KEY</span>,  <span class="cmt">-- Natural PK e.g. 'CS301'</span>
+    course_name  <span class="cn">VARCHAR(200) NOT NULL</span>,
+    credit_hours <span class="cn">INT NOT NULL CHECK (credit_hours IN (1,2,3))</span>,
+    <span class="cmt">-- Step 3/4: instructor FK (one instructor supervises course — 1:N)</span>
+    <span class="fk">inst_id</span>      <span class="cn">INT REFERENCES instructor(inst_id)</span>
+                 <span class="kw">ON DELETE SET NULL</span>  <span class="cmt">-- Partial: كورس ممكن مش معيّن ليه أستاذ</span>
+);
+
+<span class="kw">CREATE TABLE</span> <span class="tb">student</span> (
+    <span class="pk">student_id</span>   <span class="cn">SERIAL PRIMARY KEY</span>,
+    student_code <span class="cn">VARCHAR(20) UNIQUE NOT NULL</span>,
+    first_name   <span class="cn">VARCHAR(50) NOT NULL</span>,
+    last_name    <span class="cn">VARCHAR(50) NOT NULL</span>,
+    birth_date   <span class="cn">DATE NOT NULL</span>,
+    gpa          <span class="cn">DECIMAL(3,2) CHECK (gpa BETWEEN 0 AND 4)</span>,
+    email        <span class="cn">VARCHAR(150) UNIQUE</span>,
+    <span class="cmt">-- Step 4: program_id FK</span>
+    <span class="fk">program_id</span>   <span class="cn">INT REFERENCES program(program_id)</span>
+);
+
+<span class="kw">CREATE TABLE</span> <span class="tb">program</span> (
+    <span class="pk">program_id</span>   <span class="cn">SERIAL PRIMARY KEY</span>,
+    program_name <span class="cn">VARCHAR(100) NOT NULL UNIQUE</span>,
+    <span class="fk">dept_id</span>      <span class="cn">INT NOT NULL REFERENCES department(dept_id)</span>
+);
+
+<span class="cmt">-- ══════════════════════════════════════════
+   STEP 2: Weak Entities
+   ══════════════════════════════════════════</span>
+
+<span class="kw">CREATE TABLE</span> <span class="tb">dependent</span> (
+    <span class="fk">inst_id</span>  <span class="cn">INT NOT NULL REFERENCES instructor(inst_id)</span> <span class="kw">ON DELETE CASCADE</span>,
+    dep_name <span class="cn">VARCHAR(100) NOT NULL</span>,
+    relation <span class="cn">VARCHAR(30) NOT NULL</span>,
+    <span class="kw">PRIMARY KEY</span> (<span class="fk">inst_id</span>, dep_name)
+);
+
+<span class="cmt">-- ══════════════════════════════════════════
+   STEP 3: 1:1 — Department HEADED BY Instructor
+   ══════════════════════════════════════════</span>
+
+<span class="kw">ALTER TABLE</span> <span class="tb">department</span>
+<span class="kw">ADD COLUMN</span> <span class="fk">head_inst_id</span> <span class="cn">INT UNIQUE</span>  <span class="cmt">-- Partial: قسم جديد ممكن ما لوش رئيس</span>
+     <span class="cn">REFERENCES instructor(inst_id)</span> <span class="kw">ON DELETE SET NULL</span>;
+
+<span class="cmt">-- ══════════════════════════════════════════
+   STEP 5: M:N — Student ENROLLS Course
+   ══════════════════════════════════════════</span>
+
+<span class="kw">CREATE TABLE</span> <span class="tb">enrollment</span> (
+    <span class="fk">student_id</span>  <span class="cn">INT NOT NULL REFERENCES student(student_id)</span> <span class="kw">ON DELETE CASCADE</span>,
+    <span class="fk">course_code</span> <span class="cn">VARCHAR(10) NOT NULL REFERENCES course(course_code)</span> <span class="kw">ON DELETE RESTRICT</span>,
+    semester    <span class="cn">VARCHAR(20) NOT NULL</span>,
+    grade       <span class="cn">CHAR(2)</span>,
+    enroll_date <span class="cn">DATE NOT NULL DEFAULT CURRENT_DATE</span>,
+    <span class="kw">PRIMARY KEY</span> (<span class="fk">student_id</span>, <span class="fk">course_code</span>, semester)
+);
+
+<span class="cmt">-- ══════════════════════════════════════════
+   STEP 6: Multivalued — Student phones
+   ══════════════════════════════════════════</span>
+
+<span class="kw">CREATE TABLE</span> <span class="tb">student_phone</span> (
+    <span class="fk">student_id</span> <span class="cn">INT NOT NULL REFERENCES student(student_id)</span> <span class="kw">ON DELETE CASCADE</span>,
+    phone      <span class="cn">VARCHAR(20) NOT NULL</span>,
+    <span class="kw">PRIMARY KEY</span> (<span class="fk">student_id</span>, phone)
+);
+            </div>
+        </div>
+    </div>
+
+    <!-- COMMON MISTAKES -->
+    <div class="section-block" data-aos="fade-up">
+        <div class="section-title"><span class="icon">⚠️</span> أخطاء التحويل الشائعة</div>
+        <div style="display:grid;gap:1rem;">
+            <div class="callout mistake" style="margin:0;"><div class="chead">1. وضع FK في الجانب الغلط (1:N)</div><p>❌ بيضيفوا order_ids كعمود في CUSTOMER. ✅ الـ FK دايماً في جانب N: customer_id في ORDER.</p></div>
+            <div class="callout mistake" style="margin:0;"><div class="chead">2. نسيان جدول وسيط لـ M:N</div><p>❌ بيضيفوا course_ids array في STUDENT. ✅ ENROLLMENT جدول منفصل مع Composite PK.</p></div>
+            <div class="callout mistake" style="margin:0;"><div class="chead">3. تخزين Derived Attributes</div><p>❌ بيضيفوا age و total_price وorder_count كأعمدة ثابتة. ✅ احسبها في الاستعلام.</p></div>
+            <div class="callout mistake" style="margin:0;"><div class="chead">4. Multivalued في نفس الجدول</div><p>❌ phone1, phone2, phone3. ✅ جدول STUDENT_PHONE منفصل بـ FK + قيمة.</p></div>
+            <div class="callout mistake" style="margin:0;"><div class="chead">5. نسيان ON DELETE المناسب</div><p>❌ كل الـ FKs بدون ON DELETE (بيستخدم RESTRICT افتراضياً). ✅ فكّر في كل FK: لو اتحذف الـ parent — إيه اللي المفروض يحصل؟</p></div>
+        </div>
+    </div>
+
+    <!-- PRACTICE -->
+    <div class="section-block" id="practice" data-aos="fade-up">
+        <div class="section-title"><span class="icon">✍️</span> تمرين عملي</div>
+        <div class="practice-block">
+            <div class="practice-header"><h3>🚗 تمرين: نظام إدارة سيارات</h3></div>
+            <div class="practice-body">
+                <div class="callout tip">
+                    <div class="chead">الـ ER المعطى</div>
+                    <p>OWNER (owner_id PK, name, phones*) - VEHICLE (vin PK, brand, color, year) - INSURANCE (policy_no PK, Company, start_date, end_date)<br><br>
+                    العلاقات:<br>
+                    • OWNER OWNS VEHICLE: 1:N (مالك عنده سيارات كتير)<br>
+                    • VEHICLE HAS INSURANCE: 1:1 (سيارة عندها تأمين واحد — Total من ناحية السيارة، Partial من ناحية الـ Insurance — سيارة لازم مؤمّنة)<br>
+                    • VEHICLE HAS ACCIDENT: 1:N — ACCIDENT هو Weak Entity (accident_seq partial key)</p>
+                </div>
+                <ul class="task-list">
+                    <li><span class="tnum">A</span>طبّق الـ 7 خطوات واكتب كل الجداول بـ SQL.</li>
+                    <li><span class="tnum">B</span>فين بيروح الـ FK في العلاقة 1:1 بين VEHICLE وINSURANCE؟</li>
+                </ul>
+                <button class="sol-btn" onclick="toggleSol(this)">👁️ اظهر الحل الكامل</button>
+                <div class="sol-content">
+                    <div class="callout why" style="margin-bottom:1rem;">
+                        <div class="chead">B — فين الـ FK في 1:1؟</div>
+                        <p>السيارة Total Participation (لازم عندها تأمين). الـ FK بيروح في جدول VEHICLE لأن Total Participation من ناحيتها. نضيف policy_no FK NOT NULL UNIQUE في VEHICLE.</p>
+                    </div>
+                    <div class="sql-block">
+                        <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Car Management System — Solution</span></div>
+                        <div class="sbody">
+<span class="cmt">-- Step 1: Strong Entities</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">owner</span> (
+    <span class="pk">owner_id</span>  <span class="cn">SERIAL PRIMARY KEY</span>,
+    full_name <span class="cn">VARCHAR(100) NOT NULL</span>
+);
+
+<span class="kw">CREATE TABLE</span> <span class="tb">insurance</span> (
+    <span class="pk">policy_no</span>  <span class="cn">VARCHAR(30) PRIMARY KEY</span>,
+    company    <span class="cn">VARCHAR(100) NOT NULL</span>,
+    start_date <span class="cn">DATE NOT NULL</span>,
+    end_date   <span class="cn">DATE NOT NULL CHECK (end_date > start_date)</span>
+);
+
+<span class="kw">CREATE TABLE</span> <span class="tb">vehicle</span> (
+    <span class="pk">vin</span>       <span class="cn">CHAR(17) PRIMARY KEY</span>,   <span class="cmt">-- Vehicle Identification Number</span>
+    brand     <span class="cn">VARCHAR(50) NOT NULL</span>,
+    color     <span class="cn">VARCHAR(30)</span>,
+    year      <span class="cn">INT CHECK (year BETWEEN 1990 AND 2030)</span>,
+    <span class="cmt">-- Step 3: 1:1 Total from vehicle side</span>
+    <span class="fk">policy_no</span> <span class="cn">VARCHAR(30) NOT NULL UNIQUE REFERENCES insurance(policy_no)</span>,
+    <span class="cmt">-- Step 4: 1:N Owner → Vehicle</span>
+    <span class="fk">owner_id</span>  <span class="cn">INT NOT NULL REFERENCES owner(owner_id)</span> <span class="kw">ON DELETE RESTRICT</span>
+);
+
+<span class="cmt">-- Step 2: Weak Entity ACCIDENT</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">accident</span> (
+    <span class="fk">vin</span>          <span class="cn">CHAR(17) NOT NULL REFERENCES vehicle(vin)</span> <span class="kw">ON DELETE CASCADE</span>,
+    accident_seq <span class="cn">INT NOT NULL</span>,   <span class="cmt">-- Partial Key</span>
+    accident_dt  <span class="cn">TIMESTAMPTZ NOT NULL</span>,
+    description  <span class="cn">TEXT</span>,
+    damage_cost  <span class="cn">DECIMAL(10,2)</span>,
+    <span class="kw">PRIMARY KEY</span> (<span class="fk">vin</span>, accident_seq)
+);
+
+<span class="cmt">-- Step 6: Multivalued phones</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">owner_phone</span> (
+    <span class="fk">owner_id</span> <span class="cn">INT NOT NULL REFERENCES owner(owner_id)</span> <span class="kw">ON DELETE CASCADE</span>,
+    phone    <span class="cn">VARCHAR(20) NOT NULL</span>,
+    <span class="kw">PRIMARY KEY</span> (<span class="fk">owner_id</span>, phone)
+);
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="section-block" id="quiz" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🧠</span> اختبار الفهم</div>
+        <div class="quiz-card" id="qq1">
+            <div class="quiz-q">١. في الـ M:N Mapping، كيف نخزّن صفات العلاقة (زي grade في ENROLLMENT)؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="ans(1,this,false)">في جدول STUDENT</div>
+                <div class="quiz-opt" onclick="ans(1,this,true)">في جدول ENROLLMENT (Junction Table)</div>
+                <div class="quiz-opt" onclick="ans(1,this,false)">في جدول COURSE</div>
+            </div>
+            <div class="quiz-fb" id="fb1"></div>
+        </div>
+        <div class="quiz-card" id="qq2">
+            <div class="quiz-q">٢. Weak Entity DEPENDENT عندها Partial Key = dep_name وOwner = EMPLOYEE. ما هو PK الجدول؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="ans(2,this,false)">dep_name فقط</div>
+                <div class="quiz-opt" onclick="ans(2,this,true)">Composite: (emp_id, dep_name)</div>
+                <div class="quiz-opt" onclick="ans(2,this,false)">dependent_id SERIAL</div>
+            </div>
+            <div class="quiz-fb" id="fb2"></div>
+        </div>
+        <div class="quiz-card" id="qq3">
+            <div class="quiz-q">٣. في 1:N، أين يذهب الـ FK؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="ans(3,this,false)">في جانب الـ 1</div>
+                <div class="quiz-opt" onclick="ans(3,this,true)">في جانب الـ N (الأبناء)</div>
+                <div class="quiz-opt" onclick="ans(3,this,false)">في جدول وسيط جديد</div>
+            </div>
+            <div class="quiz-fb" id="fb3"></div>
+        </div>
+        <div class="quiz-card" id="qq4">
+            <div class="quiz-q">٤. EMPLOYEE عندها Multivalued Attribute "skills". ما هو التمثيل الصحيح في SQL؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="ans(4,this,false)">عمود skill VARCHAR في EMPLOYEE</div>
+                <div class="quiz-opt" onclick="ans(4,this,false)">أعمدة skill1, skill2, skill3 في EMPLOYEE</div>
+                <div class="quiz-opt" onclick="ans(4,this,true)">جدول EMPLOYEE_SKILL(emp_id FK, skill_name, PK(emp_id, skill_name))</div>
+            </div>
+            <div class="quiz-fb" id="fb4"></div>
+        </div>
+        <div class="quiz-score-box" id="score-box">
+            <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+            <p id="score-msg" style="color:#94A3B8;"></p>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="relational_model.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: Relational Model</a>
+        <a href="../Unit3/ddl_basics.html" class="bnav-btn" style="color:#F9A8D4;">الوحدة 3: DDL SQL <i class="fas fa-arrow-left"></i></a>
+    </div>
+    </div>
+    <footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 2: التحويل من ER لـ SQL</footer>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        AOS.init({ duration: 800, once: true, offset: 100 });
-        window.addEventListener('scroll', () => { const p = (document.documentElement.scrollTop / (document.documentElement.scrollHeight - document.documentElement.clientHeight)) * 100; document.getElementById('reading-progress').style.width = p + '%'; });
-        let quizScore=0, answered=0; const total=4;
-        const fb = { 1:{correct:'🎉 صح! في 1:N الـ FK بيروح في جانب الـ N!',wrong:'❌ في 1:N الـ FK دايماً بيروح في جانب الـ N (الكتير).'}, 2:{correct:'✅ Junction Table — جدول وسيط فيه FK من الجدولين!',wrong:'❌ M:N بتحتاج Junction Table (جدول وسيط).'}, 3:{correct:'💪 جدول منفصل — FK + القيمة = PK مركب!',wrong:'❌ Multivalued Attribute بتتحول لجدول منفصل.'}, 4:{correct:'🎉 Partial Key + FK = PK مركب!',wrong:'❌ الـ PK = Partial Key + FK من الـ Owner Entity.'} };
-        function checkAnswer(q,el,correct){const qEl=document.getElementById('q'+q);if(qEl.classList.contains('answered'))return;qEl.classList.add('answered');answered++;qEl.querySelectorAll('.quiz-option').forEach(o=>o.style.pointerEvents='none');const f=document.getElementById('q'+q+'-feedback');if(correct){el.classList.add('correct');f.className='quiz-feedback show correct-fb';f.textContent=fb[q].correct;quizScore++;}else{el.classList.add('wrong');f.className='quiz-feedback show wrong-fb';f.textContent=fb[q].wrong;qEl.querySelectorAll('.quiz-option').forEach(o=>{if(o.getAttribute('onclick').includes('true'))o.classList.add('correct');});}if(answered===total){const sd=document.getElementById('quiz-score');sd.style.display='block';document.getElementById('score-text').textContent=`🏆 النتيجة: ${quizScore} / ${total}`;const msg=document.getElementById('score-msg');if(quizScore===total){msg.textContent='🎉 درجة كاملة! أنت جاهز للـ SQL!';msg.style.color='#34D399';}else if(quizScore>=3){msg.textContent='👏 كويس جداً! الوحدة الثانية خلصت!';msg.style.color='#FBBF24';}else{msg.textContent='💪 راجع الدرس وحاول تاني!';msg.style.color='#F87171';}}}
+        AOS.init({duration:700,once:true,offset:80});
+        window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+        function toggleSol(btn){const sc=btn.nextElementSibling;sc.classList.toggle('open');btn.textContent=sc.classList.contains('open')?'🙈 إخفاء الحل':'👁️ اظهر الحل الكامل';}
+        const fbs={
+            1:{c:'✅ صفات العلاقة تروح في الـ Junction Table — لأنها بتنتمي للعلاقة مش للكيان.',w:'❌ الصفة مش في STUDENT (عنده grades كتير) ومش في COURSE (فيه grades كتير). هي في العلاقة ENROLLMENT.'},
+            2:{c:'✅ Composite PK (emp_id, dep_name) — لو dep_name = "أحمد" موجود لأكتر من موظف، الاتنين مع بعض فريد.',w:'❌ dep_name وحده مش فريد (ممكن موظفين عندهم ابن باسم "أحمد"). emp_id وحده مش فريد (موظف عنده تبعيين كتير).'},
+            3:{c:'✅ الـ FK دايماً في جانب الـ N. مثلاً: EMPLOYEE.dept_id FK → DEPARTMENT. مش DEPARTMENT.employee_ids.',w:'❌ لو حطيت FK في جانب الـ 1، هتحتاج تخزن قائمة من الـ IDs — ده يكسر الـ First Normal Form.'},
+            4:{c:'✅ جدول منفصل EMPLOYEE_SKILL بـ FK وComposite PK. لو موظف عنده 100 skill — مش مشكلة.',w:'❌ عمود واحد = قيمة واحدة بس. وأعمدة skill1,2,3 تعني ماذا لو في أكتر من 3؟ الجدول المنفصل هو الحل.'}
+        };
+        let answered=0,score=0;
+        function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';const st=document.getElementById('score-text');const sm=document.getElementById('score-msg');st.textContent=`نتيجتك: ${score} / 4`;if(score===4){st.style.color='#34D399';sm.textContent='🎉 تقدر تحوّل أي ER لـ SQL!';}else if(score>=3){st.style.color='#FBBF24';sm.textContent='👏 كويس جداً!';}else{st.style.color='#F87171';sm.textContent='💪 راجع الخطوات.';}}}
     </script>
 </body>
 </html>

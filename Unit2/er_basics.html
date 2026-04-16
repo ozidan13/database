@@ -1,376 +1,737 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ER Basics — أساسيات الـ ER Diagram | Database Mastery</title>
-    <meta name="description" content="تعرف على الـ Entity-Relationship Diagram — الـ Entities, Attributes, وأنواعها بالتفصيل.">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <title>ER Basics — أساسيات الـ Entity-Relationship | Database Mastery</title>
+    <meta name="description" content="دليل شامل لـ ER Diagrams: كيف تحوّل متطلبات العمل لكيانات وصفات وعلاقات — مع أمثلة واقعية وتمارين بحلول كاملة.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link href="../css/global-db.css" rel="stylesheet">
     <style>
-        body { background: #020617; color: #E2E8F0; font-family: 'Inter', sans-serif; }
-        .lesson-nav-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(2,6,23,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.06); height: 64px; display: flex; align-items: center; padding: 0 1.5rem; }
-        .nav-inner { max-width: 1280px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; }
-        .nav-brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; }
-        .nav-brand .back-btn { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #3B82F6, #1D4ED8); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; transition: transform 0.3s; }
-        .nav-brand .back-btn:hover { transform: scale(1.1); }
-        .nav-links { display: flex; gap: 2rem; font-size: 0.85rem; font-family: 'Cairo', sans-serif; color: var(--text-faint); }
-        .nav-links a { transition: color 0.3s; direction: rtl; }
-        .nav-links a:hover { color: #60A5FA; }
-        @media (max-width: 768px) { .nav-links { display: none; } }
-        .lesson-hero { position: relative; padding: 8rem 1.5rem 5rem; text-align: center; overflow: hidden; }
-        .lesson-hero .glow-orb { position: absolute; width: 500px; height: 500px; border-radius: 50%; filter: blur(128px); pointer-events: none; }
-        .glow-orb-1 { top: -10%; right: -5%; background: rgba(59,130,246,0.15); }
-        .glow-orb-2 { bottom: -20%; left: -10%; background: rgba(139,92,246,0.08); }
-        .lesson-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 1rem; border-radius: 50px; background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08); font-family: 'Fira Code', monospace; font-size: 0.78rem; color: #60A5FA; margin-bottom: 1.5rem; }
-        .lesson-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #3B82F6; animation: pulse-dot 2s ease infinite; }
-        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-        .lesson-hero h1 { font-size: clamp(2.5rem,5vw,4rem); font-weight: 800; margin-bottom: 1rem; }
-        .lesson-hero h1 .text-gradient { background: linear-gradient(135deg, #3B82F6, #8B5CF6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-        .lesson-hero .subtitle { font-family: 'Cairo', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1.5rem; direction: rtl; unicode-bidi: isolate; }
-        .lesson-hero .desc { color: var(--text-faint); max-width: 600px; margin: 0 auto; font-size: 1rem; line-height: 1.8; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
-        .lesson-section { padding: 5rem 1.5rem; max-width: 960px; margin: 0 auto; }
-        .lesson-section.alt-bg { background: rgba(15,23,42,0.3); max-width: 100%; }
-        .lesson-section.alt-bg > .section-inner { max-width: 960px; margin: 0 auto; }
-        .section-header { text-align: center; margin-bottom: 3rem; }
-        .section-header h2 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
-        .section-header .en-sub { font-family: 'Inter', sans-serif; color: var(--text-faint); font-size: 0.9rem; direction: ltr; unicode-bidi: isolate; display: block; }
-        .progress-bar-container { position: fixed; top: 64px; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.05); z-index: 99; }
-        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #3B82F6, #8B5CF6); width: 0%; transition: width 0.1s ease-out; }
+        :root { --accent: #8B5CF6; --accent-lt: #A78BFA; --accent-bg: rgba(139,92,246,.12); }
+        body { background:#020617; color:#E2E8F0; font-family:'Cairo',sans-serif; direction:rtl; }
+        .lesson-nav-bar { position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem; }
+        .nav-inner { max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between; }
+        .back-btn { display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;transition:.3s; }
+        .back-btn .icon { width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#8B5CF6,#6D28D9);display:flex;align-items:center;justify-content:center;font-size:.8rem; }
+        .back-btn:hover { color:#A78BFA; }
+        .nav-toc { display:flex;gap:1.5rem;font-size:.82rem;color:#64748B; }
+        .nav-toc a:hover { color:#A78BFA; }
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#8B5CF6,#D946EF);width:0%;transition:width .1s ease-out;}
 
-        /* ER Shape Cards */
-        .er-shapes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 1.5rem; margin: 2rem 0; }
-        .er-shape { background: rgba(15,23,42,0.6); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 2rem; text-align: center; transition: all 0.4s; }
-        .er-shape:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-6px); }
-        .er-shape .shape-visual { width: 100px; height: 80px; margin: 0 auto 1.2rem; display: flex; align-items: center; justify-content: center; }
-        .er-shape .shape-visual .rect { width: 100px; height: 60px; border: 3px solid #60A5FA; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #60A5FA; font-size: 0.85rem; }
-        .er-shape .shape-visual .ellipse { width: 100px; height: 50px; border: 3px solid #34D399; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #34D399; font-size: 0.75rem; }
-        .er-shape .shape-visual .diamond { width: 70px; height: 70px; border: 3px solid #FBBF24; transform: rotate(45deg); display: flex; align-items: center; justify-content: center; }
-        .er-shape .shape-visual .diamond span { transform: rotate(-45deg); font-weight: 700; color: #FBBF24; font-size: 0.7rem; }
-        .er-shape h3 { font-size: 1.1rem; margin-bottom: 0.3rem; }
-        .er-shape .shape-ar { font-family: 'Cairo', sans-serif; font-size: 0.85rem; color: var(--text-faint); direction: rtl; unicode-bidi: isolate; margin-bottom: 0.8rem; }
-        .er-shape .shape-desc { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.9rem; color: var(--text-muted); line-height: 2; }
+        /* HERO */
+        .hero { padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden; }
+        .hero::before { content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(139,92,246,.12),transparent);pointer-events:none; }
+        .lesson-badge { display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#A78BFA;margin-bottom:1.5rem; }
+        .lesson-badge .pulse { width:6px;height:6px;border-radius:50%;background:#8B5CF6;animation:pulse 2s infinite; }
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1 { font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;margin-bottom:.8rem;line-height:1.2; }
+        .grad { background:linear-gradient(135deg,#8B5CF6,#D946EF);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent; }
+        .hero .en-title { font-family:'Inter',sans-serif;font-size:1.1rem;color:#64748B;margin-bottom:1rem;direction:ltr; }
+        .hero .desc { max-width:650px;margin:0 auto;font-size:1.05rem;color:#94A3B8;line-height:2; }
+        .learn-pills { display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem; }
+        .pill { padding:.3rem .8rem;border-radius:8px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);font-size:.78rem;color:#C4B5FD; }
 
-        /* Attribute Types */
-        .attr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 2rem 0; }
-        @media (max-width: 768px) { .attr-grid { grid-template-columns: 1fr; } }
-        .attr-card { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1.5rem; transition: all 0.3s; }
-        .attr-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-3px); }
-        .attr-card .attr-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
-        .attr-card h4 { font-size: 0.95rem; margin-bottom: 0.3rem; }
-        .attr-card .attr-ar { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.82rem; color: var(--text-faint); margin-bottom: 0.5rem; }
-        .attr-card p { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.88rem; color: var(--text-muted); line-height: 1.9; }
+        /* LAYOUT */
+        .lesson-body { max-width:900px;margin:0 auto;padding:0 1.5rem; }
+        .section-block { padding:4rem 0; border-bottom:1px solid rgba(255,255,255,.05); }
+        .section-block:last-child { border-bottom:none; }
+        .section-title { font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem; }
+        .section-title .icon { font-size:1.4rem; }
+        .section-en { font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr; }
 
-        /* ER Canvas */
-        #er-canvas-container { background: rgba(0,0,0,0.4); border-radius: 16px; border: 1px solid var(--border-subtle); overflow: hidden; margin: 2rem 0; }
-        #er-canvas { width: 100%; display: block; }
+        /* TEXT BLOCKS */
+        p.body-text { font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem; }
+        .highlight { color:#A78BFA;font-weight:700; }
+        .en-term { font-family:'Inter',sans-serif;color:#60A5FA;font-weight:600;unicode-bidi:isolate;direction:ltr;display:inline-block; }
+        .en-inline { font-family:'Fira Code',monospace;color:#A78BFA;font-size:.9em;unicode-bidi:isolate;direction:ltr;display:inline-block; }
 
-        .quiz-question { background: rgba(15,23,42,0.7); backdrop-filter: blur(12px); border: 1px solid var(--border-light); border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem; }
-        .quiz-question h4 { margin-bottom: 1rem; color: var(--text-primary); font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; }
-        .quiz-options { display: flex; flex-direction: column; gap: 0.6rem; }
-        .quiz-option { padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.3s; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; font-size: 0.92rem; color: var(--text-body); unicode-bidi: isolate; }
-        .quiz-option:hover { background: rgba(255,255,255,0.06); border-color: var(--border-hover); }
-        .quiz-option.correct { background: rgba(16,185,129,0.15); border-color: #10B981; color: #34D399; }
-        .quiz-option.wrong { background: rgba(239,68,68,0.15); border-color: #EF4444; color: #F87171; }
-        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: 10px; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; display: none; font-size: 0.92rem; line-height: 2; }
-        .quiz-feedback.show { display: block; }
-        .quiz-feedback.correct-fb { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #34D399; }
-        .quiz-feedback.wrong-fb { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #F87171; }
-        .lesson-bottom-nav { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 2rem 0; border-top: 1px solid var(--border-subtle); margin-top: 3rem; }
-        .lesson-bottom-nav a { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); transition: all 0.3s; font-weight: 600; font-size: 0.9rem; }
-        .lesson-bottom-nav a:hover { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); transform: translateY(-2px); }
+        /* CALLOUT BOXES */
+        .callout { border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0; }
+        .callout.why { background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2); }
+        .callout.why .chead { color:#22D3EE;font-weight:800;margin-bottom:.5rem; }
+        .callout.mistake { background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2); }
+        .callout.mistake .chead { color:#F87171;font-weight:800;margin-bottom:.5rem; }
+        .callout.realworld { background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2); }
+        .callout.realworld .chead { color:#34D399;font-weight:800;margin-bottom:.5rem; }
+        .callout.tip { background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2); }
+        .callout.tip .chead { color:#FBBF24;font-weight:800;margin-bottom:.5rem; }
+        .callout p { font-size:.95rem;line-height:2;color:#CBD5E1;margin:0; }
+
+        /* CONCEPT CARDS */
+        .concept-group { display:grid;gap:1.2rem;margin:2rem 0; }
+        .concept-card { background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:1.6rem;transition:.3s; }
+        .concept-card:hover { border-color:rgba(255,255,255,.13);transform:translateY(-2px); }
+        .concept-card .cc-head { display:flex;align-items:center;gap:.7rem;margin-bottom:.8rem; }
+        .concept-card .cc-tag { font-family:'Fira Code',monospace;font-size:.75rem;padding:.2rem .6rem;border-radius:6px;font-weight:700; }
+        .concept-card h3 { font-size:1.05rem;font-weight:700;margin:0; }
+        .concept-card .cc-def { font-size:.95rem;line-height:2;color:#CBD5E1;margin-bottom:.8rem; }
+        .concept-card .cc-ex { font-size:.88rem;line-height:1.9;color:#94A3B8;border-top:1px solid rgba(255,255,255,.05);padding-top:.8rem; }
+        .ex-list { list-style:none;padding:0;margin:.5rem 0; }
+        .ex-list li { padding:.25rem 0;font-size:.9rem;color:#CBD5E1;display:flex;align-items:flex-start;gap:.4rem; }
+        .ex-list li::before { content:'→';color:#8B5CF6;flex-shrink:0; }
+
+        /* ATTR TYPES GRID */
+        .attr-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem;margin:2rem 0; }
+        .attr-card { background:rgba(15,23,42,.7);border-radius:14px;padding:1.4rem;border:1px solid rgba(255,255,255,.07);transition:.3s; }
+        .attr-card:hover { border-color:rgba(255,255,255,.15);transform:translateY(-3px); }
+        .attr-card .at-header { display:flex;align-items:center;gap:.6rem;margin-bottom:.7rem; }
+        .attr-card .at-icon { font-size:1.4rem; }
+        .attr-card .at-name { font-size:1rem;font-weight:700; }
+        .attr-card .at-en { font-family:'Inter',sans-serif;font-size:.78rem;color:#475569;direction:ltr; }
+        .attr-card p { font-size:.88rem;line-height:1.9;color:#94A3B8;margin-bottom:.7rem; }
+        .attr-examples { font-size:.82rem;color:#64748B; }
+        .attr-examples span { display:inline-block;padding:.15rem .5rem;border-radius:5px;background:rgba(255,255,255,.04);margin:.15rem; font-family:'Fira Code',monospace; }
+
+        /* SYMBOL TABLE */
+        .symbol-table { width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:.88rem; }
+        .symbol-table th { text-align:right;padding:.7rem 1rem;background:rgba(139,92,246,.1);border:1px solid rgba(255,255,255,.06);color:#A78BFA;font-weight:700; }
+        .symbol-table td { padding:.7rem 1rem;border:1px solid rgba(255,255,255,.05);color:#CBD5E1;vertical-align:top;line-height:1.8; }
+        .symbol-table tr:nth-child(even) td { background:rgba(255,255,255,.02); }
+        .symbol-table .sym { font-size:1.3rem;text-align:center; }
+
+        /* WORKED EXAMPLE */
+        .worked-ex { background:rgba(8,14,30,.8);border:1px solid rgba(139,92,246,.2);border-radius:18px;padding:2rem;margin:2rem 0; }
+        .worked-ex .we-title { font-size:1.15rem;font-weight:800;color:#A78BFA;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem; }
+        .req-box { background:rgba(15,23,42,.8);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:1.3rem 1.5rem;margin:1rem 0;font-size:.93rem;line-height:2.1;color:#CBD5E1; }
+        .req-box .req-label { font-family:'Fira Code',monospace;font-size:.72rem;color:#475569;margin-bottom:.6rem;direction:ltr; }
+        .step-block { margin:1.5rem 0; }
+        .step-block .step-num { background:linear-gradient(135deg,#8B5CF6,#6D28D9);color:white;font-weight:800;font-size:.8rem;padding:.3rem .7rem;border-radius:8px;display:inline-block;margin-bottom:.8rem;font-family:'Inter',sans-serif; }
+        .step-block p { font-size:.93rem;line-height:2;color:#CBD5E1;margin-bottom:.6rem; }
+
+        /* ENTITY DIAGRAM VISUAL */
+        .er-visual { background:rgba(8,14,30,.9);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:2rem;margin:1.5rem 0;overflow-x:auto; }
+        .er-visual .er-title { font-family:'Fira Code',monospace;font-size:.72rem;color:#475569;margin-bottom:1.2rem;direction:ltr; }
+        .entity-box { display:inline-flex;flex-direction:column;align-items:center;margin:0 1rem; }
+        .entity-rect { border:2.5px solid #A78BFA;border-radius:6px;padding:.5rem 1.5rem;font-weight:700;font-size:.9rem;color:#A78BFA;background:rgba(139,92,246,.08);min-width:120px;text-align:center; }
+        .entity-rect.weak { border-style:double;border-width:4px; }
+        .entity-attrs { display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;margin-top:.8rem;max-width:180px; }
+        .attr-oval { border:1.5px solid;border-radius:50px;padding:.2rem .7rem;font-size:.72rem;font-family:'Fira Code',monospace;text-align:center; }
+        .attr-oval.key { font-weight:700;text-decoration:underline; }
+        .attr-oval.derived { border-style:dashed; }
+        .attr-oval.multi { border-width:3px; }
+        .attr-oval.composite { border-style:solid; }
+
+        /* PRACTICE */
+        .practice-block { background:rgba(15,23,42,.8);border:1px solid rgba(255,255,255,.07);border-radius:18px;overflow:hidden;margin:2rem 0; }
+        .practice-header { background:rgba(139,92,246,.1);padding:1.2rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.06); }
+        .practice-header h3 { font-size:1.1rem;font-weight:800;color:#A78BFA;margin:0; }
+        .practice-body { padding:1.8rem; }
+        .practice-req { background:rgba(0,0,0,.3);border-radius:10px;padding:1.2rem;font-size:.93rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem; }
+        .practice-tasks { list-style:none;padding:0;margin-bottom:1.5rem; }
+        .practice-tasks li { padding:.5rem 0;font-size:.93rem;color:#CBD5E1;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:.5rem; }
+        .task-num { background:rgba(139,92,246,.15);color:#A78BFA;font-weight:800;font-size:.78rem;padding:.1rem .5rem;border-radius:5px;flex-shrink:0;font-family:'Inter',sans-serif; }
+        .solution-toggle { width:100%;padding:.9rem;border-radius:10px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.2);color:#A78BFA;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:.3s; }
+        .solution-toggle:hover { background:rgba(139,92,246,.18); }
+        .solution-content { display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.05); }
+        .solution-content.open { display:block; }
+
+        /* QUIZ */
+        .quiz-section { padding:4rem 0; }
+        .quiz-card { background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem; }
+        .quiz-q { font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9; }
+        .quiz-opts { display:flex;flex-direction:column;gap:.6rem; }
+        .quiz-opt { padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right; }
+        .quiz-opt:hover { background:rgba(255,255,255,.05); }
+        .quiz-opt.correct { background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399; }
+        .quiz-opt.wrong { background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171; }
+        .quiz-fb { margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none; }
+        .quiz-fb.show { display:block; }
+        .quiz-fb.ok { background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399; }
+        .quiz-fb.bad { background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171; }
+        .quiz-score-box { text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem; }
+
+        /* REFERENCE TABLE */
+        .ref-table { width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:.87rem; }
+        .ref-table th { text-align:right;padding:.7rem 1rem;background:rgba(139,92,246,.1);border:1px solid rgba(255,255,255,.06);color:#A78BFA;font-weight:700; }
+        .ref-table td { padding:.65rem 1rem;border:1px solid rgba(255,255,255,.05);color:#CBD5E1;line-height:1.8; }
+        .ref-table tr:hover td { background:rgba(255,255,255,.025); }
+
+        /* BOTTOM NAV */
+        .bottom-nav { display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem; }
+        .bnav-btn { display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s; }
+        .bnav-btn:hover { background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.3);transform:translateY(-2px); }
+        .bnav-btn.next { color:#A78BFA; }
     </style>
 </head>
 <body>
     <nav class="lesson-nav-bar">
         <div class="nav-inner">
-            <a href="../index.html" class="nav-brand"><div class="back-btn"><i class="fas fa-arrow-left"></i></div><span><span style="color:#3B82F6;">ER</span>Basics</span></a>
-            <div class="nav-links"><a href="#shapes">الأشكال</a><a href="#entities">الكيانات</a><a href="#attributes">الصفات</a><a href="#quiz">اختبر نفسك</a></div>
+            <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-arrow-right"></i></div>العودة للبوابة</a>
+            <div class="nav-toc">
+                <a href="#why-model">لماذا نصمم؟</a>
+                <a href="#entities">الكيانات</a>
+                <a href="#attributes">الصفات</a>
+                <a href="#notation">الرسم</a>
+                <a href="#worked">مثال كامل</a>
+                <a href="#practice">تمرين</a>
+                <a href="#quiz">اختبار</a>
+            </div>
         </div>
     </nav>
-    <div class="progress-bar-container"><div class="progress-bar-fill" id="reading-progress"></div></div>
+    <div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
 
-    <header class="lesson-hero">
-        <div class="glow-orb glow-orb-1"></div><div class="glow-orb glow-orb-2"></div>
-        <div style="position:relative;z-index:1;">
-            <div class="lesson-badge" data-aos="fade-down"><span class="dot"></span> UNIT 2 • Lesson 1</div>
-            <h1 data-aos="fade-up" data-aos-delay="150"><span class="text-gradient">ER</span> Basics</h1>
-            <div class="subtitle" data-aos="fade-up" data-aos-delay="300">أساسيات الـ Entity-Relationship Diagram</div>
-            <p class="desc" data-aos="fade-up" data-aos-delay="450">قبل ما نكتب أي SQL — لازم نرسم خريطة البيانات الأول! 🗺️</p>
+    <!-- HERO -->
+    <header class="hero" data-aos="fade-up">
+        <div class="lesson-badge"><span class="pulse"></span>الوحدة 2 — الدرس 1</div>
+        <h1>أساسيات الـ <span class="grad">ER Diagram</span></h1>
+        <p class="en-title">Entity-Relationship Modeling — The Foundation of Database Design</p>
+        <p class="desc">قبل ما تكتب سطر SQL واحد — لازم تعرف إيه اللي هتبنيه. الـ ER Diagram هو الخطة اللي بناء عليها كل قاعدة بيانات محترمة.</p>
+        <div class="learn-pills">
+            <span class="pill">تحويل المتطلبات لكيانات</span>
+            <span class="pill">6 أنواع الصفات</span>
+            <span class="pill">Strong vs Weak Entities</span>
+            <span class="pill">Chen Notation</span>
+            <span class="pill">مثال كامل: نظام جامعة</span>
+            <span class="pill">أخطاء شائعة + تمرين</span>
         </div>
     </header>
 
-    <!-- Why ER -->
-    <section class="lesson-section" id="intro">
-        <div class="section-header" data-aos="fade-up">
-            <h2><i class="fas fa-lightbulb" style="color:#FBBF24;margin-left:0.5rem;"></i> ليه نرسم قبل ما نبني؟</h2>
-            <p class="en-sub">Why Design Before You Code?</p>
-        </div>
-        <div class="glass-card" style="padding:2rem;border-radius:20px;" data-aos="fade-up">
-            <div class="rtl-block" style="font-size:1.05rem;">
-                <p style="color:#E2E8F0;margin-bottom:1.5rem;">تخيل إنك بتبني عمارة. هل هتبدأ تحط طوب على طول؟ 🧱</p>
-                <p style="color:#CBD5E1;margin-bottom:1.5rem;"><span class="hl-red">لأ طبعاً!</span> لازم الأول ترسم الـ <span class="english">Blueprint</span> (المخطط المعماري) — عشان تعرف كل حاجة هتبقى فين.</p>
-                <p style="color:#CBD5E1;margin-bottom:1.5rem;">نفس الكلام في قواعد البيانات — الـ <span class="english">ER Diagram</span> هو الـ <span class="hl-blue">Blueprint</span> بتاع الـ <span class="english">Database</span>. بيبيّن:</p>
-                <div class="step-box" style="border-color:#3B82F6;margin-bottom:0.8rem;"><p style="color:#60A5FA;">📦 إيه البيانات اللي هنخزنها (<span class="english">Entities</span>)</p></div>
-                <div class="step-box" style="border-color:#34D399;margin-bottom:0.8rem;"><p style="color:#34D399;">📝 كل حاجة ليها إيه صفات (<span class="english">Attributes</span>)</p></div>
-                <div class="step-box" style="border-color:#FBBF24;"><p style="color:#FBBF24;">🔗 العلاقات بين البيانات (<span class="english">Relationships</span>)</p></div>
-                <div class="note" style="margin-top:1.5rem;">💡 الـ <span class="english">ER Model</span> اخترعه <span class="english">Peter Chen</span> سنة ١٩٧٦. لحد النهاردة بيتستخدم في كل الجامعات والشركات لتصميم قواعد البيانات!</div>
-            </div>
-        </div>
-    </section>
+    <div class="lesson-body">
 
-    <!-- ER Shapes -->
-    <section class="lesson-section alt-bg" id="shapes">
-        <div class="section-inner">
-            <div class="section-header" data-aos="fade-up">
-                <h2><i class="fas fa-shapes" style="color:#60A5FA;margin-left:0.5rem;"></i> أشكال الـ ER Diagram</h2>
-                <p class="en-sub">The Building Blocks</p>
-            </div>
-            <div class="er-shapes" data-aos="fade-up" data-aos-delay="100">
-                <div class="er-shape">
-                    <div class="shape-visual"><div class="rect">STUDENT</div></div>
-                    <h3 style="color:#60A5FA;">Rectangle — مستطيل</h3>
-                    <div class="shape-ar">يمثل الـ Entity (الكيان)</div>
-                    <div class="shape-desc">كل مستطيل = نوع بيانات مستقل. مثلاً: <span class="english">Student</span>، <span class="english">Course</span>، <span class="english">Department</span>. الكيان هو "حاجة" في الواقع عايزين نخزن بيانات عنها.</div>
-                </div>
-                <div class="er-shape">
-                    <div class="shape-visual"><div class="ellipse">Name</div></div>
-                    <h3 style="color:#34D399;">Ellipse — بيضاوي</h3>
-                    <div class="shape-ar">يمثل الـ Attribute (الصفة)</div>
-                    <div class="shape-desc">كل بيضاوي = صفة للكيان. مثلاً: اسم الطالب، رقم الهاتف، المعدل. الصفات بتوصف الكيان بالتفصيل.</div>
-                </div>
-                <div class="er-shape">
-                    <div class="shape-visual"><div class="diamond"><span>enrolls</span></div></div>
-                    <h3 style="color:#FBBF24;">Diamond — معين</h3>
-                    <div class="shape-ar">يمثل الـ Relationship (العلاقة)</div>
-                    <div class="shape-desc">كل معين = علاقة بين كيانين أو أكتر. مثلاً: الطالب <span class="english">enrolls in</span> مادة. الدكتور <span class="english">teaches</span> مادة.</div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- ====== SECTION 1: WHY MODEL ====== -->
+    <div class="section-block" id="why-model" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🤔</span> ليه بنتعب نعمل ER قبل الـ SQL؟</div>
+        <p class="section-en">Why Data Modeling Before Implementation</p>
+        <p class="body-text">كتير من المبتدئين بيبدأوا يكتبوا <span class="en-inline">CREATE TABLE</span> من الدقيقة الأولى! النتيجة؟ بعد أسبوعين — لما الكود كبر — بيلاقوا إنهم محتاجين يغيّروا الـ Schema بالكامل. وده في الـ Production بيعني:</p>
 
-    <!-- Entities -->
-    <section class="lesson-section" id="entities">
-        <div class="section-header" data-aos="fade-up">
-            <h2><i class="fas fa-cube" style="color:#60A5FA;margin-left:0.5rem;"></i> الكيانات بالتفصيل</h2>
-            <p class="en-sub">Entity Types — Strong vs Weak</p>
+        <div class="callout why">
+            <div class="chead">💡 تكلفة تغيير الـ Schema في مراحل مختلفة</div>
+            <p>⏱️ <span class="en-term">Design Phase</span>: تغيير ورقة رسم = دقيقتين.<br>
+            ⏱️ <span class="en-term">Development Phase</span>: تغيير الكود + الجداول = ساعات.<br>
+            ⏱️ <span class="en-term">Production Phase</span>: Migration + data transformation + downtime = أيام أو أسابيع.<br>
+            📌 الـ ER بيخليك تكتشف الأخطاء <strong>وأنت لسه بترسم</strong>.</p>
         </div>
-        <div class="glass-card" style="padding:2rem;border-radius:20px;margin-bottom:2rem;" data-aos="fade-up">
-            <div class="rtl-block" style="font-size:1.05rem;">
-                <p style="color:#E2E8F0;margin-bottom:1.5rem;">الـ <span class="english">Entity</span> (الكيان) هو أي حاجة في العالم الحقيقي عايزين نخزن بيانات عنها.</p>
-                <p style="color:#CBD5E1;margin-bottom:1rem;">في نوعين:</p>
-            </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;" data-aos="fade-up" data-aos-delay="100">
-            <div class="glass-card" style="padding:1.5rem;border-radius:16px;border-top:3px solid #60A5FA;">
-                <h4 style="color:#60A5FA;margin-bottom:0.5rem;">📦 Strong Entity — كيان قوي</h4>
-                <div class="rtl-block" style="font-size:0.9rem;color:#CBD5E1;">
-                    <p style="margin-bottom:0.8rem;">بيقدر يعيش لوحده — عنده <span class="english">Primary Key</span> خاص بيه.</p>
-                    <p style="color:#94A3B8;">أمثلة: <span class="english">Student</span> (ID)، <span class="english">Department</span> (Dept_ID)، <span class="english">Course</span> (Course_Code)</p>
-                    <p style="margin-top:0.5rem;color:#60A5FA;">الرسم: مستطيل عادي بخط واحد 📦</p>
-                </div>
-            </div>
-            <div class="glass-card" style="padding:1.5rem;border-radius:16px;border-top:3px solid #F87171;">
-                <h4 style="color:#F87171;margin-bottom:0.5rem;">👶 Weak Entity — كيان ضعيف</h4>
-                <div class="rtl-block" style="font-size:0.9rem;color:#CBD5E1;">
-                    <p style="margin-bottom:0.8rem;">مش بيقدر يعيش لوحده — محتاج كيان تاني عشان يتعرف. عنده <span class="english">Partial Key</span> بس.</p>
-                    <p style="color:#94A3B8;">مثال: <span class="english">Dependent</span> (معال الموظف) — "أحمد ابن محمد" مش هنعرفه إلا لو عرفنا مين "محمد" (الموظف).</p>
-                    <p style="margin-top:0.5rem;color:#F87171;">الرسم: مستطيل بخط مزدوج 📦📦</p>
-                </div>
-            </div>
-        </div>
-        <div class="glass-card" style="padding:1.5rem;border-radius:16px;margin-top:1.5rem;" data-aos="fade-up" data-aos-delay="200">
-            <div class="rtl-block" style="color:#94A3B8;font-size:0.95rem;text-align:center;">
-                <p>🎓 <span class="hl-amber">مهم للامتحان:</span> الـ <span class="english">Weak Entity</span> دايماً بيكون في علاقة <span class="english">Total Participation</span> مع الـ <span class="english">Owner Entity</span>. والعلاقة بينهم اسمها <span class="english">Identifying Relationship</span> (بترسم بمعين مزدوج).</p>
-            </div>
-        </div>
-    </section>
 
-    <!-- Attributes -->
-    <section class="lesson-section alt-bg" id="attributes">
-        <div class="section-inner">
-            <div class="section-header" data-aos="fade-up">
-                <h2><i class="fas fa-tags" style="color:#34D399;margin-left:0.5rem;"></i> أنواع الصفات</h2>
-                <p class="en-sub">Attribute Types</p>
-            </div>
-            <div class="attr-grid" data-aos="fade-up" data-aos-delay="100">
-                <div class="attr-card">
-                    <div class="attr-icon">🔵</div>
-                    <h4 style="color:#60A5FA;">Simple Attribute</h4>
-                    <div class="attr-ar">صفة بسيطة</div>
-                    <p>صفة مش ممكن نقسمها لأجزاء أصغر. مثلاً: <span class="english">Age</span>، <span class="english">GPA</span>، <span class="english">SSN</span>.</p>
-                </div>
-                <div class="attr-card">
-                    <div class="attr-icon">🟣</div>
-                    <h4 style="color:#A78BFA;">Composite Attribute</h4>
-                    <div class="attr-ar">صفة مركبة</div>
-                    <p>صفة ممكن نقسمها. مثلاً: <span class="english">Full Name</span> = <span class="english">First + Middle + Last</span>. أو <span class="english">Address</span> = شارع + مدينة + رقم.</p>
-                </div>
-                <div class="attr-card">
-                    <div class="attr-icon">🔴</div>
-                    <h4 style="color:#F87171;">Multivalued Attribute</h4>
-                    <div class="attr-ar">صفة متعددة القيم</div>
-                    <p>ممكن يكون لها أكتر من قيمة. مثلاً: <span class="english">Phone Numbers</span> (ممكن يكون عند الشخص 2-3 أرقام). بترسم ببيضاوي مزدوج.</p>
-                </div>
-                <div class="attr-card">
-                    <div class="attr-icon">🟡</div>
-                    <h4 style="color:#FBBF24;">Derived Attribute</h4>
-                    <div class="attr-ar">صفة مشتقة</div>
-                    <p>قيمتها بتتحسب من صفات تانية. مثلاً: <span class="english">Age</span> ممكن نحسبه من <span class="english">Birth Date</span>. بترسم ببيضاوي متقطع.</p>
-                </div>
-                <div class="attr-card">
-                    <div class="attr-icon">🔑</div>
-                    <h4 style="color:#34D399;">Key Attribute</h4>
-                    <div class="attr-ar">صفة مفتاحية</div>
-                    <p>الصفة اللي بتميز كل <span class="english">Entity</span> عن التاني — زي <span class="english">Student ID</span> أو <span class="english">SSN</span>. بترسم ببيضاوي مع خط تحت الاسم.</p>
-                </div>
-                <div class="attr-card">
-                    <div class="attr-icon">📦</div>
-                    <h4 style="color:#22D3EE;">Stored Attribute</h4>
-                    <div class="attr-ar">صفة مخزنة</div>
-                    <p>الصفة اللي فعلاً متخزنة في الـ <span class="english">Database</span>. مثلاً: <span class="english">Birth Date</span> مخزن — بس <span class="english">Age</span> مشتق منه.</p>
-                </div>
-            </div>
+        <p class="body-text">الـ <span class="highlight">Entity-Relationship Model</span> اقترحه <span class="en-term">Peter Chen</span> سنة 1976، وهو الطريقة الأكتر استخداماً في العالم لتصميم قواعد البيانات. الفكرة بسيطة: بنحوّل متطلبات العمل (اللي غالباً بتيجي في شكل نص أو اجتماع) لـ diagram بصري واضح يفهمه الـ developer والـ business analyst والـ CEO.</p>
 
-            <!-- Visual Example -->
-            <div class="glass-card" style="padding:2rem;border-radius:20px;margin-top:2rem;" data-aos="fade-up" data-aos-delay="200">
-                <div class="section-header" style="margin-bottom:1.5rem;"><h3 style="color:#60A5FA;">🎨 مثال عملي: كيان الطالب</h3></div>
-                <div id="er-canvas-container"><canvas id="er-canvas" width="800" height="400"></canvas></div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Quiz -->
-    <section class="lesson-section" id="quiz">
-        <div class="section-header" data-aos="fade-up">
-            <h2><i class="fas fa-brain" style="color:#D946EF;margin-left:0.5rem;"></i> اختبر نفسك!</h2>
-            <p class="en-sub">Quick Knowledge Check</p>
-        </div>
-        <div data-aos="fade-up" data-aos-delay="100">
-            <div class="quiz-question" id="q1">
-                <h4>❓ سؤال ١: الشكل المستطيل في الـ ER Diagram بيمثل إيه؟</h4>
-                <div class="quiz-options">
-                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">Attribute — صفة</div>
-                    <div class="quiz-option" onclick="checkAnswer(1,this,true)">Entity — كيان</div>
-                    <div class="quiz-option" onclick="checkAnswer(1,this,false)">Relationship — علاقة</div>
-                </div>
-                <div class="quiz-feedback" id="q1-feedback"></div>
-            </div>
-            <div class="quiz-question" id="q2">
-                <h4>❓ سؤال ٢: الـ Weak Entity بيختلف عن الـ Strong Entity في إيه؟</h4>
-                <div class="quiz-options">
-                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">مالوش صفات</div>
-                    <div class="quiz-option" onclick="checkAnswer(2,this,true)">مش بيقدر يتعرف لوحده — محتاج Owner Entity</div>
-                    <div class="quiz-option" onclick="checkAnswer(2,this,false)">بيتخزن في ملفات مش في Database</div>
-                </div>
-                <div class="quiz-feedback" id="q2-feedback"></div>
-            </div>
-            <div class="quiz-question" id="q3">
-                <h4>❓ سؤال ٣: لو عندي صفة "العمر" ممكن أحسبها من "تاريخ الميلاد" — ده نوع إيه من الصفات؟</h4>
-                <div class="quiz-options">
-                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">Composite Attribute</div>
-                    <div class="quiz-option" onclick="checkAnswer(3,this,false)">Multivalued Attribute</div>
-                    <div class="quiz-option" onclick="checkAnswer(3,this,true)">Derived Attribute — صفة مشتقة</div>
-                </div>
-                <div class="quiz-feedback" id="q3-feedback"></div>
-            </div>
-            <div class="quiz-question" id="q4">
-                <h4>❓ سؤال ٤: لو شخص عنده أكتر من رقم تليفون — نوع الصفة ده إيه؟</h4>
-                <div class="quiz-options">
-                    <div class="quiz-option" onclick="checkAnswer(4,this,true)">Multivalued Attribute</div>
-                    <div class="quiz-option" onclick="checkAnswer(4,this,false)">Derived Attribute</div>
-                    <div class="quiz-option" onclick="checkAnswer(4,this,false)">Key Attribute</div>
-                </div>
-                <div class="quiz-feedback" id="q4-feedback"></div>
-            </div>
-        </div>
-        <div id="quiz-score" style="text-align:center;margin-top:2rem;display:none;">
-            <div class="glass-card" style="padding:2rem;border-radius:20px;display:inline-block;">
-                <div class="rtl-block"><h3 style="color:#34D399;margin-bottom:0.5rem;" id="score-text"></h3><p style="color:#94A3B8;" id="score-msg"></p></div>
-            </div>
-        </div>
-    </section>
-
-    <section class="lesson-section alt-bg">
-        <div class="section-inner">
-            <div class="section-header" data-aos="fade-up"><h2><i class="fas fa-flag-checkered" style="color:#10B981;margin-left:0.5rem;"></i> الخلاصة</h2><p class="en-sub">Key Takeaways</p></div>
-            <div class="glass-card" style="padding:2rem;border-radius:20px;" data-aos="fade-up">
-                <div class="rtl-block" style="font-size:1.05rem;">
-                    <div class="step-box" style="border-color:#3B82F6;margin-bottom:1rem;"><p style="color:#60A5FA;">① الـ <span class="english">ER Diagram</span> هو الخريطة اللي بترسمها قبل ما تبني الـ <span class="english">Database</span>.</p></div>
-                    <div class="step-box" style="border-color:#34D399;margin-bottom:1rem;"><p style="color:#34D399;">② الأشكال الأساسية: مستطيل (كيان) + بيضاوي (صفة) + معين (علاقة).</p></div>
-                    <div class="step-box" style="border-color:#F59E0B;margin-bottom:1rem;"><p style="color:#FBBF24;">③ الصفات ليها أنواع: بسيطة، مركبة، متعددة القيم، مشتقة، مفتاحية.</p></div>
-                    <div class="step-box" style="border-color:#8B5CF6;"><p style="color:#A78BFA;">④ في الدرس الجاي هندرس <span class="hl-purple">العلاقات</span> بالتفصيل — <span class="english">Cardinality</span> و <span class="english">Participation</span>!</p></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <div style="max-width:960px;margin:0 auto;padding:0 1.5rem;">
-        <div class="lesson-bottom-nav">
-            <a href="../Unit1/database_history.html"><i class="fas fa-arrow-right"></i><span>الوحدة السابقة</span></a>
-            <a href="er_relationships.html" style="color:#60A5FA;"><span>الدرس التالي: العلاقات في ER</span><i class="fas fa-arrow-left"></i></a>
+        <div class="callout realworld">
+            <div class="chead">🏢 في الشغل الحقيقي</div>
+            <p>الـ <span class="en-term">System Analyst</span> بييجيله متطلبات من صاحب العمل. مهمته إنه يحوّل الكلام المكتوب لـ ER Diagram، يعرضه على الـ Stakeholders، يعدّل عليه، وبعد الموافقة يبدأ هو والـ Developers يبنوا. الخطأ في الـ ER = خطأ في كل حاجة بعد كده.</p>
         </div>
     </div>
-    <footer style="text-align:center;padding:3rem 1.5rem;color:var(--text-ghost);font-size:0.85rem;border-top:1px solid var(--border-subtle);"><p>Database Mastery — Unit 2: Data Modeling & ER</p><p style="font-family:'Cairo',sans-serif;margin-top:0.3rem;">إتقان قواعد البيانات — الوحدة ٢</p></footer>
+
+    <!-- ====== SECTION 2: ENTITIES ====== -->
+    <div class="section-block" id="entities" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🎯</span> الكيانات — Entities</div>
+        <p class="section-en">What is an Entity? Strong vs. Weak</p>
+
+        <p class="body-text">الـ <span class="highlight">Entity</span> هو أي "حاجة" في الواقع الحقيقي عايزين نخزّن بيانات عنها. مش لازم تكون جسم ملموس — ممكن تكون حدث أو مفهوم.</p>
+
+        <div class="callout tip">
+            <div class="chead">💡 اختبر بسرعة — هل ده Entity؟</div>
+            <p>لو تقدر تقول "عايز أتذكّر معلومات عن [حاجة]" وبتعاملها كوحدة مستقلة — هي Entity. مثال: "عايز أتذكّر معلومات عن كل طالب" → STUDENT هي Entity. "عايز أتذكّر معلومات عن كل يوم في الأسبوع" → مش Entity، ده بيانات ثابتة.</p>
+        </div>
+
+        <div class="concept-group">
+            <!-- Strong Entity -->
+            <div class="concept-card" style="border-right:3px solid #A78BFA;">
+                <div class="cc-head">
+                    <span class="cc-tag" style="background:rgba(139,92,246,.15);color:#A78BFA;">Strong Entity</span>
+                    <h3 style="color:#A78BFA;">الكيان القوي</h3>
+                </div>
+                <div class="cc-def">الكيان القوي هو كيان عنده <strong>هوية مستقلة</strong> — يقدر يتعرّف على نفسه بدون ما يحتاج لكيان تاني. يعني عنده <span class="en-term">Primary Key</span> خاص بيه.</div>
+                <div class="cc-ex">
+                    <strong style="color:#94A3B8;font-size:.85rem;">أمثلة واقعية:</strong>
+                    <ul class="ex-list">
+                        <li><strong>STUDENT</strong> — الطالب عنده ID فريد (student_id). ممكن تتكلم عنه بدون ما تذكر أي حاجة تانية.</li>
+                        <li><strong>PRODUCT</strong> في متجر إلكتروني — كل منتج عنده product_id مستقل.</li>
+                        <li><strong>EMPLOYEE</strong> — كل موظف عنده national_id أو employee_number خاص بيه.</li>
+                        <li><strong>COURSE</strong> — كل كورس عنده course_code زي "CS301".</li>
+                        <li><strong>CUSTOMER</strong> — كل عميل عنده email أو customer_id فريد.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Weak Entity -->
+            <div class="concept-card" style="border-right:3px solid #60A5FA;">
+                <div class="cc-head">
+                    <span class="cc-tag" style="background:rgba(96,165,250,.15);color:#60A5FA;">Weak Entity</span>
+                    <h3 style="color:#60A5FA;">الكيان الضعيف</h3>
+                </div>
+                <div class="cc-def">الكيان الضعيف هو كيان <strong>لا يملك هوية مستقلة</strong>. وجوده مرتبط بكيان قوي (اللي بنسميه <span class="en-term">Owner Entity</span>). الـ Primary Key بتاعه مش كافي لوحده — بيحتاج يُضاف له الـ PK بتاع الـ Owner.</div>
+                <div class="cc-ex">
+                    <strong style="color:#94A3B8;font-size:.85rem;">أمثلة واقعية:</strong>
+                    <ul class="ex-list">
+                        <li><strong>ORDER_ITEM</strong> — كل بند في أوردر. رقم البند (1, 2, 3) بيتكرر في أوردرات مختلفة. هويته = (order_id + item_number).</li>
+                        <li><strong>DEPENDENT</strong> — أولاد الموظف. "أحمد ابن الموظف رقم 5" غير "أحمد ابن الموظف رقم 12". هويته = (emp_id + dependent_name).</li>
+                        <li><strong>SEAT</strong> في نظام حجز سيارة — رقم المقعد (1, 2, 3) موجود في كل سيارة. هويته = (vehicle_id + seat_number).</li>
+                        <li><strong>ROOM</strong> في فندق أو مبنى — رقم الغرفة موجود في كل طابق. هويته = (floor_id + room_number).</li>
+                    </ul>
+                    <br>
+                    <strong style="color:#94A3B8;font-size:.85rem;">القاعدة الذهبية:</strong> لو حذفت الـ Owner Entity — الـ Weak Entity مش بيبقاش له معنى. لو حذفت الأوردر، أوردر items بتاعته لها معنى؟ لأ!
+                </div>
+            </div>
+        </div>
+
+        <div class="callout mistake">
+            <div class="chead">⚠️ خطأ شائع — تكرار نفس البيانات بدل ما تعمل Weak Entity</div>
+            <p>المبتدئين غالباً بيعملوا كده: بيضيفوا أعمدة في جدول EMPLOYEE زي dependent1_name, dependent2_name, dependent3_name. المشكلة: إيه لو الموظف عنده 5 تبعيين؟ أو صفر؟ الحل الصحيح = Weak Entity DEPENDENT مرتبطة بـ EMPLOYEE.</p>
+        </div>
+    </div>
+
+    <!-- ====== SECTION 3: ATTRIBUTES ====== -->
+    <div class="section-block" id="attributes" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🔑</span> الصفات — Attributes</div>
+        <p class="section-en">The 6 Types of Attributes</p>
+
+        <p class="body-text">الصفة هي <span class="highlight">خاصية</span> بتوصف الكيان. الـ Entity بدون صفات مش بيقدم فايدة. فيه 6 أنواع رئيسية — لازم تعرفهم كلهم:</p>
+
+        <div class="attr-grid">
+            <!-- Simple -->
+            <div class="attr-card" style="border-top:3px solid #34D399;">
+                <div class="at-header"><span class="at-icon">1️⃣</span><div><div class="at-name" style="color:#34D399;">Simple Attribute</div><div class="at-en">الصفة البسيطة</div></div></div>
+                <p>صفة <strong>ذرية</strong> — مش ممكن تتقسّم لأجزاء أصغر ذات معنى. الغالبية العظمى من الصفات هي simple.</p>
+                <div class="attr-examples">
+                    <span style="color:#34D399;">salary</span> <span style="color:#34D399;">age</span> <span style="color:#34D399;">email</span> <span style="color:#34D399;">gpa</span> <span style="color:#34D399;">hire_date</span>
+                </div>
+                <p style="margin-top:.6rem;font-size:.82rem;color:#64748B;">في الـ SQL: عمود واحد بنوع بيانات واحد.</p>
+            </div>
+
+            <!-- Composite -->
+            <div class="attr-card" style="border-top:3px solid #60A5FA;">
+                <div class="at-header"><span class="at-icon">2️⃣</span><div><div class="at-name" style="color:#60A5FA;">Composite Attribute</div><div class="at-en">الصفة المركّبة</div></div></div>
+                <p>صفة ممكن تتقسّم لأجزاء لها معنى مستقل. بتقرر إذا كنت محتاج تبحث بأجزاء أو لأ.</p>
+                <div class="attr-examples">
+                    <span style="color:#60A5FA;">full_name</span> = first + last<br>
+                    <span style="color:#60A5FA;">address</span> = street + city + zip<br>
+                    <span style="color:#60A5FA;">birth_date</span> = day + month + year
+                </div>
+                <p style="margin-top:.6rem;font-size:.82rem;color:#64748B;">في الـ SQL: ممكن تخزّنها في عمود واحد أو عدة أعمدة منفصلة — حسب احتياج البحث.</p>
+            </div>
+
+            <!-- Multivalued -->
+            <div class="attr-card" style="border-top:3px solid #F472B6;">
+                <div class="at-header"><span class="at-icon">3️⃣</span><div><div class="at-name" style="color:#F472B6;">Multivalued Attribute</div><div class="at-en">الصفة متعددة القيم</div></div></div>
+                <p>صفة ممكن يبقى ليها <strong>أكتر من قيمة</strong> واحدة لنفس الكيان في نفس الوقت.</p>
+                <div class="attr-examples">
+                    <span style="color:#F472B6;">phone_numbers</span> → 01012345678, 01198765432<br>
+                    <span style="color:#F472B6;">skills</span> → Python, SQL, Java<br>
+                    <span style="color:#F472B6;">languages</span> → عربي، إنجليزي، فرنسي
+                </div>
+                <p style="margin-top:.6rem;font-size:.82rem;color:#64748B;">في الـ SQL: جدول منفصل بـ FK — مش في نفس الجدول!</p>
+            </div>
+
+            <!-- Derived -->
+            <div class="attr-card" style="border-top:3px solid #FBBF24;">
+                <div class="at-header"><span class="at-icon">4️⃣</span><div><div class="at-name" style="color:#FBBF24;">Derived Attribute</div><div class="at-en">الصفة المشتقة</div></div></div>
+                <p>صفة <strong>محسوبة</strong> من صفات تانية — مش محتاج تخزّنها، بتحسبها عند الحاجة.</p>
+                <div class="attr-examples">
+                    <span style="color:#FBBF24;">age</span> ← من birth_date<br>
+                    <span style="color:#FBBF24;">total_price</span> ← unit_price × quantity<br>
+                    <span style="color:#FBBF24;">duration</span> ← end_date - start_date<br>
+                    <span style="color:#FBBF24;">order_count</span> ← COUNT(orders)
+                </div>
+                <p style="margin-top:.6rem;font-size:.82rem;color:#64748B;">في الـ SQL: استخدم Generated Columns أو احسبها في الاستعلام مباشرة.</p>
+            </div>
+
+            <!-- Key -->
+            <div class="attr-card" style="border-top:3px solid #A78BFA;">
+                <div class="at-header"><span class="at-icon">5️⃣</span><div><div class="at-name" style="color:#A78BFA;">Key Attribute</div><div class="at-en">صفة المفتاح</div></div></div>
+                <p>صفة فريدة بتعرّف كل entity بشكل فريد لا يتكرر. هي اللي بتبقى الـ <span class="en-term">Primary Key</span>.</p>
+                <div class="attr-examples">
+                    <span style="color:#A78BFA;">student_id</span> → 20230001, 20230002<br>
+                    <span style="color:#A78BFA;">national_id</span> → 30112051234567<br>
+                    <span style="color:#A78BFA;">product_sku</span> → NIKE-AIR-42-BLK<br>
+                    <span style="color:#A78BFA;">email</span> → ahmed@uni.edu
+                </div>
+                <p style="margin-top:.6rem;font-size:.82rem;color:#64748B;">في الـ ER Diagram: بنرسمها بخط تحتها. في SQL: PRIMARY KEY constraint.</p>
+            </div>
+
+            <!-- Complex -->
+            <div class="attr-card" style="border-top:3px solid #F87171;">
+                <div class="at-header"><span class="at-icon">6️⃣</span><div><div class="at-name" style="color:#F87171;">Complex Attribute</div><div class="at-en">الصفة المعقدة</div></div></div>
+                <p>تركيب من Composite + Multivalued — يعني صفة مركّبة وعندها أكتر من قيمة.</p>
+                <div class="attr-examples">
+                    <span style="color:#F87171;">addresses</span> (متعددة، وكل عنوان = street + city + zip)<br>
+                    <span style="color:#F87171;">contacts</span> (متعددة، وكل contact = name + phone + type)
+                </div>
+                <p style="margin-top:.6rem;font-size:.82rem;color:#64748B;">في الـ SQL: جدول منفصل بأعمدة منفصلة لكل جزء.</p>
+            </div>
+        </div>
+
+        <div class="callout mistake">
+            <div class="chead">⚠️ أكتر خطأ بيتعمل — تخزين الـ Derived Attribute</div>
+            <p>مثال حقيقي: كتير بيعملوا عمود <span class="en-inline">age INT</span> في جدول users. المشكلة: العمر بيتغيّر كل سنة! لو خزّنته هتحتاج تـ update كل الـ database كل سنة. الصح: خزّن <span class="en-inline">birth_date</span> فقط واحسب العمر: <span class="en-inline">DATE_PART('year', AGE(birth_date))</span></p>
+        </div>
+    </div>
+
+    <!-- ====== SECTION 4: ER NOTATION ====== -->
+    <div class="section-block" id="notation" data-aos="fade-up">
+        <div class="section-title"><span class="icon">✏️</span> رموز الـ ER Diagram (Chen Notation)</div>
+        <p class="section-en">ER Diagram Symbols — Chen Notation</p>
+
+        <table class="symbol-table">
+            <thead><tr><th>الرمز</th><th>الشكل</th><th>ما يمثّل</th><th>مثال</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td class="sym">▭</td>
+                    <td>مستطيل بحواف عادية</td>
+                    <td>Strong Entity</td>
+                    <td>STUDENT, COURSE</td>
+                </tr>
+                <tr>
+                    <td class="sym">▭▭</td>
+                    <td>مستطيل مزدوج (داخل مستطيل)</td>
+                    <td>Weak Entity</td>
+                    <td>DEPENDENT, ORDER_ITEM</td>
+                </tr>
+                <tr>
+                    <td class="sym">◯</td>
+                    <td>بيضاوي عادي</td>
+                    <td>Simple / Composite Attribute</td>
+                    <td>salary, address</td>
+                </tr>
+                <tr>
+                    <td class="sym"><u>◯</u></td>
+                    <td>بيضاوي بخط تحته</td>
+                    <td>Key Attribute (PK)</td>
+                    <td><u>student_id</u></td>
+                </tr>
+                <tr>
+                    <td class="sym">◯◯</td>
+                    <td>بيضاوي مزدوج</td>
+                    <td>Multivalued Attribute</td>
+                    <td>phone_numbers</td>
+                </tr>
+                <tr>
+                    <td class="sym">⟳◯</td>
+                    <td>بيضاوي منقّط (dashed)</td>
+                    <td>Derived Attribute</td>
+                    <td>age</td>
+                </tr>
+                <tr>
+                    <td class="sym">◇</td>
+                    <td>معين (diamond) عادي</td>
+                    <td>Relationship</td>
+                    <td>ENROLLS, WORKS_IN</td>
+                </tr>
+                <tr>
+                    <td class="sym">◇◇</td>
+                    <td>معين مزدوج</td>
+                    <td>Identifying Relationship (للـ Weak Entity)</td>
+                    <td>HAS (employee HAS dependents)</td>
+                </tr>
+                <tr>
+                    <td class="sym">——</td>
+                    <td>خط عادي</td>
+                    <td>Partial Participation</td>
+                    <td>إشتراك جزئي</td>
+                </tr>
+                <tr>
+                    <td class="sym">═══</td>
+                    <td>خط مزدوج</td>
+                    <td>Total Participation</td>
+                    <td>إشتراك كلي</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ====== SECTION 5: IDENTIFYING ENTITIES FROM TEXT ====== -->
+    <div class="section-block" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🔍</span> كيف تستخرج الكيانات من النص؟</div>
+        <p class="section-en">Extracting Entities from Requirements</p>
+
+        <p class="body-text">في الشغل الحقيقي، مش هتُعطى قائمة بالـ Entities — هتُعطى متطلبات مكتوبة بلغة طبيعية. فيه 4 خطوات عملية:</p>
+
+        <div class="callout why">
+            <div class="chead">🔢 الـ 4 خطوات لاستخراج الـ Entities</div>
+            <p>
+            <strong>خطوة 1:</strong> ابحث عن <strong>الأسماء</strong> في المتطلبات — هي المرشحة للكيانات.<br>
+            <strong>خطوة 2:</strong> افلتر — الأسماء اللي بتمثّل "مجموعة من الأشياء المتشابهة" هي Entities. الأسماء اللي بتمثّل صفات يبقى هي Attributes.<br>
+            <strong>خطوة 3:</strong> لكل Entity — حدّد صفاتها واللي يميّزها (Key Attribute).<br>
+            <strong>خطوة 4:</strong> اسأل "هل ده Weak Entity؟" — هل يعتمد وجوده على entity تانية؟
+            </p>
+        </div>
+
+        <div class="worked-ex" id="worked">
+            <div class="we-title">📖 مثال كامل — نظام إدارة الجامعة</div>
+
+            <div class="req-box">
+                <div class="req-label">// REQUIREMENTS TEXT</div>
+                <p style="font-size:.93rem;line-height:2.1;color:#CBD5E1;direction:rtl;">
+                يخزّن النظام بيانات الطلاب، حيث يملك كل طالب رقم قيد فريد، اسم ثلاثي، تاريخ ميلاد، رقم هاتف (أو أكتر)، وعنوان يشمل الشارع والمدينة والمحافظة. يُسجّل الطالب في برنامج دراسي واحد ويقدر يلتحق بأكتر من كورس.
+                <br><br>
+                كل كورس عنده كود فريد، اسم، وعدد ساعات معتمدة، وبيخضع لإشراف أستاذ واحد. الأستاذ عنده رقم وظيفي، اسم، وتخصص. كل أستاذ ينتمي لقسم واحد. القسم عنده رقم، اسم، وميزانية.
+                <br><br>
+                لما الطالب يلتحق بكورس، بنسجّل التاريخ والدرجة النهائية. كمان بنخزّن معلومات تبعيين الأستاذ (الزوج/الزوجة والأولاد): اسم التبعي وعلاقته بالأستاذ.
+                </p>
+            </div>
+
+            <div class="step-block">
+                <div class="step-num">STEP 1 — الأسماء في النص</div>
+                <p>الطلاب، رقم قيد، اسم ثلاثي، تاريخ ميلاد، رقم هاتف، عنوان، برنامج دراسي، كورس، كود، ساعات معتمدة، أستاذ، رقم وظيفي، تخصص، قسم، ميزانية، تبعيين...</p>
+            </div>
+
+            <div class="step-block">
+                <div class="step-num">STEP 2 — Entities vs Attributes</div>
+                <p>الأسماء اللي تمثّل "مجموعة أشياء" هي Entities:</p>
+                <ul class="ex-list" style="margin-right:1rem;">
+                    <li><strong>STUDENT</strong> — طلاب كتير، كل واحد له بيانات مختلفة ✅</li>
+                    <li><strong>COURSE</strong> — كورسات كتير ✅</li>
+                    <li><strong>INSTRUCTOR</strong> — أساتذة كتير ✅</li>
+                    <li><strong>DEPARTMENT</strong> — أقسام كتير ✅</li>
+                    <li><strong>PROGRAM</strong> — برامج دراسية ✅</li>
+                    <li><strong>DEPENDENT</strong> — تبعيين الأساتذة ✅ (Weak Entity)</li>
+                    <li><strong>رقم القيد</strong> — صفة للطالب ❌ (مش Entity)</li>
+                    <li><strong>ميزانية</strong> — صفة للقسم ❌</li>
+                </ul>
+            </div>
+
+            <div class="step-block">
+                <div class="step-num">STEP 3 — صفات كل Entity</div>
+                <p>بعد تحديد الـ Entities، بنعمل قائمة صفات لكل واحدة:</p>
+                <div class="ref-table" style="margin-top:1rem;">
+                    <table style="width:100%;border-collapse:collapse;font-size:.84rem;">
+                        <thead><tr style="background:rgba(139,92,246,.1);"><th style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.06);text-align:right;color:#A78BFA;">Entity</th><th style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.06);text-align:right;color:#A78BFA;">Key</th><th style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.06);text-align:right;color:#A78BFA;">Simple Attrs</th><th style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.06);text-align:right;color:#A78BFA;">Special Attrs</th></tr></thead>
+                        <tbody>
+                            <tr><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);color:#60A5FA;font-weight:700;">STUDENT</td><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);">student_id</td><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);">age</td><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);">name(composite), phone(multi), address(composite), age(derived←birth_date)</td></tr>
+                            <tr><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);color:#34D399;font-weight:700;">COURSE</td><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);">course_code</td><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);">course_name, credit_hours</td><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);">—</td></tr>
+                            <tr><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);color:#FBBF24;font-weight:700;">INSTRUCTOR</td><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);">emp_id</td><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);">name, specialization</td><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);">—</td></tr>
+                            <tr><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);color:#F472B6;font-weight:700;">DEPARTMENT</td><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);">dept_id</td><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);">dept_name, budget</td><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);">—</td></tr>
+                            <tr><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);color:#94A3B8;font-weight:700;">DEPENDENT</td><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);">dep_name (partial)</td><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);">relationship</td><td style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.05);">Weak — Owner: INSTRUCTOR</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="step-block">
+                <div class="step-num">STEP 4 — Weak Entities؟</div>
+                <p>DEPENDENT هو Weak Entity — رقم التبعي مش بيتعرّف إلا بـ (emp_id + dep_name). لو مسحنا الأستاذ — التبعيين بتاعوه مفيهمش معنى. العلاقة اللي بتربطهم: HAS وهي Identifying Relationship (مزدوجة في الرسم).</p>
+            </div>
+
+            <div class="callout tip" style="margin-top:1rem;">
+                <div class="chead">🔎 ملاحظة عن STUDENT</div>
+                <p>الصفة <span class="en-inline">age</span> هي Derived ← من <span class="en-inline">birth_date</span>. الصفة <span class="en-inline">name</span> هي Composite (first_name + middle_name + last_name). الصفة <span class="en-inline">phone</span> هي Multivalued. الصفة <span class="en-inline">address</span> هي Composite (street + city + governorate).</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== SECTION 6: COMMON MISTAKES ====== -->
+    <div class="section-block" data-aos="fade-up">
+        <div class="section-title"><span class="icon">⚠️</span> الأخطاء الشائعة في تصميم الـ ER</div>
+        <p class="section-en">Common ER Modeling Mistakes</p>
+
+        <div class="concept-group">
+            <div class="concept-card" style="border-right:3px solid #EF4444;">
+                <div class="cc-head"><span class="cc-tag" style="background:rgba(239,68,68,.15);color:#F87171;">خطأ ١</span><h3>تحويل الصفة لـ Entity</h3></div>
+                <div class="cc-def">❌ بتعمل entity "CITY" بدل ما تحطها كصفة في ADDRESS.</div>
+                <div class="cc-ex">✅ الصح: خلّي city صفة في CUSTOMER إلا لو كنت فعلاً محتاج تخزّن بيانات عن المدينة نفسها (إحصاءات، خرائط، إلخ).</div>
+            </div>
+            <div class="concept-card" style="border-right:3px solid #EF4444;">
+                <div class="cc-head"><span class="cc-tag" style="background:rgba(239,68,68,.15);color:#F87171;">خطأ ٢</span><h3>تحويل العلاقة لـ Entity</h3></div>
+                <div class="cc-def">❌ بتعمل entity "ENROLLMENT" وبعدين مش عارف تربطها صح.</div>
+                <div class="cc-ex">✅ الصح: "ENROLLMENT" فعلاً Entity (وليست علاقة بس) لأنها عندها صفات زي grade و date. في الـ M:N ممكن تبقى Entity في حالات. اللي مش صح هو تحويل كل علاقة بسيطة لـ Entity.</div>
+            </div>
+            <div class="concept-card" style="border-right:3px solid #EF4444;">
+                <div class="cc-head"><span class="cc-tag" style="background:rgba(239,68,68,.15);color:#F87171;">خطأ ٣</span><h3>إهمال الـ Multivalued Attributes</h3></div>
+                <div class="cc-def">❌ بتعمل أعمدة phone1, phone2, phone3 في جدول CUSTOMER.</div>
+                <div class="cc-ex">✅ الصح: عمل جدول CUSTOMER_PHONE منفصل مرتبط بـ FK.</div>
+            </div>
+            <div class="concept-card" style="border-right:3px solid #EF4444;">
+                <div class="cc-head"><span class="cc-tag" style="background:rgba(239,68,68,.15);color:#F87171;">خطأ ٤</span><h3>تخزين الـ Derived Attributes</h3></div>
+                <div class="cc-def">❌ تخزين age و total_salary و order_count كأعمدة ثابتة.</div>
+                <div class="cc-ex">✅ الصح: احسبها في الـ Query أو استخدم Generated Columns عشان تبقى up-to-date دايماً.</div>
+            </div>
+            <div class="concept-card" style="border-right:3px solid #EF4444;">
+                <div class="cc-head"><span class="cc-tag" style="background:rgba(239,68,68,.15);color:#F87171;">خطأ ٥</span><h3>استخدام اسم طبيعي كـ PK</h3></div>
+                <div class="cc-def">❌ استخدام full_name أو email كـ Primary Key.</div>
+                <div class="cc-ex">✅ الصح: الـ PK لازم يكون immutable (مش بيتغير)، فريد 100%، وقصير. الاسم بيتغير، الإيميل بيتغير. استخدم SERIAL أو UUID.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== PRACTICE ====== -->
+    <div class="section-block" id="practice" data-aos="fade-up">
+        <div class="section-title"><span class="icon">✍️</span> تمرين عملي</div>
+        <p class="section-en">Practice Exercise — Delivery App</p>
+
+        <div class="practice-block">
+            <div class="practice-header"><h3>🚚 تمرين: تطبيق توصيل طلبات</h3></div>
+            <div class="practice-body">
+                <div class="practice-req">
+                    <strong style="color:#A78BFA;">المتطلبات:</strong><br><br>
+                    يتيح التطبيق للعملاء طلب منتجات من متاجر مختلفة. كل عميل عنده اسم، رقم هاتف (أو أكتر)، وعناوين توصيل متعددة (كل عنوان له اسم مميز زي "البيت" أو "الشغل"، والشارع والحي والمدينة). العميل يفتح حساب بإيميل وكلمة سر.
+                    <br><br>
+                    المنتجات بتتنظّم في فئات. كل منتج عنده اسم، وصف، سعر، وكمية في المخزن. المتجر عنده اسم، عنوان، ورقم هاتف.
+                    <br><br>
+                    الطلب بيتعمل من عميل واحد ويشمل منتجات من متجر واحد. كل طلب عنده تاريخ ووقت، حالة (pending/delivered/cancelled)، وطريقة دفع. كل بند في الطلب (item) عنده المنتج المطلوب والكمية والسعر وقت الطلب.
+                    <br><br>
+                    كل طلب يتولى توصيله مندوب واحد. المندوب عنده اسم، رقم لوحة السيارة، وتقييم.
+                </div>
+
+                <ul class="practice-tasks">
+                    <li><span class="task-num">A</span>حدّد جميع الـ Entities (Strong وWeak).</li>
+                    <li><span class="task-num">B</span>لكل Entity — حدّد Key Attribute وباقي الصفات مع نوع كل صفة.</li>
+                    <li><span class="task-num">C</span>ليه ORDER_ITEM هو Weak Entity وليس Strong؟</li>
+                    <li><span class="task-num">D</span>مين هو الـ Owner Entity لـ DELIVERY_ADDRESS؟</li>
+                </ul>
+
+                <button class="solution-toggle" onclick="toggleSolution(this)">👁️ اظهر الحل الكامل</button>
+                <div class="solution-content">
+                    <p style="font-size:.95rem;color:#A78BFA;font-weight:700;margin-bottom:1rem;">📋 الحل:</p>
+                    <div class="ref-table">
+                        <table style="width:100%;border-collapse:collapse;font-size:.83rem;">
+                            <thead><tr style="background:rgba(139,92,246,.1);"><th style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.06);text-align:right;color:#A78BFA;">Entity</th><th style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.06);text-align:right;color:#A78BFA;">النوع</th><th style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.06);text-align:right;color:#A78BFA;">Key</th><th style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.06);text-align:right;color:#A78BFA;">صفات مهمة</th></tr></thead>
+                            <tbody>
+                                <tr><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);color:#60A5FA;font-weight:600;">CUSTOMER</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">Strong</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">customer_id</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">name(composite), email(key-candidate), password_hash, phone(multivalued)</td></tr>
+                                <tr><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);color:#60A5FA;font-weight:600;">DELIVERY_ADDRESS</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">Weak</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">label (partial)</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">street, district, city | Owner: CUSTOMER</td></tr>
+                                <tr><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);color:#60A5FA;font-weight:600;">STORE</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">Strong</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">store_id</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">store_name, address(composite), phone</td></tr>
+                                <tr><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);color:#60A5FA;font-weight:600;">CATEGORY</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">Strong</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">category_id</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">category_name</td></tr>
+                                <tr><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);color:#60A5FA;font-weight:600;">PRODUCT</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">Strong</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">product_id</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">name, description, price, stock_qty</td></tr>
+                                <tr><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);color:#60A5FA;font-weight:600;">ORDER</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">Strong</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">order_id</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">order_datetime, status, payment_method, total(derived)</td></tr>
+                                <tr><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);color:#F87171;font-weight:600;">ORDER_ITEM</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">Weak</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">item_seq (partial)</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">quantity, unit_price_at_time | Owner: ORDER</td></tr>
+                                <tr><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);color:#60A5FA;font-weight:600;">DELIVERY_AGENT</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">Strong</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">agent_id</td><td style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);">name, plate_number, rating(derived←avg of reviews)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="callout why" style="margin-top:1rem;">
+                        <div class="chead">C — ليه ORDER_ITEM هو Weak؟</div>
+                        <p>لأن البند رقم "1" موجود في آلاف الأوردرات. مفيش معنى لـ "item_seq = 1" بدون ما تعرف الأوردر اللي ينتمي ليه. هويته = (order_id + item_seq). لو حذفنا الأوردر — البند ده مالوش معنى.</p>
+                    </div>
+                    <div class="callout why" style="margin-top:.8rem;">
+                        <div class="chead">D — Owner Entity لـ DELIVERY_ADDRESS</div>
+                        <p>CUSTOMER — كل عنوان بيبقى ملك عميل معين. العنوان "البيت، شارع الجلاء" بيتعرّف بـ (customer_id + label). لو العميل اتمسح — عناوينه مفيهاش معنى.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====== QUIZ ====== -->
+    <div class="quiz-section" id="quiz" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🧠</span> اختبار الفهم</div>
+        <p class="section-en">Knowledge Check — 4 Questions</p>
+
+        <div class="quiz-card" id="qq1">
+            <div class="quiz-q">١. فندق عنده "غرف". رقم الغرفة (101, 102...) بيتكرر في كل فندق. لو عندنا نظام لسلسلة فنادق — هل ROOM هو Strong أم Weak Entity؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="answer(1,this,false)">Strong Entity — لأن كل غرفة عندها رقم</div>
+                <div class="quiz-opt" onclick="answer(1,this,true)">Weak Entity — هويتها = (hotel_id + room_number)</div>
+                <div class="quiz-opt" onclick="answer(1,this,false)">Strong Entity — لو أضفنا room_id مستقل</div>
+            </div>
+            <div class="quiz-fb" id="fb1"></div>
+        </div>
+
+        <div class="quiz-card" id="qq2">
+            <div class="quiz-q">٢. نظام HR — الموظف عنده "skills" (Python, Java, SQL). صح إيه؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="answer(2,this,false)">بنضيف skill1, skill2, skill3 كأعمدة في جدول EMPLOYEE</div>
+                <div class="quiz-opt" onclick="answer(2,this,true)">skills هي Multivalued Attribute — بنعمل جدول EMPLOYEE_SKILL منفصل</div>
+                <div class="quiz-opt" onclick="answer(2,this,false)">بنخزّن skills كـ text: "Python,Java,SQL" في عمود واحد</div>
+            </div>
+            <div class="quiz-fb" id="fb2"></div>
+        </div>
+
+        <div class="quiz-card" id="qq3">
+            <div class="quiz-q">٣. أي من الآتي هو Derived Attribute؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="answer(3,this,false)">national_id — لأنه بيتحسب من معلومات الميلاد</div>
+                <div class="quiz-opt" onclick="answer(3,this,false)">birth_date — لأنه تاريخ ومش محتاج نخزّنه</div>
+                <div class="quiz-opt" onclick="answer(3,this,true)">years_of_experience — لأنه = CURRENT_DATE - hire_date</div>
+            </div>
+            <div class="quiz-fb" id="fb3"></div>
+        </div>
+
+        <div class="quiz-card" id="qq4">
+            <div class="quiz-q">٤. صفة "home_address" للموظف تشمل (street, city, zip). ما هو نوعها؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="answer(4,this,false)">Simple — لأنها عنوان واحد</div>
+                <div class="quiz-opt" onclick="answer(4,this,true)">Composite — تتكوّن من أجزاء لها معنى مستقل</div>
+                <div class="quiz-opt" onclick="answer(4,this,false)">Multivalued — لأن الموظف ممكن يكون عنده أكتر من عنوان</div>
+            </div>
+            <div class="quiz-fb" id="fb4"></div>
+        </div>
+
+        <div class="quiz-score-box" id="score-box">
+            <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+            <p id="score-msg" style="color:#94A3B8;"></p>
+        </div>
+    </div>
+
+    <!-- QUICK REF -->
+    <div class="section-block" data-aos="fade-up">
+        <div class="section-title"><span class="icon">📋</span> مرجع سريع</div>
+        <p class="section-en">Quick Reference</p>
+        <table class="ref-table">
+            <thead><tr><th>المفهوم</th><th>التعريف</th><th>مثال</th><th>في SQL</th></tr></thead>
+            <tbody>
+                <tr><td style="color:#A78BFA;font-weight:700;">Strong Entity</td><td>كيان بهوية مستقلة</td><td>STUDENT, PRODUCT</td><td>جدول بـ PK مستقل</td></tr>
+                <tr><td style="color:#60A5FA;font-weight:700;">Weak Entity</td><td>كيان هويته مرتبطة بـ Owner</td><td>DEPENDENT, ORDER_ITEM</td><td>PK مركّب (own_pk + fk)</td></tr>
+                <tr><td style="color:#34D399;font-weight:700;">Simple Attr</td><td>لا تتقسّم</td><td>salary, email</td><td>عمود واحد</td></tr>
+                <tr><td style="color:#34D399;font-weight:700;">Composite Attr</td><td>تتقسّم لأجزاء</td><td>address, name</td><td>أعمدة منفصلة أو عمود واحد</td></tr>
+                <tr><td style="color:#F472B6;font-weight:700;">Multivalued Attr</td><td>أكتر من قيمة</td><td>phones, skills</td><td>جدول منفصل بـ FK</td></tr>
+                <tr><td style="color:#FBBF24;font-weight:700;">Derived Attr</td><td>محسوب من غيره</td><td>age, duration</td><td>حسابها في الاستعلام</td></tr>
+                <tr><td style="color:#A78BFA;font-weight:700;">Key Attr</td><td>يميّز الـ entity بشكل فريد</td><td>student_id, email</td><td>PRIMARY KEY</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <a href="../index.html" class="bnav-btn"><i class="fas fa-home"></i> البوابة</a>
+        <a href="er_relationships.html" class="bnav-btn next">الدرس التالي: العلاقات <i class="fas fa-arrow-left"></i></a>
+    </div>
+
+    </div><!-- end lesson-body -->
+    <footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 2: النمذجة ببيانات • نظام إدارة الجامعة</footer>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        AOS.init({ duration: 800, once: true, offset: 100 });
-        window.addEventListener('scroll', () => { const p = (document.documentElement.scrollTop / (document.documentElement.scrollHeight - document.documentElement.clientHeight)) * 100; document.getElementById('reading-progress').style.width = p + '%'; });
-
-        // ER Canvas — Student Entity
-        const canvas = document.getElementById('er-canvas');
-        const ctx = canvas.getContext('2d');
-        function drawER() {
-            const w = canvas.width, h = canvas.height;
-            ctx.clearRect(0,0,w,h);
-            // Entity
-            ctx.strokeStyle = '#60A5FA'; ctx.lineWidth = 2.5;
-            ctx.strokeRect(w/2-60, h/2-25, 120, 50);
-            ctx.fillStyle = '#60A5FA'; ctx.font = 'bold 16px Inter'; ctx.textAlign = 'center';
-            ctx.fillText('STUDENT', w/2, h/2+6);
-            // Key attribute — ID (underlined)
-            drawAttr(w/2, h/2-25, w/2, 60, 'Student_ID', '#34D399', true);
-            // Simple attrs
-            drawAttr(w/2-60, h/2, w/2-180, h/2-40, 'Name', '#CBD5E1', false);
-            drawAttr(w/2-60, h/2+10, w/2-180, h/2+40, 'GPA', '#CBD5E1', false);
-            drawAttr(w/2+60, h/2, w/2+180, h/2-40, 'Email', '#CBD5E1', false);
-            // Derived — Age (dashed)
-            drawDerivedAttr(w/2+60, h/2+10, w/2+180, h/2+40, 'Age');
-            // Multivalued — Phone (double ellipse)
-            drawMultiAttr(w/2, h/2+25, w/2, h-50, 'Phones');
+        AOS.init({duration:700,once:true,offset:80});
+        // PROGRESS
+        window.addEventListener('scroll',()=>{
+            const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;
+            document.getElementById('prog').style.width=Math.min(p,100)+'%';
+        });
+        // SOLUTION TOGGLE
+        function toggleSolution(btn){
+            const sc=btn.nextElementSibling;
+            sc.classList.toggle('open');
+            btn.textContent=sc.classList.contains('open')?'🙈 إخفاء الحل':'👁️ اظهر الحل الكامل';
         }
-        function drawAttr(ex, ey, ax, ay, text, color, isKey) {
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(ax,ay); ctx.stroke();
-            ctx.strokeStyle = color || '#CBD5E1'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.ellipse(ax, ay, 50, 22, 0, 0, Math.PI*2); ctx.stroke();
-            ctx.fillStyle = color || '#CBD5E1'; ctx.font = '12px Inter'; ctx.textAlign = 'center';
-            ctx.fillText(text, ax, ay+4);
-            if (isKey) { ctx.beginPath(); ctx.moveTo(ax-30, ay+10); ctx.lineTo(ax+30, ay+10); ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke(); }
+        // QUIZ
+        const feedbacks={
+            1:{correct:'✅ صح تماماً! رقم الغرفة 101 موجود في كل فندق — هويتها = (hotel_id + room_number). ودا بالظبط تعريف الـ Weak Entity.',wrong:'❌ غلط. الرقم 101 بيتكرر في فنادق كتير. مش ممكن تعرّف الغرفة بدون ما تعرف الفندق. هي Weak Entity بـ Owner: HOTEL.'},
+            2:{correct:'✅ ممتاز! Multivalued Attribute = جدول منفصل. EMPLOYEE_SKILL بـ columns: (emp_id FK, skill_name) وPK مركّب منهم.',wrong:'❌ غلط. تخزين أعمدة skill1، 2، 3 = مشكلة لو في أكتر من 3. وتخزينهم كـ string واحد = مش ممكن تبحث فيهم بكفاءة. الصح = جدول منفصل.'},
+            3:{correct:'✅ صح! years_of_experience = CURRENT_DATE - hire_date. بتتغيّر كل يوم — ما فيش داعي تخزّنها، حسبها في الاستعلام.',wrong:'❌ غلط. national_id هو Key Attribute مش derived. birth_date هو simple attribute أساسي لازم نخزّنه. years_of_experience هو الـ derived لأنه محسوب من hire_date.'},
+            4:{correct:'✅ صح! Composite لأن street، city، zip هي أجزاء لها معنى مستقل — ممكن تبحث بالـ city وحدها.',wrong:'❌ مش صح. هي Composite لأنها تتكوّن من أجزاء (street+city+zip). لو كانت متعددة = Multivalued. هنا عندنا عنوان واحد بتفعيلات.'}
+        };
+        let answered=0;const total=4;let score=0;
+        function answer(q,el,correct){
+            const qEl=document.getElementById('qq'+q);
+            if(qEl.classList.contains('done'))return;
+            qEl.classList.add('done');
+            answered++;
+            qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');
+            const fb=document.getElementById('fb'+q);
+            if(correct){
+                el.classList.add('correct');
+                fb.className='quiz-fb show ok';
+                fb.innerHTML=feedbacks[q].correct;
+                score++;
+            } else{
+                el.classList.add('wrong');
+                fb.className='quiz-fb show bad';
+                fb.innerHTML=feedbacks[q].wrong;
+                qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});
+            }
+            if(answered===total){
+                const sb=document.getElementById('score-box');
+                sb.style.display='block';
+                const st=document.getElementById('score-text');
+                const sm=document.getElementById('score-msg');
+                st.textContent=`نتيجتك: ${score} / ${total}`;
+                if(score===total){st.style.color='#34D399';sm.textContent='🎉 ممتاز! إنت فاهم الـ ER Basics صح!';}
+                else if(score>=3){st.style.color='#FBBF24';sm.textContent='👏 كويس جداً! راجع الأخطاء.';}
+                else{st.style.color='#F87171';sm.textContent='💪 راجع الدرس تاني وحاول.';}
+            }
         }
-        function drawDerivedAttr(ex, ey, ax, ay, text) {
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(ax,ay); ctx.stroke();
-            ctx.setLineDash([5,4]); ctx.strokeStyle = '#FBBF24'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.ellipse(ax, ay, 45, 20, 0, 0, Math.PI*2); ctx.stroke();
-            ctx.setLineDash([]); ctx.fillStyle = '#FBBF24'; ctx.font = '12px Inter'; ctx.textAlign = 'center'; ctx.fillText(text, ax, ay+4);
-        }
-        function drawMultiAttr(ex, ey, ax, ay, text) {
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(ax,ay); ctx.stroke();
-            ctx.strokeStyle = '#F87171'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.ellipse(ax, ay, 50, 22, 0, 0, Math.PI*2); ctx.stroke();
-            ctx.beginPath(); ctx.ellipse(ax, ay, 44, 17, 0, 0, Math.PI*2); ctx.stroke();
-            ctx.fillStyle = '#F87171'; ctx.font = '12px Inter'; ctx.textAlign = 'center'; ctx.fillText(text, ax, ay+4);
-        }
-        drawER();
-
-        let quizScore=0, answered=0; const total=4;
-        const fb = { 1:{correct:'🎉 صح! المستطيل = Entity (كيان).',wrong:'❌ المستطيل في ER Diagram بيمثل Entity (كيان).'}, 2:{correct:'✅ Weak Entity محتاج Owner Entity عشان يتعرف!',wrong:'❌ Weak Entity مش بيقدر يتعرف لوحده — محتاج Owner Entity.'}, 3:{correct:'💪 Derived Attribute = قيمتها بتتحسب من صفات تانية!',wrong:'❌ صفة محسوبة من صفة تانية = Derived Attribute.'}, 4:{correct:'🎉 Multivalued — أكتر من قيمة لنفس الصفة!',wrong:'❌ أكتر من قيمة = Multivalued Attribute.'} };
-        function checkAnswer(q,el,correct){const qEl=document.getElementById('q'+q);if(qEl.classList.contains('answered'))return;qEl.classList.add('answered');answered++;qEl.querySelectorAll('.quiz-option').forEach(o=>o.style.pointerEvents='none');const f=document.getElementById('q'+q+'-feedback');if(correct){el.classList.add('correct');f.className='quiz-feedback show correct-fb';f.textContent=fb[q].correct;quizScore++;}else{el.classList.add('wrong');f.className='quiz-feedback show wrong-fb';f.textContent=fb[q].wrong;qEl.querySelectorAll('.quiz-option').forEach(o=>{if(o.getAttribute('onclick').includes('true'))o.classList.add('correct');});}if(answered===total){const sd=document.getElementById('quiz-score');sd.style.display='block';document.getElementById('score-text').textContent=`🏆 النتيجة: ${quizScore} / ${total}`;const msg=document.getElementById('score-msg');if(quizScore===total){msg.textContent='🎉 ممتاز! فاهم الأساسيات كويس!';msg.style.color='#34D399';}else{msg.textContent='💪 راجع وحاول تاني!';msg.style.color='#FBBF24';}}}
     </script>
 </body>
 </html>

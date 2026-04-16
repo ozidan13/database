@@ -1,269 +1,630 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ER Relationships — العلاقات في ER | Database Mastery</title>
-    <meta name="description" content="تعلم أنواع العلاقات: One-to-One, One-to-Many, Many-to-Many, Cardinality, و Participation.">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <title>ER Relationships — العلاقات | Database Mastery</title>
+    <meta name="description" content="دليل شامل لعلاقات الـ ER: Cardinality, Participation, Relationship Attributes — من تحديد الكارديناليتي من متطلبات العمل حتى رسم الـ Hospital System.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link href="../css/global-db.css" rel="stylesheet">
     <style>
-        body { background: #020617; color: #E2E8F0; font-family: 'Inter', sans-serif; }
-        .lesson-nav-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(2,6,23,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.06); height: 64px; display: flex; align-items: center; padding: 0 1.5rem; }
-        .nav-inner { max-width: 1280px; margin: 0 auto; width: 100%; display: flex; align-items: center; justify-content: space-between; }
-        .nav-brand { display: flex; align-items: center; gap: 0.75rem; font-weight: 700; }
-        .nav-brand .back-btn { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #3B82F6, #1D4ED8); display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; transition: transform 0.3s; }
-        .nav-brand .back-btn:hover { transform: scale(1.1); }
-        .nav-links { display: flex; gap: 2rem; font-size: 0.85rem; font-family: 'Cairo', sans-serif; color: var(--text-faint); }
-        .nav-links a { transition: color 0.3s; direction: rtl; }
-        .nav-links a:hover { color: #60A5FA; }
-        @media (max-width: 768px) { .nav-links { display: none; } }
-        .lesson-hero { position: relative; padding: 8rem 1.5rem 5rem; text-align: center; overflow: hidden; }
-        .lesson-hero .glow-orb { position: absolute; width: 500px; height: 500px; border-radius: 50%; filter: blur(128px); pointer-events: none; }
-        .glow-orb-1 { top: -10%; right: -5%; background: rgba(59,130,246,0.12); }
-        .glow-orb-2 { bottom: -20%; left: -10%; background: rgba(245,158,11,0.1); }
-        .lesson-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.35rem 1rem; border-radius: 50px; background: rgba(30,41,59,0.6); border: 1px solid rgba(255,255,255,0.08); font-family: 'Fira Code', monospace; font-size: 0.78rem; color: #60A5FA; margin-bottom: 1.5rem; }
-        .lesson-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #3B82F6; animation: pulse-dot 2s ease infinite; }
-        @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-        .lesson-hero h1 { font-size: clamp(2.5rem,5vw,4rem); font-weight: 800; margin-bottom: 1rem; }
-        .lesson-hero h1 .text-gradient { background: linear-gradient(135deg, #3B82F6, #F59E0B); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-        .lesson-hero .subtitle { font-family: 'Cairo', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1.5rem; direction: rtl; unicode-bidi: isolate; }
-        .lesson-hero .desc { color: var(--text-faint); max-width: 600px; margin: 0 auto; font-size: 1rem; line-height: 1.8; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
-        .lesson-section { padding: 5rem 1.5rem; max-width: 960px; margin: 0 auto; }
-        .lesson-section.alt-bg { background: rgba(15,23,42,0.3); max-width: 100%; }
-        .lesson-section.alt-bg > .section-inner { max-width: 960px; margin: 0 auto; }
-        .section-header { text-align: center; margin-bottom: 3rem; }
-        .section-header h2 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; }
-        .section-header .en-sub { font-family: 'Inter', sans-serif; color: var(--text-faint); font-size: 0.9rem; direction: ltr; unicode-bidi: isolate; display: block; }
-        .progress-bar-container { position: fixed; top: 64px; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.05); z-index: 99; }
-        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #3B82F6, #F59E0B); width: 0%; transition: width 0.1s ease-out; }
+        :root{--accent:#0EA5E9;--accent-lt:#38BDF8;--accent-bg:rgba(14,165,233,.12);}
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#0EA5E9,#0369A1);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#38BDF8;}
+        .nav-toc{display:flex;gap:1.5rem;font-size:.82rem;color:#64748B;}
+        .nav-toc a:hover{color:#38BDF8;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#0EA5E9,#8B5CF6);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(14,165,233,.1),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#38BDF8;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#0EA5E9;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#0EA5E9,#8B5CF6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.1rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1.05rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);font-size:.78rem;color:#7DD3FC;}
 
-        /* Cardinality Cards */
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 1.5rem; margin: 2rem 0; }
-        .rel-card { background: rgba(15,23,42,0.6); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 2rem; transition: all 0.4s; }
-        .rel-card:hover { border-color: rgba(255,255,255,0.15); transform: translateY(-4px); }
-        .rel-card .rel-visual { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; font-family: 'Inter', sans-serif; font-size: 0.85rem; }
-        .rel-card .entity-box { padding: 0.4rem 0.8rem; border: 2px solid; border-radius: 4px; font-weight: 700; }
-        .rel-card .diamond-box { width: 35px; height: 35px; border: 2px solid #FBBF24; transform: rotate(45deg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .rel-card .diamond-box span { transform: rotate(-45deg); font-size: 0.55rem; font-weight: 700; color: #FBBF24; }
-        .rel-card .ratio { font-weight: 800; font-size: 1rem; }
-        .rel-card h3 { font-size: 1.1rem; margin-bottom: 0.3rem; }
-        .rel-card .rel-ar { font-family: 'Cairo', sans-serif; font-size: 0.85rem; color: var(--text-faint); direction: rtl; unicode-bidi: isolate; margin-bottom: 0.8rem; }
-        .rel-card .rel-desc { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.9rem; color: var(--text-muted); line-height: 2; }
-        .rel-card .rel-example { margin-top: 0.8rem; padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.82rem; color: var(--text-faint); }
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-title .icon{font-size:1.4rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .highlight{color:#38BDF8;font-weight:700;}
+        .en-term{font-family:'Inter',sans-serif;color:#60A5FA;font-weight:600;unicode-bidi:isolate;direction:ltr;display:inline-block;}
+        .en-inline{font-family:'Fira Code',monospace;color:#A78BFA;font-size:.9em;unicode-bidi:isolate;direction:ltr;display:inline-block;}
 
-        /* Participation */
-        .part-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2rem 0; }
-        @media (max-width: 768px) { .part-grid { grid-template-columns: 1fr; } }
-        .part-card { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 1.8rem; transition: all 0.3s; }
-        .part-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.15); }
-        .part-card h4 { font-size: 1rem; margin-bottom: 0.5rem; }
-        .part-card p { font-family: 'Cairo', sans-serif; direction: rtl; unicode-bidi: isolate; font-size: 0.9rem; color: var(--text-muted); line-height: 2; }
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.why{background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);}
+        .callout.why .chead{color:#22D3EE;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);}
+        .callout.realworld .chead{color:#34D399;font-weight:800;margin-bottom:.5rem;}
+        .callout.tip{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);}
+        .callout.tip .chead{color:#FBBF24;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
 
-        .quiz-question { background: rgba(15,23,42,0.7); backdrop-filter: blur(12px); border: 1px solid var(--border-light); border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem; }
-        .quiz-question h4 { margin-bottom: 1rem; color: var(--text-primary); font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; }
-        .quiz-options { display: flex; flex-direction: column; gap: 0.6rem; }
-        .quiz-option { padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--border-subtle); background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.3s; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; font-size: 0.92rem; color: var(--text-body); unicode-bidi: isolate; }
-        .quiz-option:hover { background: rgba(255,255,255,0.06); border-color: var(--border-hover); }
-        .quiz-option.correct { background: rgba(16,185,129,0.15); border-color: #10B981; color: #34D399; }
-        .quiz-option.wrong { background: rgba(239,68,68,0.15); border-color: #EF4444; color: #F87171; }
-        .quiz-feedback { margin-top: 1rem; padding: 1rem; border-radius: 10px; font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; display: none; font-size: 0.92rem; line-height: 2; }
-        .quiz-feedback.show { display: block; }
-        .quiz-feedback.correct-fb { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #34D399; }
-        .quiz-feedback.wrong-fb { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #F87171; }
-        .lesson-bottom-nav { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 2rem 0; border-top: 1px solid var(--border-subtle); margin-top: 3rem; }
-        .lesson-bottom-nav a { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); transition: all 0.3s; font-weight: 600; font-size: 0.9rem; }
-        .lesson-bottom-nav a:hover { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.3); transform: translateY(-2px); }
+        /* CARDINALITY CARDS */
+        .card-ratio{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:2rem;margin:1.5rem 0;transition:.3s;}
+        .card-ratio:hover{border-color:rgba(255,255,255,.13);}
+        .card-ratio .cr-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;flex-wrap:wrap;}
+        .cr-badge{font-family:'Fira Code',monospace;font-size:1.4rem;font-weight:900;padding:.3rem .8rem;border-radius:10px;}
+        .cr-name{font-size:1.1rem;font-weight:800;}
+        .cr-rule{font-size:.82rem;color:#64748B;margin-top:.2rem;}
+        .cr-body{font-size:.95rem;line-height:2;color:#CBD5E1;margin-bottom:1rem;}
+        .examples-list{display:grid;gap:.6rem;margin:.8rem 0;}
+        .ex-item{background:rgba(0,0,0,.3);border-radius:10px;padding:.7rem 1rem;font-size:.88rem;color:#CBD5E1;display:flex;gap:.7rem;align-items:flex-start;}
+        .ex-item .domain{color:#64748B;font-size:.75rem;font-family:'Inter',sans-serif;white-space:nowrap;flex-shrink:0;direction:ltr;unicode-bidi:isolate;}
+        .ex-item .rule{flex:1;}
+        .impact-box{background:rgba(14,165,233,.06);border:1px solid rgba(14,165,233,.15);border-radius:10px;padding:.8rem 1rem;margin-top:.8rem;font-size:.88rem;color:#7DD3FC;}
+        .impact-box strong{color:#38BDF8;}
+
+        /* SQL PREVIEW */
+        .sql-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:1rem 0;border:1px solid rgba(255,255,255,.05);}
+        .sql-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .sdot{width:9px;height:9px;border-radius:50%;}
+        .sdot.r{background:#FF5F57}.sdot.y{background:#FDBC40}.sdot.g{background:#27C93F}
+        .slabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .sbody{padding:1rem 1.2rem;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.col{color:#60A5FA}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.pk{color:#F472B6;font-weight:600}.fk{color:#F87171}.cn{color:#A5B4FC}
+
+        /* PARTICIPATION */
+        .part-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin:2rem 0;}
+        @media(max-width:680px){.part-grid{grid-template-columns:1fr;}}
+        .part-card{background:rgba(15,23,42,.7);border-radius:14px;padding:1.5rem;border:1px solid rgba(255,255,255,.07);}
+
+        /* MIN-MAX TABLE */
+        .minmax-table{width:100%;border-collapse:collapse;margin:1.5rem 0;font-size:.87rem;}
+        .minmax-table th{text-align:right;padding:.7rem 1rem;background:rgba(14,165,233,.08);border:1px solid rgba(255,255,255,.06);color:#38BDF8;font-weight:700;}
+        .minmax-table td{padding:.65rem 1rem;border:1px solid rgba(255,255,255,.05);color:#CBD5E1;line-height:1.8;}
+        .minmax-table tr:hover td{background:rgba(255,255,255,.02);}
+
+        /* WORKED EXAMPLE */
+        .worked-ex{background:rgba(8,14,30,.8);border:1px solid rgba(14,165,233,.2);border-radius:18px;padding:2rem;margin:2rem 0;}
+        .we-title{font-size:1.15rem;font-weight:800;color:#38BDF8;margin-bottom:1.5rem;display:flex;align-items:center;gap:.5rem;}
+        .req-box{background:rgba(15,23,42,.8);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:1.3rem 1.5rem;margin:1rem 0;font-size:.93rem;line-height:2.1;color:#CBD5E1;}
+        .req-label{font-family:'Fira Code',monospace;font-size:.72rem;color:#475569;margin-bottom:.6rem;direction:ltr;}
+        .step-block{margin:1.5rem 0;}
+        .step-num{background:linear-gradient(135deg,#0EA5E9,#0369A1);color:white;font-weight:800;font-size:.8rem;padding:.3rem .7rem;border-radius:8px;display:inline-block;margin-bottom:.8rem;font-family:'Inter',sans-serif;}
+        .step-block p{font-size:.93rem;line-height:2;color:#CBD5E1;margin-bottom:.6rem;}
+        .rel-table{width:100%;border-collapse:collapse;font-size:.83rem;}
+        .rel-table th{padding:.6rem 1rem;background:rgba(14,165,233,.08);border:1px solid rgba(255,255,255,.06);text-align:right;color:#38BDF8;font-weight:700;}
+        .rel-table td{padding:.55rem 1rem;border:1px solid rgba(255,255,255,.05);color:#CBD5E1;line-height:1.8;}
+        .rel-table tr:hover td{background:rgba(255,255,255,.02);}
+
+        /* PRACTICE */
+        .practice-block{background:rgba(15,23,42,.8);border:1px solid rgba(255,255,255,.07);border-radius:18px;overflow:hidden;margin:2rem 0;}
+        .practice-header{background:rgba(14,165,233,.1);padding:1.2rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.06);}
+        .practice-header h3{font-size:1.1rem;font-weight:800;color:#38BDF8;margin:0;}
+        .practice-body{padding:1.8rem;}
+        .practice-req{background:rgba(0,0,0,.3);border-radius:10px;padding:1.2rem;font-size:.93rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .task-list{list-style:none;padding:0;margin-bottom:1.5rem;}
+        .task-list li{padding:.5rem 0;font-size:.93rem;color:#CBD5E1;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:.5rem;}
+        .tnum{background:rgba(14,165,233,.15);color:#38BDF8;font-weight:800;font-size:.78rem;padding:.1rem .5rem;border-radius:5px;flex-shrink:0;font-family:'Inter',sans-serif;}
+        .sol-btn{width:100%;padding:.9rem;border-radius:10px;background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);color:#38BDF8;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:.3s;}
+        .sol-btn:hover{background:rgba(14,165,233,.18);}
+        .sol-content{display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.05);}
+        .sol-content.open{display:block;}
+
+        /* QUIZ */
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;}
+        .bnav-btn:hover{background:rgba(14,165,233,.1);border-color:rgba(14,165,233,.3);transform:translateY(-2px);}
     </style>
 </head>
 <body>
-    <nav class="lesson-nav-bar"><div class="nav-inner"><a href="../index.html" class="nav-brand"><div class="back-btn"><i class="fas fa-arrow-left"></i></div><span><span style="color:#3B82F6;">ER</span>Rels</span></a><div class="nav-links"><a href="#cardinality">النسب</a><a href="#participation">المشاركة</a><a href="#quiz">اختبر نفسك</a></div></div></nav>
-    <div class="progress-bar-container"><div class="progress-bar-fill" id="reading-progress"></div></div>
+    <nav class="lesson-nav-bar">
+        <div class="nav-inner">
+            <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-arrow-right"></i></div>العودة للبوابة</a>
+            <div class="nav-toc">
+                <a href="#degree">درجة العلاقة</a>
+                <a href="#cardinality">الكارديناليتي</a>
+                <a href="#participation">المشاركة</a>
+                <a href="#rel-attrs">صفات العلاقة</a>
+                <a href="#minmax">Min-Max</a>
+                <a href="#worked">مثال كامل</a>
+                <a href="#quiz">اختبار</a>
+            </div>
+        </div>
+    </nav>
+    <div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
 
-    <header class="lesson-hero">
-        <div class="glow-orb glow-orb-1"></div><div class="glow-orb glow-orb-2"></div>
-        <div style="position:relative;z-index:1;">
-            <div class="lesson-badge" data-aos="fade-down"><span class="dot"></span> UNIT 2 • Lesson 2</div>
-            <h1 data-aos="fade-up" data-aos-delay="150">ER <span class="text-gradient">Relationships</span></h1>
-            <div class="subtitle" data-aos="fade-up" data-aos-delay="300">العلاقات في الـ ER Diagram</div>
-            <p class="desc" data-aos="fade-up" data-aos-delay="450">إزاي الكيانات بتترابط مع بعض — ده اللي بيخلي الـ Database قوية! 🔗</p>
+    <header class="hero" data-aos="fade-up">
+        <div class="lesson-badge"><span class="pulse"></span>الوحدة 2 — الدرس 2</div>
+        <h1>علاقات الـ <span class="grad">ER Diagram</span></h1>
+        <p class="en-title">Entity Relationships — Cardinality, Participation, and Relationship Attributes</p>
+        <p class="desc">العلاقة هي "الجسر" بين الكيانات. فهمها صح هو الفرق بين Schema بيشتغل وSchema بيسبّب مشاكل كل يوم.</p>
+        <div class="learn-pills">
+            <span class="pill">Degree of Relationships</span>
+            <span class="pill">4-Step Cardinality Method</span>
+            <span class="pill">1:1 / 1:N / M:N بأمثلة واقعية</span>
+            <span class="pill">Total vs Partial Participation</span>
+            <span class="pill">أثر كل علاقة على الـ SQL</span>
+            <span class="pill">Hospital System كامل</span>
         </div>
     </header>
 
-    <!-- Cardinality -->
-    <section class="lesson-section" id="cardinality">
-        <div class="section-header" data-aos="fade-up">
-            <h2><i class="fas fa-link" style="color:#FBBF24;margin-left:0.5rem;"></i> نسب العلاقات — Cardinality Ratios</h2>
-            <p class="en-sub">How Many of Each Side?</p>
-        </div>
-        <div class="glass-card" style="padding:2rem;border-radius:20px;margin-bottom:2rem;" data-aos="fade-up">
-            <div class="rtl-block" style="font-size:1.05rem;">
-                <p style="color:#E2E8F0;margin-bottom:1rem;">الـ <span class="english">Cardinality Ratio</span> بيقولنا: <span class="hl-amber">كام entity من الجانب ده ممكن يرتبط بكام entity من الجانب التاني؟</span></p>
-                <p style="color:#94A3B8;">فيه 3 أنواع أساسية:</p>
+    <div class="lesson-body">
+
+    <!-- ==== DEGREE ==== -->
+    <div class="section-block" id="degree" data-aos="fade-up">
+        <div class="section-title"><span class="icon">📐</span> درجة العلاقة</div>
+        <p class="section-en">Degree of a Relationship (Unary / Binary / Ternary)</p>
+
+        <p class="body-text">الدرجة = عدد الـ Entities اللي بتشارك في العلاقة. في الغالب بنشوف Binary، بس فيه حالات تانية مهمة:</p>
+
+        <div class="card-ratio" style="border-right:3px solid #A78BFA;">
+            <div class="cr-header"><span class="cr-badge" style="background:rgba(139,92,246,.15);color:#A78BFA;">Unary (1)</span><div><div class="cr-name" style="color:#A78BFA;">علاقة أحادية — Recursive</div><div class="cr-rule">الـ Entity بتعمل علاقة مع نفسها</div></div></div>
+            <div class="cr-body">بتحصل لما entity بيكون عنده أعضاء بيرتبطوا ببعض من نفس النوع.</div>
+            <div class="examples-list">
+                <div class="ex-item"><span class="domain">HR</span><span class="rule"><strong>EMPLOYEE supervises EMPLOYEE</strong> — كل موظف عنده مدير مباشر وهو نفسه موظف. العلاقة "MANAGES" بين EMPLOYEE وEMPLOYEE.</span></div>
+                <div class="ex-item"><span class="domain">E-COMM</span><span class="rule"><strong>PRODUCT is_component_of PRODUCT</strong> — في المنتجات المركّبة: اللابتوب مكوّن من شاشة، كيبورد، إلخ — كلها products.</span></div>
+                <div class="ex-item"><span class="domain">SOCIAL</span><span class="rule"><strong>USER is_friend_of USER</strong> — علاقة الصداقة على Facebook هي ربط بين User وUser.</span></div>
             </div>
+            <div class="impact-box"><strong>في SQL:</strong> جدول EMPLOYEE فيه عمود <span class="en-inline">manager_id FK → employee.emp_id</span>. أو جدول FRIENDSHIP(user1_id, user2_id).</div>
         </div>
 
-        <div class="card-grid">
-            <div class="rel-card" data-aos="fade-up" data-aos-delay="0">
-                <div class="rel-visual">
-                    <div class="entity-box" style="border-color:#60A5FA;color:#60A5FA;">EMPLOYEE</div>
-                    <span class="ratio" style="color:#FBBF24;">1 : 1</span>
-                    <div class="entity-box" style="border-color:#34D399;color:#34D399;">PASSPORT</div>
-                </div>
-                <h3 style="color:#60A5FA;">One-to-One (1:1)</h3>
-                <div class="rel-ar">علاقة واحد لواحد</div>
-                <div class="rel-desc">كل <span class="english">Entity</span> من الجانب الأول مرتبط بـ <span class="english">Entity واحد بس</span> من الجانب التاني — والعكس.</div>
-                <div class="rel-example">📌 مثال: كل موظف ليه جواز سفر واحد بس. وكل جواز سفر لموظف واحد بس.</div>
-            </div>
-            <div class="rel-card" data-aos="fade-up" data-aos-delay="100">
-                <div class="rel-visual">
-                    <div class="entity-box" style="border-color:#60A5FA;color:#60A5FA;">DEPARTMENT</div>
-                    <span class="ratio" style="color:#FBBF24;">1 : N</span>
-                    <div class="entity-box" style="border-color:#34D399;color:#34D399;">EMPLOYEE</div>
-                </div>
-                <h3 style="color:#34D399;">One-to-Many (1:N)</h3>
-                <div class="rel-ar">علاقة واحد لكثير</div>
-                <div class="rel-desc"><span class="hl-emerald">أشهر نوع علاقة!</span> واحد من الجانب الأول يقدر يرتبط بكتير من الجانب التاني — بس كل واحد من التاني مرتبط بواحد بس من الأول.</div>
-                <div class="rel-example">📌 قسم واحد فيه كذا موظف — بس كل موظف في قسم واحد بس.</div>
-            </div>
-            <div class="rel-card" data-aos="fade-up" data-aos-delay="200">
-                <div class="rel-visual">
-                    <div class="entity-box" style="border-color:#60A5FA;color:#60A5FA;">STUDENT</div>
-                    <span class="ratio" style="color:#FBBF24;">M : N</span>
-                    <div class="entity-box" style="border-color:#34D399;color:#34D399;">COURSE</div>
-                </div>
-                <h3 style="color:#FBBF24;">Many-to-Many (M:N)</h3>
-                <div class="rel-ar">علاقة كثير لكثير</div>
-                <div class="rel-desc">كتير من الجانب الأول يقدروا يرتبطوا بكتير من التاني. <span class="hl-red">مهم!</span> لما نحولها لجداول هنحتاج <span class="english">Junction Table</span> (جدول وسيط).</div>
-                <div class="rel-example">📌 طالب يسجل في كذا مادة — ومادة فيها كذا طالب.</div>
-            </div>
+        <div class="card-ratio" style="border-right:3px solid #34D399;">
+            <div class="cr-header"><span class="cr-badge" style="background:rgba(52,211,153,.15);color:#34D399;">Binary (2)</span><div><div class="cr-name" style="color:#34D399;">علاقة ثنائية — الأشيع</div><div class="cr-rule">كيانين بيشاركوا في العلاقة</div></div></div>
+            <div class="cr-body">90%+ من العلاقات في الواقع binary. STUDENT enrolls in COURSE. EMPLOYEE works_for DEPARTMENT.</div>
         </div>
-    </section>
 
-    <!-- Participation -->
-    <section class="lesson-section alt-bg" id="participation">
-        <div class="section-inner">
-            <div class="section-header" data-aos="fade-up">
-                <h2><i class="fas fa-circle-half-stroke" style="color:#A78BFA;margin-left:0.5rem;"></i> المشاركة — Participation</h2>
-                <p class="en-sub">Total vs Partial Participation</p>
+        <div class="card-ratio" style="border-right:3px solid #FBBF24;">
+            <div class="cr-header"><span class="cr-badge" style="background:rgba(251,191,36,.15);color:#FBBF24;">Ternary (3)</span><div><div class="cr-name" style="color:#FBBF24;">علاقة ثلاثية — حين تحتاجها</div><div class="cr-rule">3 كيانات بيشاركوا في نفس الوقت</div></div></div>
+            <div class="cr-body">بتحصل لما معلومة مش ممكن تتحدّد إلا بوجود الثلاثة مع بعض.</div>
+            <div class="examples-list">
+                <div class="ex-item"><span class="domain">UNI</span><span class="rule"><strong>INSTRUCTOR teaches COURSE in ROOM</strong> — محتاج الثلاثة عشان تعرف "مين بيدرّس إيه وفين". اثنين بس مش كفاية.</span></div>
+                <div class="ex-item"><span class="domain">SUPPLY</span><span class="rule"><strong>SUPPLIER supplies PART to PROJECT</strong> — مورّد بيوّد قطعة لمشروع معين. الكمية بتتحدّد بالثلاثة مع بعض.</span></div>
             </div>
-            <div class="glass-card" style="padding:2rem;border-radius:20px;margin-bottom:2rem;" data-aos="fade-up">
-                <div class="rtl-block" style="font-size:1.05rem;">
-                    <p style="color:#E2E8F0;margin-bottom:1rem;">الـ <span class="english">Participation Constraint</span> بيقولنا: <span class="hl-purple">هل كل entity لازم يشارك في العلاقة ولا ممكن لأ؟</span></p>
-                </div>
-            </div>
-            <div class="part-grid" data-aos="fade-up" data-aos-delay="100">
-                <div class="part-card" style="border-top: 3px solid #34D399;">
-                    <h4 style="color:#34D399;">Total Participation (══)</h4>
-                    <p><span class="hl-emerald">كل</span> <span class="english">entity</span> لازم تشارك في العلاقة — مفيش استثناء. بترسم بخط مزدوج (══) بين الكيان والعلاقة.</p>
-                    <p style="margin-top:0.5rem;color:#94A3B8;font-size:0.85rem;">📌 مثال: كل موظف <span class="hl-emerald">لازم</span> يبقى في قسم. مينفعش موظف من غير قسم.</p>
-                </div>
-                <div class="part-card" style="border-top: 3px solid #64748B;">
-                    <h4 style="color:#94A3B8;">Partial Participation (—)</h4>
-                    <p>بعض الـ <span class="english">entities</span> ممكن <span class="hl-amber">تشارك أو لأ</span> — مش إجباري. بترسم بخط واحد عادي (—).</p>
-                    <p style="margin-top:0.5rem;color:#94A3B8;font-size:0.85rem;">📌 مثال: موظف <span class="hl-amber">ممكن</span> يدير قسم أو لأ. مش كل موظف مدير.</p>
-                </div>
-            </div>
-
-            <!-- Min-Max Notation -->
-            <div class="glass-card" style="padding:2rem;border-radius:20px;margin-top:2rem;" data-aos="fade-up" data-aos-delay="200">
-                <div class="rtl-block" style="font-size:1.05rem;">
-                    <h3 style="color:#FBBF24;margin-bottom:1rem;">📐 طريقة (min, max) — أدق طريقة</h3>
-                    <p style="color:#CBD5E1;margin-bottom:1rem;">بدل ما نقول بس <span class="english">1:N</span>، ممكن نحدد بالظبط:</p>
-                    <div class="code-box" style="font-size:0.95rem;">
-EMPLOYEE —(1,1)— works_for —(1,N)— DEPARTMENT
-
-يعني:
-• كل موظف يشتغل في قسم واحد بالظبط (min=1, max=1)
-• كل قسم فيه من 1 لـ N موظف (min=1, max=N)
-                    </div>
-                    <div class="note" style="margin-top:1rem;">💡 <span class="hl-amber">(0, N)</span> = مشاركة جزئية (ممكن صفر). <span class="hl-emerald">(1, N)</span> = مشاركة كلية (لازم واحد على الأقل).</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Real Example -->
-    <section class="lesson-section">
-        <div class="section-header" data-aos="fade-up">
-            <h2><i class="fas fa-university" style="color:#22D3EE;margin-left:0.5rem;"></i> مثال كامل: جامعة</h2>
-            <p class="en-sub">Full University Example</p>
-        </div>
-        <div class="glass-card" style="padding:2rem;border-radius:20px;" data-aos="fade-up">
-            <div class="rtl-block" style="font-size:1.05rem;">
-                <div class="step-box" style="border-color:#60A5FA;margin-bottom:1rem;">
-                    <p style="color:#60A5FA;"><span class="english">STUDENT</span> —(0,N)— <span class="hl-amber">enrolls_in</span> —(1,N)— <span class="english">COURSE</span></p>
-                    <p style="color:#94A3B8;font-size:0.85rem;margin-top:0.3rem;">طالب ممكن يسجل في 0 أو أكتر مادة. كل مادة لازم يكون فيها طالب واحد على الأقل.</p>
-                </div>
-                <div class="step-box" style="border-color:#34D399;margin-bottom:1rem;">
-                    <p style="color:#34D399;"><span class="english">PROFESSOR</span> —(0,N)— <span class="hl-amber">teaches</span> —(1,1)— <span class="english">COURSE</span></p>
-                    <p style="color:#94A3B8;font-size:0.85rem;margin-top:0.3rem;">أستاذ ممكن يدرّس 0 أو أكتر مادة. كل مادة ليها أستاذ واحد بالظبط.</p>
-                </div>
-                <div class="step-box" style="border-color:#FBBF24;margin-bottom:1rem;">
-                    <p style="color:#FBBF24;"><span class="english">DEPARTMENT</span> —(1,N)— <span class="hl-amber">has</span> —(1,1)— <span class="english">EMPLOYEE</span></p>
-                    <p style="color:#94A3B8;font-size:0.85rem;margin-top:0.3rem;">كل قسم فيه موظف واحد على الأقل. كل موظف في قسم واحد بالظبط.</p>
-                </div>
-                <div class="step-box" style="border-color:#A78BFA;">
-                    <p style="color:#A78BFA;"><span class="english">EMPLOYEE</span> —(0,1)— <span class="hl-amber">manages</span> —(1,1)— <span class="english">DEPARTMENT</span></p>
-                    <p style="color:#94A3B8;font-size:0.85rem;margin-top:0.3rem;">موظف ممكن يدير قسم أو لأ. كل قسم ليه مدير واحد بالظبط.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Quiz -->
-    <section class="lesson-section alt-bg" id="quiz">
-        <div class="section-inner">
-            <div class="section-header" data-aos="fade-up"><h2><i class="fas fa-brain" style="color:#D946EF;margin-left:0.5rem;"></i> اختبر نفسك!</h2><p class="en-sub">Quick Knowledge Check</p></div>
-            <div data-aos="fade-up" data-aos-delay="100">
-                <div class="quiz-question" id="q1">
-                    <h4>❓ سؤال ١: علاقة "طالب يسجل في مادة" — نسبتها إيه؟</h4>
-                    <div class="quiz-options">
-                        <div class="quiz-option" onclick="checkAnswer(1,this,false)">1:1 — One to One</div>
-                        <div class="quiz-option" onclick="checkAnswer(1,this,false)">1:N — One to Many</div>
-                        <div class="quiz-option" onclick="checkAnswer(1,this,true)">M:N — Many to Many</div>
-                    </div>
-                    <div class="quiz-feedback" id="q1-feedback"></div>
-                </div>
-                <div class="quiz-question" id="q2">
-                    <h4>❓ سؤال ٢: لو كل موظف لازم يبقى في قسم (مفيش استثناء) — ده نوع إيه من المشاركة؟</h4>
-                    <div class="quiz-options">
-                        <div class="quiz-option" onclick="checkAnswer(2,this,true)">Total Participation</div>
-                        <div class="quiz-option" onclick="checkAnswer(2,this,false)">Partial Participation</div>
-                    </div>
-                    <div class="quiz-feedback" id="q2-feedback"></div>
-                </div>
-                <div class="quiz-question" id="q3">
-                    <h4>❓ سؤال ٣: لو عندنا (0,N) بجانب Entity — ده معناه إيه؟</h4>
-                    <div class="quiz-options">
-                        <div class="quiz-option" onclick="checkAnswer(3,this,false)">لازم يشارك في العلاقة</div>
-                        <div class="quiz-option" onclick="checkAnswer(3,this,true)">مشاركة جزئية — ممكن يشارك 0 مرة أو أكتر</div>
-                        <div class="quiz-option" onclick="checkAnswer(3,this,false)">ممكن يشارك مرة واحدة بس</div>
-                    </div>
-                    <div class="quiz-feedback" id="q3-feedback"></div>
-                </div>
-            </div>
-            <div id="quiz-score" style="text-align:center;margin-top:2rem;display:none;"><div class="glass-card" style="padding:2rem;border-radius:20px;display:inline-block;"><div class="rtl-block"><h3 style="color:#34D399;margin-bottom:0.5rem;" id="score-text"></h3><p style="color:#94A3B8;" id="score-msg"></p></div></div></div>
-        </div>
-    </section>
-
-    <div style="max-width:960px;margin:0 auto;padding:0 1.5rem;">
-        <div class="lesson-bottom-nav">
-            <a href="er_basics.html"><i class="fas fa-arrow-right"></i><span>الدرس السابق</span></a>
-            <a href="eer_diagrams.html" style="color:#60A5FA;"><span>الدرس التالي: EER المتقدم</span><i class="fas fa-arrow-left"></i></a>
+            <div class="impact-box"><strong>في SQL:</strong> جدول وسيط فيه FK للثلاثة كيانات، والـ PK مركّب من الثلاثة.</div>
         </div>
     </div>
-    <footer style="text-align:center;padding:3rem 1.5rem;color:var(--text-ghost);font-size:0.85rem;border-top:1px solid var(--border-subtle);"><p>Database Mastery — Unit 2: Data Modeling & ER</p></footer>
+
+    <!-- ==== CARDINALITY ==== -->
+    <div class="section-block" id="cardinality" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🔢</span> نسب الكارديناليتي</div>
+        <p class="section-en">Cardinality Ratios — 1:1, 1:N, M:N</p>
+
+        <p class="body-text">الكارديناليتي بتحدّد "كم instance من كيان A يقدر يرتبط بـ instance من كيان B؟". ده اللي بيقرّر هيكل الـ SQL schema بالكامل.</p>
+
+        <div class="callout tip">
+            <div class="chead">🔢 طريقتي عشان تحدّد الكارديناليتي من المتطلبات</div>
+            <p><strong>خطوة 1:</strong> اسأل "كيان A واحد بيرتبط بكام B؟" → رقم من جانب B.<br>
+            <strong>خطوة 2:</strong> اسأل "كيان B واحد بيرتبط بكام A؟" → رقم من جانب A.<br>
+            <strong>مثال:</strong> "كل قسم فيه موظفين كتير، كل موظف في قسم واحد بس."<br>
+            → DEPT واحد → كتير EMPLOYEES = 1 من جانب DEPT<br>
+            → EMPLOYEE واحد → DEPT واحد = 1 من جانب EMPLOYEE<br>
+            → النتيجة: 1:N (Department إلى Employee)</p>
+        </div>
+
+        <!-- 1:1 -->
+        <div class="card-ratio" style="border-right:3px solid #34D399;" data-aos="fade-up">
+            <div class="cr-header">
+                <span class="cr-badge" style="background:rgba(52,211,153,.15);color:#34D399;font-size:1.6rem;">1 : 1</span>
+                <div><div class="cr-name" style="color:#34D399;">One-to-One</div><div class="cr-rule">كل instance من A بيرتبط بـ instance واحد بس من B وعكسه</div></div>
+            </div>
+            <div class="cr-body">أقل شيوعاً — لأنه ممكن تدمج الكيانين في جدول واحد في أغلب الحالات. بس بتفصلهم لو:</div>
+            <ul style="list-style:none;padding:0;color:#94A3B8;font-size:.9rem;margin-bottom:1rem;">
+                <li style="padding:.3rem 0;">→ البيانات كمية وبتتصفحها منفصلين</li>
+                <li style="padding:.3rem 0;">→ ممكن تكون optional (ليس كل موظف عنده لابتوب)</li>
+                <li style="padding:.3rem 0;">→ لأسباب أمان (بيانات حساسة في جدول منفصل)</li>
+            </ul>
+            <div class="examples-list">
+                <div class="ex-item"><span class="domain">HR</span><span class="rule"><strong>EMPLOYEE has COMPANY_CAR</strong> — كل موظف مش ضروري عنده سيارة شركة. لو عنده، هي ليها موظف واحد بس. لو كل موظف لازم عنده سيارة = Total participation من الجانبين.</span></div>
+                <div class="ex-item"><span class="domain">GOV</span><span class="rule"><strong>CITIZEN has PASSPORT</strong> — كل مواطن ممكن يبقى عنده جواز سفر واحد. الجواز بيبقى لمواطن واحد بس.</span></div>
+                <div class="ex-item"><span class="domain">COMPANY</span><span class="rule"><strong>COUNTRY has CAPITAL</strong> — كل دولة عاصمتها واحدة. كل عاصمة تبعت دولة واحدة.</span></div>
+                <div class="ex-item"><span class="domain">SHOP</span><span class="rule"><strong>STORE has MANAGER</strong> — كل فرع منجر واحد. المنجر مسؤول عن فرع واحد فقط.</span></div>
+            </div>
+            <div class="impact-box">
+                <strong>في SQL:</strong> بنضيف الـ FK في جدول الجانب اللي Participation بتاعه Total (الأكثر إلزامية). ممكن نجمع الجدولين لو كلهم Total.<br><br>
+                <strong>مثال:</strong> EMPLOYEE (emp_id PK) — PASSPORT (passport_id PK, emp_id FK UNIQUE, expiry_date)
+            </div>
+        </div>
+
+        <!-- 1:N -->
+        <div class="card-ratio" style="border-right:3px solid #60A5FA;" data-aos="fade-up">
+            <div class="cr-header">
+                <span class="cr-badge" style="background:rgba(96,165,250,.15);color:#60A5FA;font-size:1.6rem;">1 : N</span>
+                <div><div class="cr-name" style="color:#60A5FA;">One-to-Many — الأشيع</div><div class="cr-rule">instance واحد من A بيرتبط بكتير من B — لكن B ترتبط بـ A واحد فقط</div></div>
+            </div>
+            <div class="cr-body">80% من العلاقات في التطبيقات الحقيقية هي 1:N. دايماً ابحث عن "الآباء والأبناء".</div>
+            <div class="examples-list">
+                <div class="ex-item"><span class="domain">UNI</span><span class="rule"><strong>DEPARTMENT (1) → INSTRUCTORS (N)</strong> — القسم فيه أساتذة كتير. كل أستاذ في قسم واحد بس.</span></div>
+                <div class="ex-item"><span class="domain">E-COMM</span><span class="rule"><strong>CUSTOMER (1) → ORDERS (N)</strong> — العميل ممكن يعمل أوردرات كتير. كل أوردر بتاع عميل واحد.</span></div>
+                <div class="ex-item"><span class="domain">E-COMM</span><span class="rule"><strong>ORDER (1) → ORDER_ITEMS (N)</strong> — الأوردر فيه بنود كتير. كل بند في أوردر واحد. (Weak Entity هنا!)</span></div>
+                <div class="ex-item"><span class="domain">BLOG</span><span class="rule"><strong>USER (1) → POSTS (N)</strong> — المستخدم ينشر تدوينات كتير. كل تدوينة ليها كاتب واحد.</span></div>
+                <div class="ex-item"><span class="domain">GITHUB</span><span class="rule"><strong>ORGANIZATION (1) → REPOSITORIES (N)</strong> — كل org عندها repos كتير. كل repo ملكية org واحدة.</span></div>
+            </div>
+            <div class="impact-box">
+                <strong>في SQL:</strong> الـ FK بتروح في جانب الـ N دايماً!<br>
+                ORDERS (order_id PK, <strong>customer_id FK</strong>, order_date, total)
+            </div>
+        </div>
+
+        <!-- M:N -->
+        <div class="card-ratio" style="border-right:3px solid #F472B6;" data-aos="fade-up">
+            <div class="cr-header">
+                <span class="cr-badge" style="background:rgba(244,114,182,.15);color:#F472B6;font-size:1.6rem;">M : N</span>
+                <div><div class="cr-name" style="color:#F472B6;">Many-to-Many — الأكثر تعقيداً</div><div class="cr-rule">كتير من A بيرتبط بكتير من B</div></div>
+            </div>
+            <div class="cr-body">بتحتاج جدول وسيط (Junction Table / Bridge Table / Associative Table) — مش ممكن تيجيبها بـ FK عادي.</div>
+            <div class="examples-list">
+                <div class="ex-item"><span class="domain">UNI</span><span class="rule"><strong>STUDENT (M) ↔ COURSE (N) — ENROLLMENT</strong> — طالب بيلتحق بكورسات كتير. كورس فيه طلاب كتير. + صفات العلاقة: grade, semester.</span></div>
+                <div class="ex-item"><span class="domain">HOSPITAL</span><span class="rule"><strong>DOCTOR (M) ↔ PATIENT (N) — APPOINTMENT</strong> — دكتور بيشوف مرضى كتير. المريض بيزور دكاترة كتير. + date, diagnosis.</span></div>
+                <div class="ex-item"><span class="domain">E-COMM</span><span class="rule"><strong>PRODUCT (M) ↔ WAREHOUSE (N) — INVENTORY</strong> — منتج ممكن يتخزّن في مخازن كتير. مخزن فيه منتجات كتير. + quantity, shelf_location.</span></div>
+                <div class="ex-item"><span class="domain">SOCIAL</span><span class="rule"><strong>ARTICLE (M) ↔ TAG (N) — ARTICLE_TAG</strong> — المقالة ممكن عليها تاجات كتير. التاج موجود على مقالات كتير.</span></div>
+            </div>
+            <div class="impact-box">
+                <strong>في SQL:</strong> جدول وسيط بـ FK من الجانبين + PK مركّب:<br>
+                ENROLLMENT (<strong>student_id FK</strong>, <strong>course_id FK</strong>, grade, semester, PRIMARY KEY(student_id, course_id))
+            </div>
+        </div>
+    </div>
+
+    <!-- ==== PARTICIPATION ==== -->
+    <div class="section-block" id="participation" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🎯</span> قيود المشاركة</div>
+        <p class="section-en">Participation Constraints — Total vs Partial</p>
+
+        <p class="body-text">قيد المشاركة بيحدّد: هل <strong>كل</strong> instance من الكيان لازم يشارك في العلاقة؟ أم إنها اختيارية؟ ده بيترجم مباشرة لـ <span class="en-inline">NOT NULL</span> أو <span class="en-inline">NULL</span> في الـ SQL.</p>
+
+        <div class="part-grid">
+            <div class="part-card" style="border-top:3px solid #EF4444;">
+                <h3 style="color:#F87171;margin-bottom:.8rem;">🔴 Total Participation — كلي</h3>
+                <p style="font-size:.92rem;line-height:2;color:#CBD5E1;">كل instance من الكيان <strong>لازم</strong> يشارك في العلاقة — مش في options. في رسم الـ ER بتاخد خطين (═══).</p>
+                <div class="callout realworld" style="margin-top:1rem;">
+                    <div class="chead">أمثلة واقعية</div>
+                    <p>◆ كل موظف لازم يتبع لقسم (Total participation من جانب EMPLOYEE في WORKS_FOR).<br>
+                    ◆ كل بند في أوردر لازم يكون ليه منتج (Total من جانب ORDER_ITEM).<br>
+                    ◆ كل كورس لازم يبقى تابع لقسم.<br><br>
+                    <strong style="color:#34D399;">في SQL:</strong> الـ FK بيبقى <span class="en-inline">NOT NULL</span> — يعني ممنوع يتحط قيمة NULL فيه.</p>
+                </div>
+            </div>
+            <div class="part-card" style="border-top:3px solid #64748B;">
+                <h3 style="color:#94A3B8;margin-bottom:.8rem;">⚪ Partial Participation — جزئي</h3>
+                <p style="font-size:.92rem;line-height:2;color:#CBD5E1;">بعض instances من الكيان ممكن تشارك — وبعضها لأ. في رسم الـ ER خط واحد عادي (———).</p>
+                <div class="callout tip" style="margin-top:1rem;">
+                    <div class="chead">أمثلة واقعية</div>
+                    <p>◆ مش كل موظف لازم ييجي-منه تبعيين (Partial participation من جانب EMPLOYEE في HAS).<br>
+                    ◆ مش كل منتج لازم تكون عليه orders حالياً.<br>
+                    ◆ مش كل مستخدم لازم يكتب reviews.<br><br>
+                    <strong style="color:#FBBF24;">في SQL:</strong> الـ FK ممكن يبقى <span class="en-inline">NULL</span> — يعني الـ FK column مش بيبقاش NOT NULL.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="callout mistake">
+            <div class="chead">⚠️ الخطأ الشائع — نسيان تأثير Participation على الـ SQL</div>
+            <p>لما بتحدّد Total Participation وتنسى تحط <span class="en-inline">NOT NULL</span> على الـ FK — بتسمح بإدخال موظف من غير قسم أو بند أوردر من غير منتج. ده بيكسر الـ business rules. الـ ER Participation مباشرة = SQL NOT NULL constraint.</p>
+        </div>
+
+        <!-- Combined examples -->
+        <div class="worked-ex" style="margin-top:2rem;">
+            <div class="we-title">📊 أمثلة على كل تركيبة Cardinality × Participation</div>
+            <table class="rel-table">
+                <thead><tr><th>العلاقة</th><th>A - Part</th><th>B - Part</th><th>SQL Impact</th></tr></thead>
+                <tbody>
+                    <tr><td style="color:#60A5FA;font-weight:600;">EMPLOYEE works_in DEPARTMENT</td><td>🔴 Total — كل موظف في قسم</td><td>⚪ Partial — قسم ممكن يكون فاضي</td><td><span class="en-inline">dept_id NOT NULL</span> في EMPLOYEE</td></tr>
+                    <tr><td style="color:#60A5FA;font-weight:600;">EMPLOYEE HAS DEPENDENT</td><td>⚪ Partial — مش كل موظف متزوج</td><td>🔴 Total — التبعي لازم ليه موظف</td><td>DEPENDENT.emp_id NOT NULL</td></tr>
+                    <tr><td style="color:#60A5FA;font-weight:600;">STUDENT ENROLLS COURSE</td><td>⚪ Partial — طالب ممكن ما اتسجلش</td><td>⚪ Partial — كورس ممكن ما اتفتحش</td><td>فيه اتنين nullable FKs في جدول ENROLLMENT</td></tr>
+                    <tr><td style="color:#60A5FA;font-weight:600;">ORDER_ITEM HAS PRODUCT</td><td>🔴 Total</td><td>🔴 Total — البند لازم منتج</td><td>product_id NOT NULL في ORDER_ITEM</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ==== REL ATTRIBUTES ==== -->
+    <div class="section-block" id="rel-attrs" data-aos="fade-up">
+        <div class="section-title"><span class="icon">📎</span> صفات العلاقة</div>
+        <p class="section-en">Relationship Attributes — When the relationship itself has data</p>
+
+        <p class="body-text">أحياناً المعلومة مش بتنتمي للكيان A ولا لـ B — بتنتمي للعلاقة نفسها. زي لما نسأل "فين نحط الـ grade؟ في STUDENT؟ لأ — الطالب ممكن عنده grades كتير. في COURSE؟ لأ — للكورس فيه طلاب كتير. إجابة: في العلاقة ENROLLMENT."</p>
+
+        <div class="examples-list">
+            <div class="ex-item"><span class="domain">UNI</span><span class="rule"><strong>ENROLLMENT (STUDENT ← → COURSE)</strong> — صفات العلاقة: grade (A, B, C...), semester ("2024-Spring"), enrollment_date.</span></div>
+            <div class="ex-item"><span class="domain">E-COMM</span><span class="rule"><strong>ORDER_ITEM (ORDER ← → PRODUCT)</strong> — صفات: quantity, unit_price_at_time (مهم إنك تتذكر السعر وقت الشراء مش السعر الحالي!), discount.</span></div>
+            <div class="ex-item"><span class="domain">SUPPLY</span><span class="rule"><strong>SUPPLIES (SUPPLIER ← → PROJECT via PART)</strong> — صفات: quantity, delivery_date, unit_cost.</span></div>
+            <div class="ex-item"><span class="domain">SOCIAL</span><span class="rule"><strong>FRIENDSHIP (USER ← → USER)</strong> — صفات: request_date, accepted_date, close_friend (boolean).</span></div>
+            <div class="ex-item"><span class="domain">HOSPITAL</span><span class="rule"><strong>APPOINTMENT (DOCTOR ← → PATIENT)</strong> — صفات: appointment_date, diagnosis, prescription, duration_mins.</span></div>
+        </div>
+
+        <div class="callout tip">
+            <div class="chead">💡 سؤال يحدّد لك فين تحط الصفة</div>
+            <p>اسأل: "هل قيمة الصفة دي بتتغيّر لو الـ Instance الأخر اتغيّر؟"<br>
+            مثال: grade — هل الـ grade بتاع "أحمد" في "قواعد البيانات" بيتغيّر لو كورس تاني ضاف نفس الطالب؟ لأ! يعني هي مش صفة للطالب ولا للكورس — هي صفة للعلاقة بينهم (ENROLLMENT).</p>
+        </div>
+
+        <div class="callout realworld">
+            <div class="chead">🏢 unit_price_at_time في ORDER_ITEM — مثال حقيقي مهم</div>
+            <p>في نظام تجارة إلكترونية: لو PRODUCT عندها price = 100 جنيه وبعت بيها. غدًا تغيّر السعر لـ 150 جنيه. لو شلت الـ price من ORDER_ITEM — الأوردر القديم هيبقى بسعر غلط! لازم تخزّن <span class="en-inline">unit_price_at_time</span> في ORDER_ITEM وتـ freeze السعر وقت الشراء.</p>
+        </div>
+    </div>
+
+    <!-- ==== MIN-MAX ==== -->
+    <div class="section-block" id="minmax" data-aos="fade-up">
+        <div class="section-title"><span class="icon">📏</span> الـ Min-Max Notation</div>
+        <p class="section-en">Structural Constraints — (min, max) Notation</p>
+
+        <p class="body-text">الـ Min-Max أكثر دقة من الكارديناليتي البسيطة. بتحدّد الحد الأدنى والأقصى لعدد المشاركات. بنكتبها قصاد كل entity في العلاقة.</p>
+
+        <table class="minmax-table">
+            <thead><tr><th>الرمز</th><th>المعنى</th><th>يعني Cardinality</th><th>يعني Participation</th><th>مثال</th></tr></thead>
+            <tbody>
+                <tr><td style="font-family:'Fira Code',monospace;font-weight:700;font-size:1rem;color:#34D399;">(0,1)</td><td>صفر أو واحد</td><td>N (لأن من الجانب الآخر هو يملكه)</td><td>Partial</td><td>موظف ممكن ما عندوش سيارة شركة</td></tr>
+                <tr><td style="font-family:'Fira Code',monospace;font-weight:700;font-size:1rem;color:#60A5FA;">(1,1)</td><td>واحد بالظبط</td><td>1</td><td>Total</td><td>كل موظف في قسم واحد بالظبط</td></tr>
+                <tr><td style="font-family:'Fira Code',monospace;font-weight:700;font-size:1rem;color:#FBBF24;">(0,N)</td><td>صفر أو أكتر</td><td>N</td><td>Partial</td><td>قسم ممكن يكون فيه صفر موظفين</td></tr>
+                <tr><td style="font-family:'Fira Code',monospace;font-weight:700;font-size:1rem;color:#F472B6;">(1,N)</td><td>واحد أو أكتر</td><td>N</td><td>Total</td><td>قسم لازم فيه موظف واحد على الأقل</td></tr>
+                <tr><td style="font-family:'Fira Code',monospace;font-weight:700;font-size:1rem;color:#A78BFA;">(2,5)</td><td>من 2 لـ 5</td><td>—</td><td>Total</td><td>مشروع فيه 2 على الأقل ولا يزيد عن 5 موظفين</td></tr>
+            </tbody>
+        </table>
+
+        <div class="callout why">
+            <div class="chead">🔍 كيف تقرأ Min-Max؟</div>
+            <p>في العلاقة EMPLOYEE WORKS_IN DEPARTMENT:<br>
+            • EMPLOYEE جانبها (1,1) — كل موظف في قسم واحد بالظبط (Total + ليس أكتر من 1).<br>
+            • DEPARTMENT جانبها (0,N) — قسم ممكن مفيهوش موظفين (جديد) أو فيه N موظف.<br><br>
+            الـ min هو اللي بيحدّد الـ Participation (0=Partial, 1+=Total). الـ max هو اللي بيحدّد الـ Cardinality (1=One, N=Many).</p>
+        </div>
+    </div>
+
+    <!-- ==== WORKED EXAMPLE ==== -->
+    <div class="section-block" id="worked" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🏥</span> مثال كامل — نظام المستشفى</div>
+        <p class="section-en">Complete Worked Example — Hospital Management System</p>
+
+        <div class="worked-ex">
+            <div class="we-title">📋 متطلبات نظام المستشفى</div>
+            <div class="req-box">
+                <div class="req-label">// REQUIREMENTS — HOSPITAL SYSTEM</div>
+                <p style="font-size:.93rem;line-height:2.2;color:#CBD5E1;">
+                يدير المستشفى عدة أقسام طبية (باطنة، جراحة، إلخ). كل قسم عنده رئيس قسم واحد من الأطباء. كل طبيب ينتمي لقسم واحد بالظبط.
+                <br><br>
+                المرضى عندهم ملف طبي فيه تاريخ مرضي. المريض ممكن يزور المستشفى أكتر من مرة. الزيارة (Appointment) فيها دكتور واحد ومريض واحد، وبتتحدّد يوم ووقت وتشخيص وعلاج.
+                <br><br>
+                الممرضين بيشتغلوا في أقسام — الممرضة ممكن تشتغل في قسم أو أكتر (في shift times مختلفة). كل ممرضة عندها ساعات عمل وتخصص تمريضي.
+                <br><br>
+                المستشفى عنده غرف. كل غرفة في قسم واحد وليها كمية سراير. المريض لما بينزل يتحجز له سرير في غرفة (ADMISSION). الإدخال (ADMISSION) فيه تاريخ دخول وتاريخ خروج.
+                </p>
+            </div>
+
+            <div class="step-block">
+                <div class="step-num">STEP 1 — تحديد العلاقات</div>
+                <table class="rel-table" style="margin-top:1rem;">
+                    <thead><tr><th>Entity A</th><th>العلاقة</th><th>Entity B</th><th>Cardinality</th><th>Participation</th><th>صفات العلاقة</th></tr></thead>
+                    <tbody>
+                        <tr><td style="color:#60A5FA;">DEPARTMENT</td><td>HEADED_BY</td><td style="color:#60A5FA;">DOCTOR</td><td>1:1</td><td>Total-Dept / Partial-Doctor</td><td>since_date</td></tr>
+                        <tr><td style="color:#60A5FA;">DOCTOR</td><td>BELONGS_TO</td><td style="color:#60A5FA;">DEPARTMENT</td><td>N:1</td><td>Total-Doctor</td><td>—</td></tr>
+                        <tr><td style="color:#60A5FA;">DOCTOR</td><td>APPOINTMENT</td><td style="color:#60A5FA;">PATIENT</td><td>M:N</td><td>Partial-Both</td><td>date, time, diagnosis, treatment</td></tr>
+                        <tr><td style="color:#60A5FA;">NURSE</td><td>WORKS_IN</td><td style="color:#60A5FA;">DEPARTMENT</td><td>M:N</td><td>Total-Nurse / Partial-Dept</td><td>shift_hours, start_date</td></tr>
+                        <tr><td style="color:#60A5FA;">ROOM</td><td>IN</td><td style="color:#60A5FA;">DEPARTMENT</td><td>N:1</td><td>Total-Room</td><td>—</td></tr>
+                        <tr><td style="color:#60A5FA;">PATIENT</td><td>ADMISSION</td><td style="color:#60A5FA;">ROOM</td><td>M:N (في حالات متعددة زمنياً)</td><td>Partial-Both</td><td>admit_date, discharge_date, bed_number</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="step-block">
+                <div class="step-num">STEP 2 — التفكير في كل علاقة</div>
+                <p><strong style="color:#38BDF8;">HEADED_BY (DEPARTMENT ↔ DOCTOR) — 1:1</strong></p>
+                <p>كل قسم عنده رئيس واحد (Total من جانب DEPARTMENT). الدكتور ممكن يبقى عضو عادي من غير ما يرأس قسم (Partial من جانب DOCTOR). في SQL: نضيف <span class="en-inline">head_doctor_id FK UNIQUE</span> في جدول DEPARTMENT.</p>
+
+                <p style="margin-top:1rem;"><strong style="color:#38BDF8;">WORKS_IN (NURSE ↔ DEPARTMENT) — M:N</strong></p>
+                <p>الممرضة ممكن تشتغل في أقسام كتير في shifts مختلفة. القسم فيه ممرضات كتير. صفات العلاقة: shift_hours, start_date. في SQL: جدول NURSE_DEPT_SHIFT(nurse_id, dept_id, shift_hours, start_date).</p>
+
+                <p style="margin-top:1rem;"><strong style="color:#38BDF8;">ADMISSION (PATIENT ↔ ROOM) — منطق خاص</strong></p>
+                <p>المريض ممكن يتدخّل أكتر من مرة في غرف مختلفة. الغرفة فيها مرضى كتير في أوقات مختلفة. ADMISSION عندها زيادة bed_number لأن الغرفة فيها سراير أكتر من واحد. الـ PK = (patient_id + admit_date) أو admission_id مستقل.</p>
+            </div>
+        </div>
+
+        <!-- SQL Schema Preview -->
+        <p class="body-text" style="margin-top:2rem;">نتيجة التصميم — الهيكل الأساسي بالـ SQL:</p>
+        <div class="sql-block">
+            <div class="sql-bar"><span class="sdot r"></span><span class="sdot y"></span><span class="sdot g"></span><span class="slabel">Hospital Schema — Key Tables</span></div>
+            <div class="sbody">
+<span class="cmt">-- Department: رئيس القسم FK = 1:1 مع DOCTOR</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">department</span> (
+    <span class="pk">dept_id</span>        <span class="cn">SERIAL PRIMARY KEY</span>,
+    dept_name      <span class="cn">VARCHAR(100) NOT NULL UNIQUE</span>,
+    head_doctor_id <span class="fk">INT UNIQUE REFERENCES doctor(doctor_id)</span> <span class="cmt">-- 1:1</span>
+);
+
+<span class="cmt">-- Doctor: لازم في قسم (Total) ← NOT NULL</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">doctor</span> (
+    <span class="pk">doctor_id</span>  <span class="cn">SERIAL PRIMARY KEY</span>,
+    full_name  <span class="cn">VARCHAR(100) NOT NULL</span>,
+    <span class="fk">dept_id</span>    <span class="cn">INT NOT NULL REFERENCES department(dept_id)</span> <span class="cmt">-- Total Participation</span>
+);
+
+<span class="cmt">-- Appointment: M:N مع صفات</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">appointment</span> (
+    appt_id     <span class="cn">SERIAL PRIMARY KEY</span>,
+    <span class="fk">doctor_id</span>   <span class="cn">INT NOT NULL REFERENCES doctor(doctor_id)</span>,
+    <span class="fk">patient_id</span>  <span class="cn">INT NOT NULL REFERENCES patient(patient_id)</span>,
+    appt_date   <span class="cn">TIMESTAMP NOT NULL</span>,
+    diagnosis   <span class="cn">TEXT</span>,
+    treatment   <span class="cn">TEXT</span>
+);
+
+<span class="cmt">-- Nurse-Department: M:N مع صفات Shift</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">nurse_dept_assignment</span> (
+    <span class="fk">nurse_id</span>    <span class="cn">INT NOT NULL REFERENCES nurse(nurse_id)</span>,
+    <span class="fk">dept_id</span>     <span class="cn">INT NOT NULL REFERENCES department(dept_id)</span>,
+    shift_hours <span class="cn">VARCHAR(20)</span>,  <span class="cmt">-- e.g. "08:00-16:00"</span>
+    start_date  <span class="cn">DATE NOT NULL</span>,
+    <span class="kw">PRIMARY KEY</span> (<span class="fk">nurse_id</span>, <span class="fk">dept_id</span>, start_date)
+);
+            </div>
+        </div>
+    </div>
+
+    <!-- ==== COMMON MISTAKES ==== -->
+    <div class="section-block" data-aos="fade-up">
+        <div class="section-title"><span class="icon">⚠️</span> الأخطاء الشائعة في تحديد العلاقات</div>
+        <div style="display:grid;gap:1rem;">
+            <div class="card-ratio" style="padding:1.3rem;border-right:3px solid #EF4444;">
+                <strong style="color:#F87171;">خطأ ١: الخلط بين 1:N وM:N</strong>
+                <p style="font-size:.9rem;color:#94A3B8;margin-top:.5rem;line-height:1.9;">
+                ❌ "الطبيب بيشوف مرضى كتير" → ده يبدو 1:N. لكن "المريض بيزور دكاترة كتير" → M:N!<br>
+                ✅ دايماً اسأل من الجانبين قبل تقرر.
+                </p>
+            </div>
+            <div class="card-ratio" style="padding:1.3rem;border-right:3px solid #EF4444;">
+                <strong style="color:#F87171;">خطأ ٢: وضع FK في الجانب الغلط في 1:N</strong>
+                <p style="font-size:.9rem;color:#94A3B8;margin-top:.5rem;line-height:1.9;">
+                ❌ بيضيفوا customer_ids (array) في جدول ORDER بدل ما يضيفوا order_id في CUSTOMER.<br>
+                ✅ الـ FK دايماً بيروح في جانب الـ N. ORDER بتاخد customer_id FK، مش العكس.
+                </p>
+            </div>
+            <div class="card-ratio" style="padding:1.3rem;border-right:3px solid #EF4444;">
+                <strong style="color:#F87171;">خطأ ٣: إهمال صفات العلاقة</strong>
+                <p style="font-size:.9rem;color:#94A3B8;margin-top:.5rem;line-height:1.9;">
+                ❌ بتعمل ENROLLMENT بـ student_id و course_id بس. بعدين مين يحفظ الـ grade؟<br>
+                ✅ أي M:N تسأل: "هل العلاقة دي عندها بيانات خاصة بيها؟" — grade, date, quantity, etc.
+                </p>
+            </div>
+            <div class="card-ratio" style="padding:1.3rem;border-right:3px solid #EF4444;">
+                <strong style="color:#F87171;">خطأ ٤: استخدام Unary بدل Binary</strong>
+                <p style="font-size:.9rem;color:#94A3B8;margin-top:.5rem;line-height:1.9;">
+                ❌ إنشاء entity MANAGER منفردة بدل ما تعمل Unary relationship على EMPLOYEE.<br>
+                ✅ لو المدير نفسه موظف — الصح هو self-join: EMPLOYEE.manager_id FK → EMPLOYEE.emp_id.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==== PRACTICE ==== -->
+    <div class="section-block" id="practice" data-aos="fade-up">
+        <div class="section-title"><span class="icon">✍️</span> تمرين عملي</div>
+        <div class="practice-block">
+            <div class="practice-header"><h3>📱 تمرين: منصة سوشيال ميديا</h3></div>
+            <div class="practice-body">
+                <div class="practice-req">
+                    <strong style="color:#38BDF8;">المتطلبات:</strong><br><br>
+                    المنصة فيها يوزرز. كل يوزر ينشر بوستات. اليوزر ممكن يـ follow يوزرز تانيين. البوست ممكن يتحطله لايكات وكومنتات من يوزرز. اليوزر ممكن يشير البوست لـ friends. البوست ممكن ينتمي لـ Group. الـ Group ممكن فيها admins (subset من المنضمين). المنضمين للـ Group ممكن يكونوا regular members أو admins.
+                </div>
+                <ul class="task-list">
+                    <li><span class="tnum">A</span>حدّد كل العلاقات من المتطلبات.</li>
+                    <li><span class="tnum">B</span>لكل علاقة: حدّد الـ Cardinality وهل فيها Relationship Attributes.</li>
+                    <li><span class="tnum">C</span>علاقة المتابعة (FOLLOWS) — زي إيه تمثّلها في الـ ER؟</li>
+                    <li><span class="tnum">D</span>لو عايز تعرف "مين follow مين" وإمتى — فين بتتحط صفة follow_date؟</li>
+                </ul>
+                <button class="sol-btn" onclick="toggleSol(this)">👁️ اظهر الحل الكامل</button>
+                <div class="sol-content">
+                    <table class="rel-table" style="margin-bottom:1rem;">
+                        <thead><tr><th>A</th><th>العلاقة</th><th>B</th><th>Cardinality</th><th>صفات العلاقة</th></tr></thead>
+                        <tbody>
+                            <tr><td>USER</td><td>CREATES</td><td>POST</td><td>1:N</td><td>—</td></tr>
+                            <tr><td>USER</td><td>FOLLOWS</td><td>USER (Unary)</td><td>M:N</td><td>follow_date</td></tr>
+                            <tr><td>USER</td><td>LIKES</td><td>POST</td><td>M:N</td><td>liked_at</td></tr>
+                            <tr><td>USER</td><td>COMMENTS</td><td>POST</td><td>M:N</td><td>content, commented_at</td></tr>
+                            <tr><td>USER</td><td>SHARES</td><td>POST</td><td>M:N</td><td>shared_at, message</td></tr>
+                            <tr><td>POST</td><td>POSTED_IN</td><td>GROUP</td><td>N:1</td><td>—</td></tr>
+                            <tr><td>USER</td><td>MEMBER_OF</td><td>GROUP</td><td>M:N</td><td>role (admin/member), joined_at</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="callout why">
+                        <div class="chead">C — علاقة FOLLOWS</div>
+                        <p>FOLLOWS هي Unary M:N على USER — يوزر يتابع يوزرات كتير، ويوزر ممكن يتابعه كتير. في SQL: جدول FOLLOWS(follower_id FK → user.user_id, following_id FK → user.user_id, follow_date, PRIMARY KEY(follower_id, following_id)).</p>
+                    </div>
+                    <div class="callout why">
+                        <div class="chead">D — صفة follow_date</div>
+                        <p>follow_date هي صفة العلاقة FOLLOWS — مش صفة USER ومش صفة USER التاني. بتتحط في جدول FOLLOWS كعمود إضافي بجانب الـ FKs.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="section-block" id="quiz" data-aos="fade-up">
+        <div class="section-title"><span class="icon">🧠</span> اختبار الفهم</div>
+        <div class="quiz-card" id="qq1">
+            <div class="quiz-q">١. في نظام تجارة إلكترونية: منتج ممكن يتباع في أوردرات كتير، وأوردر فيه منتجات كتير. هل نضيف product_id في ORDERS أم order_id في PRODUCTS؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="ans(1,this,false)">نضيف product_id في ORDERS — لأن الأوردر هو اللي بيطلب المنتج</div>
+                <div class="quiz-opt" onclick="ans(1,this,true)">نعمل جدول ORDER_ITEMS منفصل — لأن العلاقة M:N تحتاج Junction Table</div>
+                <div class="quiz-opt" onclick="ans(1,this,false)">نضيف order_id في PRODUCTS — لأن المنتج له أوردرات</div>
+            </div>
+            <div class="quiz-fb" id="fb1"></div>
+        </div>
+        <div class="quiz-card" id="qq2">
+            <div class="quiz-q">٢. "كل طالب لازم يكون في تخصص واحد بالظبط. التخصص ممكن يكون فيه صفر طلاب." ما هي الـ Participation من كل جانب؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="ans(2,this,true)">طالب: Total (1,1) — تخصص: Partial (0,N)</div>
+                <div class="quiz-opt" onclick="ans(2,this,false)">طالب: Partial — تخصص: Total</div>
+                <div class="quiz-opt" onclick="ans(2,this,false)">كلهم Total</div>
+            </div>
+            <div class="quiz-fb" id="fb2"></div>
+        </div>
+        <div class="quiz-card" id="qq3">
+            <div class="quiz-q">٣. صفة "grade" في علاقة STUDENT ↔ COURSE — أين تُحفظ في الـ SQL؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="ans(3,this,false)">في جدول STUDENT — لأن الطالب هو اللي بياخد الدرجة</div>
+                <div class="quiz-opt" onclick="ans(3,this,false)">في جدول COURSE — لأن الكورس هو اللي بيدي الدرجة</div>
+                <div class="quiz-opt" onclick="ans(3,this,true)">في جدول ENROLLMENT — لأنها صفة للعلاقة بين الطالب والكورس</div>
+            </div>
+            <div class="quiz-fb" id="fb3"></div>
+        </div>
+        <div class="quiz-card" id="qq4">
+            <div class="quiz-q">٤. علاقة EMPLOYEE manages EMPLOYEE — ما درجتها وكيف تُمثَّل في SQL؟</div>
+            <div class="quiz-opts">
+                <div class="quiz-opt" onclick="ans(4,this,false)">Binary — بعمل جدولين: EMPLOYEE و MANAGER</div>
+                <div class="quiz-opt" onclick="ans(4,this,true)">Unary — في جدول EMPLOYEE أضيف عمود manager_id FK → employee.emp_id</div>
+                <div class="quiz-opt" onclick="ans(4,this,false)">Ternary — محتاجين كيان ثالث</div>
+            </div>
+            <div class="quiz-fb" id="fb4"></div>
+        </div>
+        <div class="quiz-score-box" id="score-box">
+            <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+            <p id="score-msg" style="color:#94A3B8;"></p>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="er_basics.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> الدرس السابق: الكيانات</a>
+        <a href="eer_diagrams.html" class="bnav-btn" style="color:#38BDF8;">الدرس التالي: EER <i class="fas fa-arrow-left"></i></a>
+    </div>
+    </div>
+
+    <footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 2: نظام المستشفى</footer>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
-        AOS.init({ duration: 800, once: true, offset: 100 });
-        window.addEventListener('scroll', () => { const p = (document.documentElement.scrollTop / (document.documentElement.scrollHeight - document.documentElement.clientHeight)) * 100; document.getElementById('reading-progress').style.width = p + '%'; });
-        let quizScore=0, answered=0; const total=3;
-        const fb = { 1:{correct:'🎉 M:N — طالب في كذا مادة ومادة فيها كذا طالب!',wrong:'❌ طلاب كتير ومواد كتير = Many-to-Many (M:N).'}, 2:{correct:'✅ Total Participation — كل موظف لازم يكون في قسم!',wrong:'❌ لو الكل لازم يشارك = Total Participation.'}, 3:{correct:'💪 (0,N) = الـ min هو 0 — يعني مشاركة جزئية!',wrong:'❌ (0,N) = الحد الأدنى 0 = مشاركة جزئية (مش إجبارية).'} };
-        function checkAnswer(q,el,correct){const qEl=document.getElementById('q'+q);if(qEl.classList.contains('answered'))return;qEl.classList.add('answered');answered++;qEl.querySelectorAll('.quiz-option').forEach(o=>o.style.pointerEvents='none');const f=document.getElementById('q'+q+'-feedback');if(correct){el.classList.add('correct');f.className='quiz-feedback show correct-fb';f.textContent=fb[q].correct;quizScore++;}else{el.classList.add('wrong');f.className='quiz-feedback show wrong-fb';f.textContent=fb[q].wrong;qEl.querySelectorAll('.quiz-option').forEach(o=>{if(o.getAttribute('onclick').includes('true'))o.classList.add('correct');});}if(answered===total){const sd=document.getElementById('quiz-score');sd.style.display='block';document.getElementById('score-text').textContent=`🏆 النتيجة: ${quizScore} / ${total}`;const msg=document.getElementById('score-msg');if(quizScore===total){msg.textContent='🎉 ممتاز!';msg.style.color='#34D399';}else{msg.textContent='💪 راجع وحاول تاني!';msg.style.color='#FBBF24';}}}
+        AOS.init({duration:700,once:true,offset:80});
+        window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+        function toggleSol(btn){const sc=btn.nextElementSibling;sc.classList.toggle('open');btn.textContent=sc.classList.contains('open')?'🙈 إخفاء الحل':'👁️ اظهر الحل الكامل';}
+        const fbs={
+            1:{c:'✅ M:N دايماً تحتاج Junction Table — ORDER_ITEMS(order_id FK, product_id FK, quantity, unit_price). دي الطريقة الوحيدة الصحيحة.',w:'❌ M:N مش ممكن تتمثّل بـ FK عادي في أي من الجدولين. لازم Junction Table.'},
+            2:{c:'✅ طالب (1,1) = Total لأنه لازم في تخصص. تخصص (0,N) = Partial لأنه ممكن مفيهوش طلاب (تخصص جديد مثلاً).',w:'❌ "لازم" = Total participation. "ممكن صفر" = Partial participation.'},
+            3:{c:'✅ grade صفة للعلاقة لأنها تعتمد على الطالب والكورس معاً. نفس الطالب ممكن ياخد A في كورس وC في كورس تاني.',w:'❌ grade مش صفة للطالب (لأنه بياخد grades كتير) ومش للكورس (لأن كل طالب بياخد grade مختلفة). هي صفة للعلاقة ENROLLMENT.'},
+            4:{c:'✅ Unary relationship — نفس EMPLOYEE جدول. عمود manager_id FK بيرجع لنفس الجدول. لو الموظف مدير — dept FK CASCADE.',w:'❌ مش محتاجين جدول MANAGER منفصل. المدير نفسه موظف — Unary self-referencing FK هو الصح.'}
+        };
+        let answered=0,score=0;
+        function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';const st=document.getElementById('score-text');const sm=document.getElementById('score-msg');st.textContent=`نتيجتك: ${score} / 4`;if(score===4){st.style.color='#34D399';sm.textContent='🎉 احترفت العلاقات!';}else if(score>=3){st.style.color='#FBBF24';sm.textContent='👏 كويس جداً!';}else{st.style.color='#F87171';sm.textContent='💪 راجع الدرس.';}}}
     </script>
 </body>
 </html>
