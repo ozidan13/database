@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Mastery — إتقان قواعد البيانات</title>
+    <meta name="description" content="منصة تعليمية تفاعلية لتعلم قواعد البيانات من الصفر حتى الاحتراف. تعلم SQL, PostgreSQL, Prisma, NestJS بالعربي المصري.">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- AOS Animations -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- Global CSS -->
+    <link href="css/global-db.css" rel="stylesheet">
+
+    <style>
+        /* ── Portal-Specific Styles ── */
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #020617;
+            color: #E2E8F0;
+        }
+
+        /* ── Particle Canvas ── */
+        #particle-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── Hero Styles ── */
+        .hero-section {
+            position: relative;
+            min-height: 60vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8rem 1.5rem 4rem;
+            overflow: hidden;
+        }
+        .hero-title {
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+            font-family: 'Inter', sans-serif;
+            direction: ltr;
+            unicode-bidi: isolate;
+        }
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.3rem);
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 1rem auto 2rem;
+            line-height: 2;
+        }
+
+        /* ── Stats Bar ── */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .stat-number {
+            font-family: 'Inter', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #10B981, #06B6D4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            direction: ltr;
+            unicode-bidi: isolate;
+        }
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-faint);
+        }
+
+        /* ── Units Grid ── */
+        .units-container {
+            display: grid;
+            gap: 1.5rem;
+            padding: 0;
+        }
+        @media (min-width: 1200px) {
+            .units-container { grid-template-columns: repeat(5, 1fr); }
+        }
+        @media (max-width: 1199px) and (min-width: 768px) {
+            .units-container { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 767px) {
+            .units-container { grid-template-columns: 1fr; }
+        }
+
+        /* ── Unit Card ── */
+        .unit-card {
+            position: relative;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 1.5rem;
+            transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            overflow: hidden;
+        }
+        .unit-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 20%; right: 20%;
+            height: 2px;
+            border-radius: 1px;
+            background: linear-gradient(90deg, transparent, var(--unit-color), transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .unit-card:hover::before { opacity: 1; }
+        .unit-card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-6px);
+            box-shadow: 0 20px 60px -15px var(--unit-glow);
+        }
+
+        /* Unit Header */
+        .unit-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+        .unit-number {
+            width: 48px; height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: white;
+            flex-shrink: 0;
+        }
+        .unit-info { flex: 1; }
+        .unit-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.15rem;
+        }
+        .unit-subtitle {
+            font-size: 0.8rem;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-faint);
+            direction: ltr;
+            unicode-bidi: isolate;
+        }
+        .unit-level {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 0.3rem;
+        }
+
+        /* Lessons List */
+        .lessons-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .lesson-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.55rem 0.75rem;
+            border-radius: 10px;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--text-body);
+        }
+        .lesson-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(6px);
+        }
+        .lesson-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+        .lesson-text { flex: 1; }
+        .lesson-name {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            direction: ltr;
+            unicode-bidi: isolate;
+        }
+        .lesson-desc {
+            font-size: 0.72rem;
+            color: var(--text-faint);
+            margin-top: 0.1rem;
+        }
+        .lesson-arrow {
+            color: var(--text-ghost);
+            font-size: 0.7rem;
+            transition: transform 0.3s ease;
+        }
+        .lesson-item:hover .lesson-arrow {
+            transform: translateX(-4px);
+            color: var(--text-muted);
+        }
+
+        /* ── Lesson Status ── */
+        .lesson-item.locked {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* ── Per-Unit Colors ── */
+        .unit-1 { --unit-color: var(--unit-1); --unit-glow: var(--unit-1-glow); }
+        .unit-1 .unit-number { background: linear-gradient(135deg, var(--unit-1), var(--unit-1-dark)); }
+        .unit-1 .lesson-icon { background: rgba(16, 185, 129, 0.1); color: var(--unit-1-light); }
+        .unit-1 .unit-level { background: rgba(16, 185, 129, 0.15); color: var(--unit-1-light); }
+
+        .unit-2 { --unit-color: var(--unit-2); --unit-glow: var(--unit-2-glow); }
+        .unit-2 .unit-number { background: linear-gradient(135deg, var(--unit-2), var(--unit-2-dark)); }
+        .unit-2 .lesson-icon { background: rgba(59, 130, 246, 0.1); color: var(--unit-2-light); }
+        .unit-2 .unit-level { background: rgba(59, 130, 246, 0.15); color: var(--unit-2-light); }
+
+        .unit-3 { --unit-color: var(--unit-3); --unit-glow: var(--unit-3-glow); }
+        .unit-3 .unit-number { background: linear-gradient(135deg, var(--unit-3), var(--unit-3-dark)); }
+        .unit-3 .lesson-icon { background: rgba(245, 158, 11, 0.1); color: var(--unit-3-light); }
+        .unit-3 .unit-level { background: rgba(245, 158, 11, 0.15); color: var(--unit-3-light); }
+
+        .unit-4 { --unit-color: var(--unit-4); --unit-glow: var(--unit-4-glow); }
+        .unit-4 .unit-number { background: linear-gradient(135deg, var(--unit-4), var(--unit-4-dark)); }
+        .unit-4 .lesson-icon { background: rgba(249, 115, 22, 0.1); color: var(--unit-4-light); }
+        .unit-4 .unit-level { background: rgba(249, 115, 22, 0.15); color: var(--unit-4-light); }
+
+        .unit-5 { --unit-color: var(--unit-5); --unit-glow: var(--unit-5-glow); }
+        .unit-5 .unit-number { background: linear-gradient(135deg, var(--unit-5), var(--unit-5-dark)); }
+        .unit-5 .lesson-icon { background: rgba(139, 92, 246, 0.1); color: var(--unit-5-light); }
+        .unit-5 .unit-level { background: rgba(139, 92, 246, 0.15); color: var(--unit-5-light); }
+
+        .unit-6 { --unit-color: var(--unit-6); --unit-glow: var(--unit-6-glow); }
+        .unit-6 .unit-number { background: linear-gradient(135deg, var(--unit-6), var(--unit-6-dark)); }
+        .unit-6 .lesson-icon { background: rgba(6, 182, 212, 0.1); color: var(--unit-6-light); }
+        .unit-6 .unit-level { background: rgba(6, 182, 212, 0.15); color: var(--unit-6-light); }
+
+        .unit-7 { --unit-color: var(--unit-7); --unit-glow: var(--unit-7-glow); }
+        .unit-7 .unit-number { background: linear-gradient(135deg, var(--unit-7), var(--unit-7-dark)); }
+        .unit-7 .lesson-icon { background: rgba(239, 68, 68, 0.1); color: var(--unit-7-light); }
+        .unit-7 .unit-level { background: rgba(239, 68, 68, 0.15); color: var(--unit-7-light); }
+
+        .unit-8 { --unit-color: var(--unit-8); --unit-glow: var(--unit-8-glow); }
+        .unit-8 .unit-number { background: linear-gradient(135deg, var(--unit-8), var(--unit-8-dark)); }
+        .unit-8 .lesson-icon { background: rgba(234, 179, 8, 0.1); color: var(--unit-8-light); }
+        .unit-8 .unit-level { background: rgba(234, 179, 8, 0.15); color: var(--unit-8-light); }
+
+        .unit-9 { --unit-color: var(--unit-9); --unit-glow: var(--unit-9-glow); }
+        .unit-9 .unit-number { background: linear-gradient(135deg, var(--unit-9), var(--unit-9-dark)); }
+        .unit-9 .lesson-icon { background: rgba(20, 184, 166, 0.1); color: var(--unit-9-light); }
+        .unit-9 .unit-level { background: rgba(20, 184, 166, 0.15); color: var(--unit-9-light); }
+
+        .unit-10 { --unit-color: var(--unit-10); --unit-glow: var(--unit-10-glow); }
+        .unit-10 .unit-number { background: linear-gradient(135deg, var(--unit-10), var(--unit-10-dark)); }
+        .unit-10 .lesson-icon { background: rgba(217, 70, 239, 0.1); color: var(--unit-10-light); }
+        .unit-10 .unit-level { background: rgba(217, 70, 239, 0.15); color: var(--unit-10-light); }
+
+        /* ── Footer ── */
+        .portal-footer {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--text-ghost);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-subtle);
+            margin-top: 4rem;
+        }
+        .portal-footer .heart { color: #EF4444; }
+
+        /* ── DB Icon Logo ── */
+        .db-logo {
+            width: 64px; height: 64px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #10B981 0%, #06B6D4 50%, #3B82F6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            color: white;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Particle Canvas -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Aurora Glows -->
+    <div class="aurora aurora-1"></div>
+    <div class="aurora aurora-2"></div>
+    <div class="aurora aurora-3"></div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- HERO SECTION -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="hero-section" id="hero">
+        <div style="position: relative; z-index: 1;">
+            <div class="db-logo" data-aos="zoom-in" data-aos-duration="600">
+                <i class="fas fa-database"></i>
+            </div>
+            <h1 class="hero-title" data-aos="fade-up" data-aos-delay="200">
+                <span class="text-gradient-emerald">Database</span> Mastery
+            </h1>
+            <p class="hero-subtitle" data-aos="fade-up" data-aos-delay="400">
+                منصة تعليمية تفاعلية لتعلم قواعد البيانات من الصفر حتى الاحتراف.
+                <br>
+                <span style="font-family: 'Inter', sans-serif; font-size: 0.9rem; color: var(--text-faint); direction: ltr; display: inline-block;">
+                    SQL • PostgreSQL • Prisma • NestJS — Zero to Hero
+                </span>
+            </p>
+
+            <!-- Stats -->
+            <div class="stats-bar" data-aos="fade-up" data-aos-delay="600">
+                <div class="stat-item">
+                    <span class="stat-number">10</span>
+                    <span class="stat-label">وحدات</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">44</span>
+                    <span class="stat-label">درس تفاعلي</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">100+</span>
+                    <span class="stat-label">تمرين SQL</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">5</span>
+                    <span class="stat-label">مشاريع عملية</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- UNITS GRID -->
+    <!-- ═══════════════════════════════════════════ -->
+    <main class="container" style="position: relative; z-index: 1; padding-bottom: 2rem;">
+        <div class="units-container">
+
+            <!-- ══════════ UNIT 1 ══════════ -->
+            <div class="unit-card unit-1" data-aos="fade-up" data-aos-delay="0" id="unit-card-1">
+                <div class="unit-header">
+                    <div class="unit-number">1</div>
+                    <div class="unit-info">
+                        <div class="unit-title">عالم قواعد البيانات</div>
+                        <div class="unit-subtitle">The World of Databases</div>
+                        <span class="unit-level">🟢 مبتدئ</span>
+                    </div>
+                </div>
+                <div class="lessons-list">
+                    <a href="Unit1/why_databases.html" class="lesson-item" id="lesson-1-1">
+                        <div class="lesson-icon"><i class="fas fa-question-circle"></i></div>
+                        <div class="lesson-text">
+                            <div class="lesson-name">Why Databases?</div>
+                            <div class="lesson-desc">ليه محتاجين قواعد بيانات؟</div>
+                        </div>
+                        <i class="fas fa-chevron-left lesson-arrow"></i>
+                    </a>
+                    <a href="Unit1/database_types.html" class="lesson-item locked" id="lesson-1-2">
+                        <div class="lesson-icon"><i class="fas fa-layer-group"></i></div>
+                        <div class="lesson-text">
+                            <div class="lesson-name">Database Types</div>
+                            <div class="lesson-desc">أنواع قواعد البيانات</div>
+                        </div>
+                        <i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i>
+                    </a>
+                    <a href="Unit1/database_architecture.html" class="lesson-item locked" id="lesson-1-3">
+                        <div class="lesson-icon"><i class="fas fa-sitemap"></i></div>
+                        <div class="lesson-text">
+                            <div class="lesson-name">DB Architecture</div>
+                            <div class="lesson-desc">معمارية قواعد البيانات</div>
+                        </div>
+                        <i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i>
+                    </a>
+                    <a href="Unit1/postgresql_setup.html" class="lesson-item locked" id="lesson-1-4">
+                        <div class="lesson-icon"><i class="fas fa-download"></i></div>
+                        <div class="lesson-text">
+                            <div class="lesson-name">PostgreSQL Setup</div>
+                            <div class="lesson-desc">تثبيت PostgreSQL</div>
+                        </div>
+                        <i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i>
+                    </a>
+                    <a href="Unit1/database_history.html" class="lesson-item locked" id="lesson-1-5">
+                        <div class="lesson-icon"><i class="fas fa-clock-rotate-left"></i></div>
+                        <div class="lesson-text">
+                            <div class="lesson-name">DB History</div>
+                            <div class="lesson-desc">تاريخ قواعد البيانات</div>
+                        </div>
+                        <i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- ══════════ UNIT 2 ══════════ -->
+            <div class="unit-card unit-2" data-aos="fade-up" data-aos-delay="100" id="unit-card-2">
+                <div class="unit-header">
+                    <div class="unit-number">2</div>
+                    <div class="unit-info">
+                        <div class="unit-title">النموذج العلائقي و ER</div>
+                        <div class="unit-subtitle">Data Modeling & ER Diagrams</div>
+                        <span class="unit-level">🔵 مبتدئ</span>
+                    </div>
+                </div>
+                <div class="lessons-list">
+                    <a href="Unit2/er_basics.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-shapes"></i></div><div class="lesson-text"><div class="lesson-name">ER Basics</div><div class="lesson-desc">أساسيات الـ ER Diagram</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit2/er_relationships.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-link"></i></div><div class="lesson-text"><div class="lesson-name">ER Relationships</div><div class="lesson-desc">العلاقات في ER</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit2/eer_diagrams.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-project-diagram"></i></div><div class="lesson-text"><div class="lesson-name">EER Diagrams</div><div class="lesson-desc">الـ EER المتقدم</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit2/relational_model.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-table"></i></div><div class="lesson-text"><div class="lesson-name">Relational Model</div><div class="lesson-desc">النموذج العلائقي</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit2/er_to_relational.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-arrows-turn-right"></i></div><div class="lesson-text"><div class="lesson-name">ER→Tables</div><div class="lesson-desc">تحويل ER إلى جداول</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                </div>
+            </div>
+
+            <!-- ══════════ UNIT 3 ══════════ -->
+            <div class="unit-card unit-3" data-aos="fade-up" data-aos-delay="200" id="unit-card-3">
+                <div class="unit-header">
+                    <div class="unit-number">3</div>
+                    <div class="unit-info">
+                        <div class="unit-title">أساسيات SQL</div>
+                        <div class="unit-subtitle">SQL Fundamentals</div>
+                        <span class="unit-level">🟡 مبتدئ ← متوسط</span>
+                    </div>
+                </div>
+                <div class="lessons-list">
+                    <a href="Unit3/ddl_basics.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-table-columns"></i></div><div class="lesson-text"><div class="lesson-name">DDL Basics</div><div class="lesson-desc">إنشاء الجداول — CREATE, ALTER, DROP</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit3/dml_crud.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-pen-to-square"></i></div><div class="lesson-text"><div class="lesson-name">CRUD Operations</div><div class="lesson-desc">عمليات CRUD</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit3/aggregate_grouping.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-chart-bar"></i></div><div class="lesson-text"><div class="lesson-name">Aggregation</div><div class="lesson-desc">التجميع والتصنيف</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit3/joins_mastery.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-code-merge"></i></div><div class="lesson-text"><div class="lesson-name">JOIN Mastery</div><div class="lesson-desc">إتقان الـ Joins</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit3/subqueries_sets.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-layer-group"></i></div><div class="lesson-text"><div class="lesson-name">Subqueries</div><div class="lesson-desc">الاستعلامات الفرعية</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                </div>
+            </div>
+
+            <!-- ══════════ UNIT 4 ══════════ -->
+            <div class="unit-card unit-4" data-aos="fade-up" data-aos-delay="300" id="unit-card-4">
+                <div class="unit-header">
+                    <div class="unit-number">4</div>
+                    <div class="unit-info">
+                        <div class="unit-title">SQL المتقدم</div>
+                        <div class="unit-subtitle">Advanced SQL</div>
+                        <span class="unit-level">🟠 متوسط</span>
+                    </div>
+                </div>
+                <div class="lessons-list">
+                    <a href="Unit4/views_ctes.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-eye"></i></div><div class="lesson-text"><div class="lesson-name">Views & CTEs</div><div class="lesson-desc">الـ Views و Common Table Expressions</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit4/window_functions.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-window-maximize"></i></div><div class="lesson-text"><div class="lesson-name">Window Functions</div><div class="lesson-desc">دوال النافذة</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit4/advanced_types.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-code"></i></div><div class="lesson-text"><div class="lesson-name">Advanced Types</div><div class="lesson-desc">أنواع بيانات متقدمة</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit4/functions_triggers.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-bolt"></i></div><div class="lesson-text"><div class="lesson-name">Functions & Triggers</div><div class="lesson-desc">الدوال والمحفزات</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                </div>
+            </div>
+
+            <!-- ══════════ UNIT 5 ══════════ -->
+            <div class="unit-card unit-5" data-aos="fade-up" data-aos-delay="400" id="unit-card-5">
+                <div class="unit-header">
+                    <div class="unit-number">5</div>
+                    <div class="unit-info">
+                        <div class="unit-title">التصميم والتطبيع</div>
+                        <div class="unit-subtitle">Normalization & Design</div>
+                        <span class="unit-level">🟣 متوسط — أكاديمي</span>
+                    </div>
+                </div>
+                <div class="lessons-list">
+                    <a href="Unit5/functional_dependencies.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-arrow-right-arrow-left"></i></div><div class="lesson-text"><div class="lesson-name">Functional Dependencies</div><div class="lesson-desc">الاعتمادات الوظيفية</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit5/normalization.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-diagram-successor"></i></div><div class="lesson-text"><div class="lesson-name">Normalization</div><div class="lesson-desc">التطبيع — 1NF → BCNF</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit5/denormalization.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-compress-arrows-alt"></i></div><div class="lesson-text"><div class="lesson-name">Denormalization</div><div class="lesson-desc">عكس التطبيع</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit5/design_workshop.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-drafting-compass"></i></div><div class="lesson-text"><div class="lesson-name">Design Workshop</div><div class="lesson-desc">ورشة التصميم الكاملة</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                </div>
+            </div>
+
+            <!-- ══════════ UNIT 6 ══════════ -->
+            <div class="unit-card unit-6" data-aos="fade-up" data-aos-delay="0" id="unit-card-6">
+                <div class="unit-header">
+                    <div class="unit-number">6</div>
+                    <div class="unit-info">
+                        <div class="unit-title">Backend والـ ORM</div>
+                        <div class="unit-subtitle">Backend Integration</div>
+                        <span class="unit-level">🌊 متوسط ← متقدم</span>
+                    </div>
+                </div>
+                <div class="lessons-list">
+                    <a href="Unit6/express_pg_basics.html" class="lesson-item locked"><div class="lesson-icon"><i class="fab fa-node-js"></i></div><div class="lesson-text"><div class="lesson-name">Express + PostgreSQL</div><div class="lesson-desc">ربط Node.js بقاعدة البيانات</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit6/prisma_intro.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-gem"></i></div><div class="lesson-text"><div class="lesson-name">Prisma ORM</div><div class="lesson-desc">مقدمة في Prisma</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit6/prisma_relations.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-diagram-project"></i></div><div class="lesson-text"><div class="lesson-name">Prisma Relations</div><div class="lesson-desc">العلاقات في Prisma</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit6/nestjs_prisma.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-feather-pointed"></i></div><div class="lesson-text"><div class="lesson-name">NestJS + Prisma</div><div class="lesson-desc">بناء API كامل</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit6/migrations_seeding.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-seedling"></i></div><div class="lesson-text"><div class="lesson-name">Migrations</div><div class="lesson-desc">الهجرة والبذر</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                </div>
+            </div>
+
+            <!-- ══════════ UNIT 7 ══════════ -->
+            <div class="unit-card unit-7" data-aos="fade-up" data-aos-delay="100" id="unit-card-7">
+                <div class="unit-header">
+                    <div class="unit-number">7</div>
+                    <div class="unit-info">
+                        <div class="unit-title">المعاملات والتزامن</div>
+                        <div class="unit-subtitle">Transactions & Concurrency</div>
+                        <span class="unit-level">🔴 متقدم — أكاديمي</span>
+                    </div>
+                </div>
+                <div class="lessons-list">
+                    <a href="Unit7/acid_transactions.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-flask"></i></div><div class="lesson-text"><div class="lesson-name">ACID Properties</div><div class="lesson-desc">خصائص المعاملات</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit7/concurrency_problems.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-users"></i></div><div class="lesson-text"><div class="lesson-name">Concurrency Problems</div><div class="lesson-desc">مشاكل التزامن</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit7/isolation_levels.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-shield-halved"></i></div><div class="lesson-text"><div class="lesson-name">Isolation Levels</div><div class="lesson-desc">مستويات العزل</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit7/locking_recovery.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-lock"></i></div><div class="lesson-text"><div class="lesson-name">Locks & Recovery</div><div class="lesson-desc">الأقفال والاستعادة</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                </div>
+            </div>
+
+            <!-- ══════════ UNIT 8 ══════════ -->
+            <div class="unit-card unit-8" data-aos="fade-up" data-aos-delay="200" id="unit-card-8">
+                <div class="unit-header">
+                    <div class="unit-number">8</div>
+                    <div class="unit-info">
+                        <div class="unit-title">الأداء والفهرسة</div>
+                        <div class="unit-subtitle">Performance & Indexing</div>
+                        <span class="unit-level">⚡ متقدم</span>
+                    </div>
+                </div>
+                <div class="lessons-list">
+                    <a href="Unit8/explain_analyze.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-magnifying-glass-chart"></i></div><div class="lesson-text"><div class="lesson-name">EXPLAIN ANALYZE</div><div class="lesson-desc">قراءة خطة التنفيذ</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit8/indexing_deep_dive.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-list-ol"></i></div><div class="lesson-text"><div class="lesson-name">Indexing Deep Dive</div><div class="lesson-desc">الفهرسة بالتفصيل</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit8/query_optimization.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-rocket"></i></div><div class="lesson-text"><div class="lesson-name">Query Optimization</div><div class="lesson-desc">تحسين الاستعلامات</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit8/partitioning_scaling.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-cubes"></i></div><div class="lesson-text"><div class="lesson-name">Partitioning</div><div class="lesson-desc">التقسيم والتوسع</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                </div>
+            </div>
+
+            <!-- ══════════ UNIT 9 ══════════ -->
+            <div class="unit-card unit-9" data-aos="fade-up" data-aos-delay="300" id="unit-card-9">
+                <div class="unit-header">
+                    <div class="unit-number">9</div>
+                    <div class="unit-info">
+                        <div class="unit-title">NoSQL الحديثة</div>
+                        <div class="unit-subtitle">NoSQL & Modern Databases</div>
+                        <span class="unit-level">🌐 متقدم</span>
+                    </div>
+                </div>
+                <div class="lessons-list">
+                    <a href="Unit9/nosql_overview.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-globe"></i></div><div class="lesson-text"><div class="lesson-name">NoSQL Overview</div><div class="lesson-desc">عالم الـ NoSQL</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit9/mongodb_basics.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-leaf"></i></div><div class="lesson-text"><div class="lesson-name">MongoDB</div><div class="lesson-desc">أساسيات MongoDB</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit9/redis_caching.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-bolt-lightning"></i></div><div class="lesson-text"><div class="lesson-name">Redis</div><div class="lesson-desc">التخزين المؤقت</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit9/choosing_database.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-scale-balanced"></i></div><div class="lesson-text"><div class="lesson-name">Choosing a DB</div><div class="lesson-desc">إزاي تختار الـ Database</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                </div>
+            </div>
+
+            <!-- ══════════ UNIT 10 ══════════ -->
+            <div class="unit-card unit-10" data-aos="fade-up" data-aos-delay="400" id="unit-card-10">
+                <div class="unit-header">
+                    <div class="unit-number">10</div>
+                    <div class="unit-info">
+                        <div class="unit-title">المشروع النهائي</div>
+                        <div class="unit-subtitle">Capstone & Career</div>
+                        <span class="unit-level">🏆 كل المستويات</span>
+                    </div>
+                </div>
+                <div class="lessons-list">
+                    <a href="Unit10/capstone_ecommerce.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-store"></i></div><div class="lesson-text"><div class="lesson-name">E-Commerce Project</div><div class="lesson-desc">مشروع تجارة إلكترونية</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit10/capstone_analytics.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-chart-pie"></i></div><div class="lesson-text"><div class="lesson-name">Analytics Dashboard</div><div class="lesson-desc">لوحة تحليلات</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit10/database_security.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-shield"></i></div><div class="lesson-text"><div class="lesson-name">DB Security</div><div class="lesson-desc">أمان قواعد البيانات</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                    <a href="Unit10/career_guide.html" class="lesson-item locked"><div class="lesson-icon"><i class="fas fa-briefcase"></i></div><div class="lesson-text"><div class="lesson-name">Career Guide</div><div class="lesson-desc">المسار المهني</div></div><i class="fas fa-lock" style="font-size: 0.65rem; color: var(--text-ghost);"></i></a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="portal-footer">
+        <p>Database Mastery — إتقان قواعد البيانات</p>
+        <p style="margin-top: 0.5rem;">Built with <span class="heart">❤</span> for Egyptian CS Students</p>
+    </footer>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SCRIPTS -->
+    <!-- ═══════════════════════════════════════════ -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true, offset: 100 });
+
+        // ── Floating Particles ──
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.3;
+                this.speedY = (Math.random() - 0.5) * 0.3;
+                this.hue = Math.random() > 0.5 ? 160 : 190; // emerald = 160, cyan = 190
+                this.opacity = Math.random() * 0.3 + 0.1;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `hsla(${this.hue}, 80%, 60%, ${this.opacity})`;
+                ctx.fill();
+            }
+        }
+
+        // Create particles
+        const particleCount = Math.min(80, Math.floor(window.innerWidth / 15));
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+
+            // Draw connections
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(16, 185, 129, ${0.04 * (1 - dist / 120)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // ── Card Tilt Effect ──
+        document.querySelectorAll('.unit-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width - 0.5;
+                const y = (e.clientY - rect.top) / rect.height - 0.5;
+                card.style.transform = `translateY(-6px) perspective(800px) rotateX(${-y * 4}deg) rotateY(${x * 4}deg)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>

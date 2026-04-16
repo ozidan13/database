@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Databases? — ليه محتاجين قواعد بيانات؟ | Database Mastery</title>
+    <meta name="description" content="الدرس الأول: ليه العالم محتاج قواعد بيانات؟ تعرف على مشاكل الملفات وازاي الـ Database بتحلها.">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- AOS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- Global CSS -->
+    <link href="../css/global-db.css" rel="stylesheet">
+
+    <style>
+        /* ── Lesson-Specific Styles ── */
+        body {
+            background: #020617;
+            color: #E2E8F0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* ── Fixed Navbar ── */
+        .lesson-nav-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            height: 64px;
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+        }
+        .nav-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .nav-brand .back-btn {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #10B981, #059669);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.85rem;
+            transition: transform 0.3s ease;
+        }
+        .nav-brand .back-btn:hover { transform: scale(1.1); }
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.85rem;
+            font-family: 'Cairo', sans-serif;
+            color: var(--text-faint);
+        }
+        .nav-links a {
+            transition: color 0.3s ease;
+            direction: rtl;
+        }
+        .nav-links a:hover { color: #34D399; }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+        }
+
+        /* ── Hero Section ── */
+        .lesson-hero {
+            position: relative;
+            padding: 8rem 1.5rem 5rem;
+            text-align: center;
+            overflow: hidden;
+        }
+        .lesson-hero .glow-orb {
+            position: absolute;
+            width: 500px; height: 500px;
+            border-radius: 50%;
+            filter: blur(128px);
+            pointer-events: none;
+        }
+        .glow-orb-1 { top: -10%; right: -5%; background: rgba(16, 185, 129, 0.12); }
+        .glow-orb-2 { bottom: -20%; left: -10%; background: rgba(6, 182, 212, 0.08); }
+        .lesson-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 1rem;
+            border-radius: 50px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.78rem;
+            color: #34D399;
+            margin-bottom: 1.5rem;
+        }
+        .lesson-badge .dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: #10B981;
+            animation: pulse-dot 2s ease infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .lesson-hero h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+        .lesson-hero h1 .text-gradient {
+            background: linear-gradient(135deg, #10B981, #06B6D4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .lesson-hero .subtitle {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            direction: rtl;
+            unicode-bidi: isolate;
+        }
+        .lesson-hero .desc {
+            color: var(--text-faint);
+            max-width: 600px;
+            margin: 0 auto;
+            font-size: 1rem;
+            line-height: 1.8;
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            unicode-bidi: isolate;
+        }
+
+        /* ── Section Container ── */
+        .lesson-section {
+            padding: 5rem 1.5rem;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .lesson-section.alt-bg {
+            background: rgba(15, 23, 42, 0.3);
+            max-width: 100%;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+        .lesson-section.alt-bg > .section-inner {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .section-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            unicode-bidi: isolate;
+        }
+        .section-header .en-sub {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-faint);
+            font-size: 0.9rem;
+            direction: ltr;
+            unicode-bidi: isolate;
+            display: block;
+        }
+
+        /* ── Interactive Excel vs DB Animation ── */
+        .excel-db-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        @media (max-width: 768px) {
+            .excel-db-container { grid-template-columns: 1fr; }
+        }
+        .scenario-card {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.4s ease;
+        }
+        .scenario-card.bad { border-color: rgba(239, 68, 68, 0.2); }
+        .scenario-card.good { border-color: rgba(16, 185, 129, 0.2); }
+        .scenario-card .label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        .scenario-card.bad .label { color: #F87171; }
+        .scenario-card.good .label { color: #34D399; }
+
+        /* ── Mini Spreadsheet ── */
+        .mini-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+            font-family: 'Fira Code', monospace;
+            margin: 0.5rem 0;
+        }
+        .mini-table th {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.4rem 0.6rem;
+            text-align: left;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-subtle);
+            font-weight: 600;
+        }
+        .mini-table td {
+            padding: 0.4rem 0.6rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            color: var(--text-body);
+        }
+        .mini-table .error-cell {
+            color: #F87171;
+            background: rgba(239, 68, 68, 0.08);
+        }
+        .mini-table .duplicate-cell {
+            color: #FBBF24;
+            background: rgba(251, 191, 36, 0.08);
+        }
+
+        /* ── Problem Cards ── */
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .problem-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .problem-card:hover {
+            border-color: rgba(239, 68, 68, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(239, 68, 68, 0.1);
+        }
+        .problem-card .icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            background: rgba(239, 68, 68, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: #F87171;
+            margin-bottom: 1rem;
+        }
+        .problem-card h4 {
+            margin-bottom: 0.5rem;
+            color: #F87171;
+            font-size: 1rem;
+        }
+        .problem-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        /* ── Solution Cards ── */
+        .solution-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .solution-card:hover {
+            border-color: rgba(16, 185, 129, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(16, 185, 129, 0.1);
+        }
+        .solution-card .icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            background: rgba(16, 185, 129, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: #34D399;
+            margin-bottom: 1rem;
+        }
+        .solution-card h4 {
+            margin-bottom: 0.5rem;
+            color: #34D399;
+            font-size: 1rem;
+        }
+        .solution-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+
+        /* ── Interactive Demo Canvas ── */
+        #demo-canvas-container {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 16px;
+            border: 1px solid var(--border-subtle);
+            overflow: hidden;
+            margin: 2rem 0;
+        }
+        #demo-canvas {
+            width: 100%;
+            display: block;
+        }
+        .demo-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-top: 1px solid var(--border-subtle);
+            flex-wrap: wrap;
+        }
+        .demo-btn {
+            padding: 0.5rem 1.2rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-light);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-body);
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .demo-btn:hover {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: #10B981;
+            color: #34D399;
+        }
+        .demo-btn.active {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10B981;
+            color: #34D399;
+        }
+
+        /* ── Quiz Section ── */
+        .quiz-container {
+            margin: 2rem 0;
+        }
+        .quiz-question {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .quiz-question h4 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            text-align: right;
+        }
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+        .quiz-option {
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-subtle);
+            background: rgba(255, 255, 255, 0.02);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            text-align: right;
+            font-size: 0.92rem;
+            color: var(--text-body);
+            unicode-bidi: isolate;
+        }
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--border-hover);
+        }
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: #10B981;
+            color: #34D399;
+        }
+        .quiz-option.wrong {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: #EF4444;
+            color: #F87171;
+        }
+        .quiz-feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            text-align: right;
+            display: none;
+            font-size: 0.92rem;
+            line-height: 2;
+        }
+        .quiz-feedback.show { display: block; }
+        .quiz-feedback.correct-fb {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #34D399;
+        }
+        .quiz-feedback.wrong-fb {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #F87171;
+        }
+
+        /* ── DBMS Components Visualization ── */
+        .dbms-visual {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        .dbms-layer {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .dbms-layer:hover {
+            border-color: var(--border-hover);
+            transform: translateX(-4px);
+            background: rgba(15, 23, 42, 0.8);
+        }
+        .dbms-layer .layer-icon {
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .dbms-layer .layer-info h4 {
+            font-size: 0.95rem;
+            margin-bottom: 0.2rem;
+            unicode-bidi: plaintext;
+        }
+        .dbms-layer .layer-info p {
+            font-size: 0.82rem;
+            color: var(--text-faint);
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            line-height: 1.8;
+            unicode-bidi: isolate;
+        }
+
+        /* ── Lesson Footer Nav ── */
+        .lesson-bottom-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 2rem 0;
+            border-top: 1px solid var(--border-subtle);
+            margin-top: 3rem;
+        }
+        .lesson-bottom-nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .lesson-bottom-nav a:hover {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* ── Real World Example Card ── */
+        .real-world-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(6, 182, 212, 0.05));
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        .real-world-card .rw-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            color: #34D399;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        /* ── Progress Indicator ── */
+        .progress-bar-container {
+            position: fixed;
+            top: 64px; left: 0; right: 0;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.05);
+            z-index: 99;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10B981, #06B6D4);
+            width: 0%;
+            transition: width 0.1s ease-out;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- FIXED NAVBAR -->
+    <!-- ═══════════════════════════════════════════ -->
+    <nav class="lesson-nav-bar" id="lesson-navbar">
+        <div class="nav-inner">
+            <a href="../index.html" class="nav-brand">
+                <div class="back-btn"><i class="fas fa-arrow-left"></i></div>
+                <span>Why<span style="color: #10B981;">DB</span></span>
+            </a>
+            <div class="nav-links">
+                <a href="#hook">البداية</a>
+                <a href="#problems">المشاكل</a>
+                <a href="#solution">الحل</a>
+                <a href="#demo">التجربة</a>
+                <a href="#dbms">الـ DBMS</a>
+                <a href="#quiz">اختبر نفسك</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Reading Progress -->
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="reading-progress"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- HERO SECTION -->
+    <!-- ═══════════════════════════════════════════ -->
+    <header class="lesson-hero" id="hook">
+        <div class="glow-orb glow-orb-1"></div>
+        <div class="glow-orb glow-orb-2"></div>
+        <div style="position: relative; z-index: 1;">
+            <div class="lesson-badge" data-aos="fade-down">
+                <span class="dot"></span>
+                UNIT 1 • Lesson 1
+            </div>
+            <h1 data-aos="fade-up" data-aos-delay="150">
+                Why <span class="text-gradient">Databases</span>?
+            </h1>
+            <div class="subtitle" data-aos="fade-up" data-aos-delay="300">ليه محتاجين قواعد بيانات؟</div>
+            <p class="desc" data-aos="fade-up" data-aos-delay="450">
+                قبل ما نكتب أي كود، لازم نفهم ليه العالم محتاج قواعد البيانات أصلاً.
+            </p>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 1: THE HOOK — القصة -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="lesson-section" id="story">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-book-open" style="color: #FBBF24; margin-left: 0.5rem;"></i> القصة</h2>
+            <p class="en-sub">The Story That Started It All</p>
+        </div>
+
+        <div class="glass-card" style="padding: 2rem; border-radius: 20px;" data-aos="fade-up" data-aos-delay="100">
+            <div class="rtl-block" style="font-size: 1.1rem;">
+                <p style="color: #E2E8F0; margin-bottom: 1.5rem;">
+                    تخيل إنك <span class="hl-amber">مسؤول عن تسجيل 50,000 طالب</span> في جامعة القاهرة.
+                </p>
+                <p style="color: #CBD5E1; margin-bottom: 1.5rem;">
+                    عندك ملفات <span class="english">Excel</span> فيها كل حاجة — أسماء الطلاب، أرقام التليفونات، الدرجات، المواد، الأساتذة، الأقسام... كل حاجة حرفياً في <span class="english">Spreadsheets</span>.
+                </p>
+                <p style="color: #CBD5E1; margin-bottom: 1.5rem;">
+                    فجأة مدير الجامعة قالك:
+                </p>
+                <div class="step-box" style="border-color: #FBBF24; margin-bottom: 1.5rem;">
+                    <p style="color: #FDE68A; font-weight: 700; font-size: 1.15rem;">
+                        "ابعتلي أسماء كل طلاب كلية الهندسة اللي معدلهم فوق 3.0 ودفعوا المصاريف."
+                    </p>
+                </div>
+                <p style="color: #94A3B8; margin-bottom: 1rem;">
+                    ... كويس. حظ سعيد مع 📊 <span class="english">VLOOKUP</span> على 50,000 صف في 5 ملفات مختلفة. 😅
+                </p>
+                <p style="color: #CBD5E1; margin-bottom: 1.5rem;">
+                    بس الموضوع مش مجرد صعوبة البحث. فيه <span class="hl-red">مشاكل حقيقية وخطيرة</span> لما بيانات مهمة تتخزن في ملفات عادية...
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 2: THE PROBLEMS — مشاكل الملفات -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="lesson-section alt-bg" id="problems">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-triangle-exclamation" style="color: #F87171; margin-left: 0.5rem;"></i> مشاكل الملفات</h2>
+                <p class="en-sub">The File-Based System Problems</p>
+            </div>
+
+            <div class="rtl-block" data-aos="fade-up" data-aos-delay="100">
+                <p style="color: #CBD5E1; margin-bottom: 1.5rem; font-size: 1.05rem;">
+                    تخيل <span class="hl-amber">مكتبة فيها مليون كتاب من غير فهرس</span> 📚 — كده بالظبط شكل البيانات لما تكون في ملفات من غير نظام إدارة.
+                </p>
+            </div>
+
+            <!-- Excel vs DB Side-by-Side -->
+            <div class="excel-db-container" data-aos="fade-up" data-aos-delay="200">
+                <!-- BAD: Excel Files -->
+                <div class="scenario-card bad">
+                    <div class="label"><i class="fas fa-file-excel"></i> ملفات Excel (المشكلة)</div>
+                    <table class="mini-table">
+                        <thead>
+                            <tr><th>Student</th><th>Phone</th><th>Dept</th><th>Course</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>أحمد محمد</td>
+                                <td>0101234567</td>
+                                <td class="duplicate-cell">هندسة</td>
+                                <td>رياضيات</td>
+                            </tr>
+                            <tr>
+                                <td class="duplicate-cell">أحمد محمد</td>
+                                <td class="error-cell">0101234568</td>
+                                <td class="duplicate-cell">هندسة</td>
+                                <td>فيزياء</td>
+                            </tr>
+                            <tr>
+                                <td class="duplicate-cell">أحمد محمد</td>
+                                <td class="error-cell">010123456</td>
+                                <td>هندسه</td>
+                                <td>كيمياء</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="rtl-block" style="margin-top: 0.8rem; font-size: 0.82rem; color: #F87171;">
+                        ⚠️ لاحظ: نفس الطالب متكرر 3 مرات! رقم التليفون مختلف! "هندسة" و "هندسه" — تناقض!
+                    </div>
+                </div>
+
+                <!-- GOOD: Database -->
+                <div class="scenario-card good">
+                    <div class="label"><i class="fas fa-database"></i> Database (الحل)</div>
+                    <table class="mini-table">
+                        <thead>
+                            <tr><th>ID</th><th>Student</th><th>Phone</th><th>Dept_ID</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="color: #34D399;">1</td>
+                                <td>أحمد محمد</td>
+                                <td>0101234567</td>
+                                <td style="color: #60A5FA;">3</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table class="mini-table" style="margin-top: 0.6rem;">
+                        <thead>
+                            <tr><th>Student_ID</th><th>Course_ID</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td style="color: #34D399;">1</td><td>101</td></tr>
+                            <tr><td style="color: #34D399;">1</td><td>102</td></tr>
+                            <tr><td style="color: #34D399;">1</td><td>103</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="rtl-block" style="margin-top: 0.8rem; font-size: 0.82rem; color: #34D399;">
+                        ✅ الطالب مخزن مرة واحدة بس! المواد في جدول منفصل! مفيش تكرار!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Problem Cards Grid -->
+            <div class="problem-grid" data-aos="fade-up" data-aos-delay="300">
+                <div class="problem-card">
+                    <div class="icon"><i class="fas fa-copy"></i></div>
+                    <h4 class="rtl-block">① تكرار البيانات <span class="english" style="font-size: 0.85rem;">Data Redundancy</span></h4>
+                    <p class="rtl-block">نفس البيانات متكررة في أكتر من مكان. لو عايز تغير رقم تليفون طالب، لازم تغيره في كل الملفات. لو نسيت واحد — بقت عندك بيانات متناقضة! 💥</p>
+                </div>
+                <div class="problem-card">
+                    <div class="icon"><i class="fas fa-shuffle"></i></div>
+                    <h4 class="rtl-block">② عدم الاتساق <span class="english" style="font-size: 0.85rem;">Data Inconsistency</span></h4>
+                    <p class="rtl-block">لما البيانات متكررة، سهل جداً يحصل تعارض. ملف بيقول "هندسة" وملف تاني بيقول "هندسه" — مش نفس الحاجة؟ ولا لأ؟ محدش يعرف! 🤷‍♂️</p>
+                </div>
+                <div class="problem-card">
+                    <div class="icon"><i class="fas fa-lock-open"></i></div>
+                    <h4 class="rtl-block">③ عدم الأمان <span class="english" style="font-size: 0.85rem;">No Security</span></h4>
+                    <p class="rtl-block">أي حد يقدر يفتح الملف ويشوف كل حاجة — درجات، أرقام تليفونات، بيانات حساسة. مفيش صلاحيات ولا حماية! 🔓</p>
+                </div>
+                <div class="problem-card">
+                    <div class="icon"><i class="fas fa-users-slash"></i></div>
+                    <h4 class="rtl-block">④ عزل البيانات <span class="english" style="font-size: 0.85rem;">Data Isolation</span></h4>
+                    <p class="rtl-block">كل قسم عنده ملفاته الخاصة بصيغ مختلفة. عايز تجمع بيانات من 3 أقسام؟ لازم يدوياً تنقل وتلصق وتدعي ربنا يبقى صح. 📋</p>
+                </div>
+                <div class="problem-card">
+                    <div class="icon"><i class="fas fa-user-friends"></i></div>
+                    <h4 class="rtl-block">⑤ مشاكل التزامن <span class="english" style="font-size: 0.85rem;">Concurrent Access</span></h4>
+                    <p class="rtl-block">لو اتنين فتحوا نفس الملف في نفس الوقت — واحد يحفظ، والتاني يحفظ — التعديلات فين؟ ضاعت! "The file is locked by another user." 😤</p>
+                </div>
+                <div class="problem-card">
+                    <div class="icon"><i class="fas fa-bolt"></i></div>
+                    <h4 class="rtl-block">⑥ مفيش Atomicity <span class="english" style="font-size: 0.85rem;">No Atomicity</span></h4>
+                    <p class="rtl-block">تخيل بتحول فلوس من حساب لحساب. خصمت من الأول — وفجأة الكهربا قطعت. الفلوس اتخصمت بس ما وصلتش! 😱 مفيش undo!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 3: THE SOLUTION — الحل -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="lesson-section" id="solution">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-lightbulb" style="color: #34D399; margin-left: 0.5rem;"></i> الحل: قواعد البيانات</h2>
+            <p class="en-sub">The Solution: Database Management Systems</p>
+        </div>
+
+        <div class="glass-card" style="padding: 2rem; border-radius: 20px; margin-bottom: 2rem;" data-aos="fade-up" data-aos-delay="100">
+            <div class="rtl-block" style="font-size: 1.05rem;">
+                <p style="color: #E2E8F0; margin-bottom: 1.5rem;">
+                    طيب... إيه الحل؟ 🤔
+                </p>
+                <p style="color: #CBD5E1; margin-bottom: 1.5rem;">
+                    الحل هو إننا نستخدم <span class="hl-emerald">نظام إدارة قواعد بيانات</span> — يعني <span class="english">Database Management System</span> — أو اختصاراً <span class="english">DBMS</span>.
+                </p>
+                <p style="color: #CBD5E1; margin-bottom: 1.5rem;">
+                    الـ <span class="english">DBMS</span> ده برنامج ذكي بيقعد بينك وبين البيانات. إنت مش بتكلم الملفات مباشرة — إنت <span class="hl-cyan">بتكلم البرنامج ده</span>، وهو بيعمل كل حاجة نيابة عنك.
+                </p>
+                <div class="note">
+                    💡 فكر فيه كده: الـ <span class="english">DBMS</span> هو زي <span class="hl-amber">أمين المكتبة</span>. إنت مش بتدور على الكتب بنفسك — بتقوله "عايز كتب الفيزياء اللي صدرت بعد 2020" وهو بيجيبهالك. مش بس كده — هو كمان بيمنع حد يسرق الكتب أو يكتب فيها! 📚✨
+                </div>
+            </div>
+        </div>
+
+        <div class="rtl-block" data-aos="fade-up" data-aos-delay="150">
+            <h3 style="color: #34D399; margin-bottom: 1.5rem; text-align: center; font-size: 1.3rem;">
+                ✅ إزاي الـ <span class="english">DBMS</span> بيحل كل المشاكل دي؟
+            </h3>
+        </div>
+
+        <div class="problem-grid" data-aos="fade-up" data-aos-delay="200">
+            <div class="solution-card">
+                <div class="icon"><i class="fas fa-database"></i></div>
+                <h4 class="rtl-block">مركزية البيانات <span class="english" style="font-size: 0.85rem;">Centralized Data</span></h4>
+                <p class="rtl-block">كل البيانات في مكان واحد. تغير رقم التليفون مرة واحدة — يتغير في كل مكان. بدل ما البيانات متبعتره في 50 ملف.</p>
+            </div>
+            <div class="solution-card">
+                <div class="icon"><i class="fas fa-shield-halved"></i></div>
+                <h4 class="rtl-block">أمان وصلاحيات <span class="english" style="font-size: 0.85rem;">Access Control</span></h4>
+                <p class="rtl-block">تقدر تقول: "الدكتور يشوف درجات بس مادته" و "الطالب يشوف درجاته بس." مفيش حد يوصل لحاجة مش من حقه.</p>
+            </div>
+            <div class="solution-card">
+                <div class="icon"><i class="fas fa-arrows-rotate"></i></div>
+                <h4 class="rtl-block">تعامل متزامن <span class="english" style="font-size: 0.85rem;">Concurrency Control</span></h4>
+                <p class="rtl-block">100 طالب بيسجلوا مواد في نفس الثانية؟ مفيش مشكلة! الـ DBMS بينظم كل حاجة وبيضمن إن مفيش Data تضيع.</p>
+            </div>
+            <div class="solution-card">
+                <div class="icon"><i class="fas fa-rotate-left"></i></div>
+                <h4 class="rtl-block">استعادة البيانات <span class="english" style="font-size: 0.85rem;">Recovery</span></h4>
+                <p class="rtl-block">الكهربا قطعت في نص عملية تحويل فلوس؟ الـ DBMS بيرجع كل حاجة لحالتها قبل ما يحصل أي مشكلة. زي Ctrl+Z بتاع البيانات! ↩️</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 4: INTERACTIVE DEMO -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="lesson-section alt-bg" id="demo">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-play-circle" style="color: #06B6D4; margin-left: 0.5rem;"></i> شوف بنفسك!</h2>
+                <p class="en-sub">Interactive Visualization: Files vs Database</p>
+            </div>
+
+            <div class="rtl-block" style="text-align: center; margin-bottom: 1.5rem;" data-aos="fade-up">
+                <p style="color: #94A3B8;">
+                    اختار السيناريو وشوف الفرق بعينك بين النظام القديم والـ <span class="english">Database</span> 👇
+                </p>
+            </div>
+
+            <div id="demo-canvas-container" data-aos="fade-up" data-aos-delay="100">
+                <canvas id="demo-canvas" width="900" height="500"></canvas>
+                <div class="demo-controls">
+                    <button class="demo-btn active" onclick="showScenario('redundancy')" id="btn-redundancy">① تكرار البيانات</button>
+                    <button class="demo-btn" onclick="showScenario('inconsistency')" id="btn-inconsistency">② عدم الاتساق</button>
+                    <button class="demo-btn" onclick="showScenario('concurrent')" id="btn-concurrent">③ التزامن</button>
+                    <button class="demo-btn" onclick="showScenario('recovery')" id="btn-recovery">④ الاستعادة</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 5: WHAT IS A DBMS — مكونات الـ DBMS -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="lesson-section" id="dbms">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-gears" style="color: #A78BFA; margin-left: 0.5rem;"></i> مكونات الـ DBMS</h2>
+            <p class="en-sub">Components of a Database Management System</p>
+        </div>
+
+        <div class="glass-card" style="padding: 2rem; border-radius: 20px; margin-bottom: 2rem;" data-aos="fade-up" data-aos-delay="100">
+            <div class="rtl-block" style="font-size: 1.05rem;">
+                <p style="color: #CBD5E1; margin-bottom: 1rem;">
+                    الـ <span class="english">DBMS</span> مش برنامج بسيط — ده نظام معقد فيه أجزاء كتير بتشتغل مع بعض. خلينا نتعرف على أهم الأجزاء دي:
+                </p>
+            </div>
+        </div>
+
+        <div class="dbms-visual" data-aos="fade-up" data-aos-delay="200">
+            <div class="dbms-layer" style="border-color: rgba(96, 165, 250, 0.2);" onclick="toggleLayerDetail(this)">
+                <div class="layer-icon" style="background: rgba(96, 165, 250, 0.1); color: #60A5FA;"><i class="fas fa-terminal"></i></div>
+                <div class="layer-info">
+                    <h4 style="color: #60A5FA;">Query Processor — معالج الاستعلامات</h4>
+                    <p>بياخد الـ SQL بتاعك ويحلله ويعمله optimization عشان ينفذه بأسرع طريقة ممكنة. زي الـ GPS — بيلاقيلك أقصر طريق للإجابة! 🗺️</p>
+                </div>
+            </div>
+            <div class="dbms-layer" style="border-color: rgba(52, 211, 153, 0.2);" onclick="toggleLayerDetail(this)">
+                <div class="layer-icon" style="background: rgba(52, 211, 153, 0.1); color: #34D399;"><i class="fas fa-hard-drive"></i></div>
+                <div class="layer-info">
+                    <h4 style="color: #34D399;">Storage Manager — مدير التخزين</h4>
+                    <p>مسؤول عن تخزين البيانات على الـ Disk وقراءتها. بيدير الذاكرة والـ Buffer Pool عشان يسرّع الوصول للبيانات اللي بتتطلب كتير. 💾</p>
+                </div>
+            </div>
+            <div class="dbms-layer" style="border-color: rgba(251, 191, 36, 0.2);" onclick="toggleLayerDetail(this)">
+                <div class="layer-icon" style="background: rgba(251, 191, 36, 0.1); color: #FBBF24;"><i class="fas fa-exchange-alt"></i></div>
+                <div class="layer-info">
+                    <h4 style="color: #FBBF24;">Transaction Manager — مدير المعاملات</h4>
+                    <p>بيضمن إن العمليات بتتم بالكامل أو ما بتتمش خالص (ACID Properties). لو حصلت مشكلة في النص — بيرجع كل حاجة زي ما كانت. ⚡</p>
+                </div>
+            </div>
+            <div class="dbms-layer" style="border-color: rgba(248, 113, 113, 0.2);" onclick="toggleLayerDetail(this)">
+                <div class="layer-icon" style="background: rgba(248, 113, 113, 0.1); color: #F87171;"><i class="fas fa-user-shield"></i></div>
+                <div class="layer-info">
+                    <h4 style="color: #F87171;">Authorization Manager — مدير الصلاحيات</h4>
+                    <p>بيتحكم في "مين يقدر يعمل إيه." الأدمن يقدر يعمل كل حاجة، الدكتور يشوف درجات مادته بس، الطالب يشوف بياناته بس. 🔐</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 6: REAL WORLD — أمثلة واقعية -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="lesson-section alt-bg" id="real-world">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-globe-africa" style="color: #22D3EE; margin-left: 0.5rem;"></i> أمثلة من مصر والعالم</h2>
+                <p class="en-sub">Real-World Database Examples</p>
+            </div>
+
+            <div class="rtl-block" data-aos="fade-up" data-aos-delay="100">
+                <p style="color: #CBD5E1; margin-bottom: 2rem; font-size: 1.05rem; text-align: center;">
+                    كل تطبيق بتستخدمه كل يوم — وراه <span class="english">Database</span> بتشتغل بجد عشانك 👇
+                </p>
+            </div>
+
+            <div class="problem-grid" data-aos="fade-up" data-aos-delay="200">
+                <div class="real-world-card">
+                    <div class="rw-header"><i class="fas fa-university"></i> نظام التنسيق المصري</div>
+                    <div class="rtl-block" style="font-size: 0.92rem; color: #CBD5E1;">
+                        كل سنة بيتعامل مع بيانات <span class="hl-amber">800,000+</span> طالب ثانوية عامة — رغباتهم، درجاتهم، ترتيبهم. لو ده كان في <span class="english">Excel</span> — كان الموضوع هياخد سنة! 😱
+                    </div>
+                </div>
+                <div class="real-world-card">
+                    <div class="rw-header"><i class="fas fa-mobile-alt"></i> إنستاباي — InstaPay</div>
+                    <div class="rtl-block" style="font-size: 0.92rem; color: #CBD5E1;">
+                        كل عملية تحويل فلوس لازم تتم بالكامل أو ما تتمش خالص. مينفعش الفلوس تتخصم من حسابك ومتوصلش للتاني. ده الـ <span class="english">ACID</span> اللي بنتكلم عنه!
+                    </div>
+                </div>
+                <div class="real-world-card">
+                    <div class="rw-header"><i class="fab fa-facebook"></i> Facebook</div>
+                    <div class="rtl-block" style="font-size: 0.92rem; color: #CBD5E1;">
+                        <span class="hl-cyan">2.9 مليار</span> مستخدم. ملايين البوستات كل ثانية. بيستخدم <span class="english">MySQL + TAO + Cassandra</span> مش <span class="english">Database</span> واحدة! هنفهم ليه لما نوصل لـ <span class="english">Unit 9</span>.
+                    </div>
+                </div>
+                <div class="real-world-card">
+                    <div class="rw-header"><i class="fas fa-phone"></i> فودافون مصر</div>
+                    <div class="rtl-block" style="font-size: 0.92rem; color: #CBD5E1;">
+                        بيانات <span class="hl-amber">40+ مليون</span> عميل — رصيدهم، باقاتهم، سجل مكالماتهم. بيستخدموا <span class="english">Oracle Database</span> — واحدة من أقوى وأغلى قواعد البيانات في العالم.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 7: KEY TERMS — مصطلحات أساسية -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="lesson-section" id="terms">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-book" style="color: #FBBF24; margin-left: 0.5rem;"></i> مصطلحات لازم تعرفها</h2>
+            <p class="en-sub">Key Terminology</p>
+        </div>
+
+        <div class="glass-card" style="padding: 0; border-radius: 20px; overflow: hidden;" data-aos="fade-up" data-aos-delay="100">
+            <table class="comparison-table" style="font-family: 'Cairo', sans-serif;">
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">المصطلح</th>
+                        <th style="width: 35%;">المعنى</th>
+                        <th style="width: 35%;">مثال بسيط</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="direction: ltr; text-align: right;"><span class="english" style="font-style: normal;">Database (DB)</span></td>
+                        <td>مجموعة بيانات منظمة ومترابطة</td>
+                        <td>كل بيانات طلاب جامعة القاهرة</td>
+                    </tr>
+                    <tr>
+                        <td style="direction: ltr; text-align: right;"><span class="english" style="font-style: normal;">DBMS</span></td>
+                        <td>البرنامج اللي بيدير الـ Database</td>
+                        <td><span class="english" style="font-size: 0.82rem;">PostgreSQL, MySQL, Oracle</span></td>
+                    </tr>
+                    <tr>
+                        <td style="direction: ltr; text-align: right;"><span class="english" style="font-style: normal;">Table (Relation)</span></td>
+                        <td>جدول بيخزن نوع معين من البيانات</td>
+                        <td>جدول الطلاب، جدول المواد</td>
+                    </tr>
+                    <tr>
+                        <td style="direction: ltr; text-align: right;"><span class="english" style="font-style: normal;">Row (Tuple/Record)</span></td>
+                        <td>صف واحد في الجدول — سجل واحد</td>
+                        <td>بيانات طالب واحد</td>
+                    </tr>
+                    <tr>
+                        <td style="direction: ltr; text-align: right;"><span class="english" style="font-style: normal;">Column (Attribute)</span></td>
+                        <td>عمود — نوع بيانات معين</td>
+                        <td>الاسم، الرقم القومي، المعدل</td>
+                    </tr>
+                    <tr>
+                        <td style="direction: ltr; text-align: right;"><span class="english" style="font-style: normal;">SQL</span></td>
+                        <td>اللغة اللي بتتكلم بيها مع الـ DB</td>
+                        <td><code class="inline-code" style="font-size: 0.78rem;">SELECT * FROM students</code></td>
+                    </tr>
+                    <tr>
+                        <td style="direction: ltr; text-align: right;"><span class="english" style="font-style: normal;">Schema</span></td>
+                        <td>التصميم الكامل لبنية الـ Database</td>
+                        <td>كل الجداول وعلاقاتها مع بعض</td>
+                    </tr>
+                    <tr>
+                        <td style="direction: ltr; text-align: right;"><span class="english" style="font-style: normal;">Query</span></td>
+                        <td>سؤال بتسأله للـ Database</td>
+                        <td>"هات أسماء الطلاب اللي نجحوا"</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 8: QUIZ — اختبر نفسك -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="lesson-section alt-bg" id="quiz">
+        <div class="section-inner">
+            <div class="section-header" data-aos="fade-up">
+                <h2><i class="fas fa-brain" style="color: #D946EF; margin-left: 0.5rem;"></i> اختبر نفسك!</h2>
+                <p class="en-sub">Quick Knowledge Check</p>
+            </div>
+
+            <div class="quiz-container" data-aos="fade-up" data-aos-delay="100">
+
+                <!-- Question 1 -->
+                <div class="quiz-question" id="q1">
+                    <h4>❓ سؤال ١: إيه أكبر مشكلة لما نخزن بيانات طلاب في ملفات Excel متعددة؟</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">ملفات Excel بطيئة في الحسابات</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, true)">تكرار البيانات وعدم الاتساق — Data Redundancy & Inconsistency</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">Excel مش مجاني</div>
+                        <div class="quiz-option" onclick="checkAnswer(1, this, false)">ملفات Excel شكلها مش حلو</div>
+                    </div>
+                    <div class="quiz-feedback" id="q1-feedback"></div>
+                </div>
+
+                <!-- Question 2 -->
+                <div class="quiz-question" id="q2">
+                    <h4>❓ سؤال ٢: الـ DBMS بيعمل إيه بالظبط؟</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">بيصمم واجهات المواقع</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">بيعمل نسخ احتياطية للكمبيوتر كله</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, true)">بيدير وينظم ويحمي البيانات المخزنة في الـ Database</div>
+                        <div class="quiz-option" onclick="checkAnswer(2, this, false)">بيحول ملفات Excel لـ PDF</div>
+                    </div>
+                    <div class="quiz-feedback" id="q2-feedback"></div>
+                </div>
+
+                <!-- Question 3 -->
+                <div class="quiz-question" id="q3">
+                    <h4>❓ سؤال ٣: إيه الفرق بين الـ Database والـ DBMS؟</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">مفيش فرق — نفس الحاجة</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, true)">الـ Database هي البيانات نفسها، والـ DBMS هو البرنامج اللي بيديرها</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">الـ DBMS هو نوع من أنواع الـ Database</div>
+                        <div class="quiz-option" onclick="checkAnswer(3, this, false)">الـ Database بتشتغل على الموبايل بس والـ DBMS على الكمبيوتر</div>
+                    </div>
+                    <div class="quiz-feedback" id="q3-feedback"></div>
+                </div>
+
+                <!-- Question 4 -->
+                <div class="quiz-question" id="q4">
+                    <h4>❓ سؤال ٤: لو اتنين بيسحبوا فلوس من نفس الحساب في نفس الوقت — إيه الـ property اللي بتمنع المشكلة دي؟</h4>
+                    <div class="quiz-options">
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Data Redundancy</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Data Isolation</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, true)">Concurrency Control</div>
+                        <div class="quiz-option" onclick="checkAnswer(4, this, false)">Query Optimization</div>
+                    </div>
+                    <div class="quiz-feedback" id="q4-feedback"></div>
+                </div>
+
+            </div>
+
+            <!-- Score Display -->
+            <div id="quiz-score" style="text-align: center; margin-top: 2rem; display: none;" data-aos="fade-up">
+                <div class="glass-card" style="padding: 2rem; border-radius: 20px; display: inline-block;">
+                    <div class="rtl-block">
+                        <h3 style="color: #34D399; margin-bottom: 0.5rem;" id="score-text"></h3>
+                        <p style="color: #94A3B8;" id="score-msg"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SECTION 9: SUMMARY — الخلاصة -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="lesson-section" id="summary">
+        <div class="section-header" data-aos="fade-up">
+            <h2><i class="fas fa-flag-checkered" style="color: #10B981; margin-left: 0.5rem;"></i> الخلاصة</h2>
+            <p class="en-sub">Key Takeaways</p>
+        </div>
+
+        <div class="glass-card" style="padding: 2rem; border-radius: 20px;" data-aos="fade-up" data-aos-delay="100">
+            <div class="rtl-block" style="font-size: 1.05rem;">
+                <div class="step-box" style="border-color: #10B981; margin-bottom: 1rem;">
+                    <p style="color: #34D399;">① الملفات العادية (Excel/CSV) مناسبة لبيانات بسيطة، لكن بتفشل مع بيانات كبيرة ومعقدة.</p>
+                </div>
+                <div class="step-box" style="border-color: #06B6D4; margin-bottom: 1rem;">
+                    <p style="color: #22D3EE;">② المشاكل الأساسية: تكرار البيانات، عدم الاتساق، عدم الأمان، مشاكل التزامن، وعدم الاستعادة.</p>
+                </div>
+                <div class="step-box" style="border-color: #3B82F6; margin-bottom: 1rem;">
+                    <p style="color: #60A5FA;">③ الـ <span class="english">DBMS</span> هو البرنامج اللي بيحل كل المشاكل دي — بيدير، ينظم، يحمي، ويضمن سلامة البيانات.</p>
+                </div>
+                <div class="step-box" style="border-color: #8B5CF6; margin-bottom: 1rem;">
+                    <p style="color: #A78BFA;">④ كل تطبيق في حياتك — من فيسبوك لإنستاباي لنظام التنسيق — وراه <span class="english">Database</span> بتشتغل. 🏗️</p>
+                </div>
+                <div class="step-box" style="border-color: #FBBF24;">
+                    <p style="color: #FDE68A;">⑤ في الدرس الجاي هنتعرف على <span class="hl-amber">أنواع قواعد البيانات المختلفة</span> — <span class="english">Relational, NoSQL, Graph</span>، ومتى نستخدم كل نوع! 🚀</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- BOTTOM NAVIGATION -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div style="max-width: 960px; margin: 0 auto; padding: 0 1.5rem;">
+        <div class="lesson-bottom-nav">
+            <a href="../index.html">
+                <i class="fas fa-home"></i>
+                <span>الصفحة الرئيسية</span>
+            </a>
+            <a href="database_types.html" style="color: #34D399;">
+                <span>الدرس التالي: أنواع قواعد البيانات</span>
+                <i class="fas fa-arrow-left"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="text-align: center; padding: 3rem 1.5rem; color: var(--text-ghost); font-size: 0.85rem; border-top: 1px solid var(--border-subtle);">
+        <p>Database Mastery — Unit 1: The World of Databases</p>
+        <p style="font-family: 'Cairo', sans-serif; margin-top: 0.3rem;">إتقان قواعد البيانات — الوحدة ١</p>
+    </footer>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SCRIPTS -->
+    <!-- ═══════════════════════════════════════════ -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({ duration: 800, once: true, offset: 100 });
+
+        // ── Reading Progress Bar ──
+        window.addEventListener('scroll', () => {
+            const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const progress = (scrollTop / scrollHeight) * 100;
+            document.getElementById('reading-progress').style.width = progress + '%';
+        });
+
+        // ── Interactive Demo Canvas ──
+        const demoCanvas = document.getElementById('demo-canvas');
+        const demoCtx = demoCanvas.getContext('2d');
+
+        function resizeDemoCanvas() {
+            const container = document.getElementById('demo-canvas-container');
+            const w = container.clientWidth;
+            const h = Math.min(500, w * 0.55);
+            demoCanvas.width = w;
+            demoCanvas.height = h;
+            showScenario(currentScenario);
+        }
+        let currentScenario = 'redundancy';
+        window.addEventListener('resize', resizeDemoCanvas);
+        setTimeout(resizeDemoCanvas, 300);
+
+        function showScenario(scenario) {
+            currentScenario = scenario;
+            // Update buttons
+            document.querySelectorAll('.demo-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById('btn-' + scenario);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            const w = demoCanvas.width;
+            const h = demoCanvas.height;
+            demoCtx.clearRect(0, 0, w, h);
+
+            const midX = w / 2;
+            const scenarios = {
+                redundancy: () => drawRedundancyScenario(w, h),
+                inconsistency: () => drawInconsistencyScenario(w, h),
+                concurrent: () => drawConcurrentScenario(w, h),
+                recovery: () => drawRecoveryScenario(w, h),
+            };
+            if (scenarios[scenario]) scenarios[scenario]();
+        }
+
+        function drawRoundedRect(ctx, x, y, w, h, r, fillColor, strokeColor) {
+            ctx.beginPath();
+            ctx.roundRect(x, y, w, h, r);
+            if (fillColor) { ctx.fillStyle = fillColor; ctx.fill(); }
+            if (strokeColor) { ctx.strokeStyle = strokeColor; ctx.lineWidth = 1; ctx.stroke(); }
+        }
+
+        function drawText(ctx, text, x, y, color, size, font, align) {
+            ctx.font = `${size}px ${font || 'Inter'}`;
+            ctx.fillStyle = color || '#E2E8F0';
+            ctx.textAlign = align || 'center';
+            ctx.fillText(text, x, y);
+        }
+
+        function drawRedundancyScenario(w, h) {
+            const leftX = w * 0.25;
+            const rightX = w * 0.75;
+            const topY = 50;
+
+            // Title
+            drawText(demoCtx, '❌ Files: Data Redundancy', leftX, 35, '#F87171', 16, 'Inter, sans-serif');
+            drawText(demoCtx, '✅ Database: No Redundancy', rightX, 35, '#34D399', 16, 'Inter, sans-serif');
+
+            // Divider
+            demoCtx.beginPath();
+            demoCtx.moveTo(w/2, 45);
+            demoCtx.lineTo(w/2, h - 20);
+            demoCtx.strokeStyle = 'rgba(255,255,255,0.06)';
+            demoCtx.lineWidth = 1;
+            demoCtx.stroke();
+
+            // LEFT: Multiple files with duplicated data
+            const files = ['students.xlsx', 'grades.xlsx', 'fees.xlsx'];
+            const fileColors = ['rgba(239,68,68,0.15)', 'rgba(249,115,22,0.15)', 'rgba(234,179,8,0.15)'];
+            files.forEach((name, i) => {
+                const y = 70 + i * 130;
+                drawRoundedRect(demoCtx, leftX - 120, y, 240, 110, 10, fileColors[i], 'rgba(239,68,68,0.3)');
+                drawText(demoCtx, '📄 ' + name, leftX, y + 25, '#F87171', 13, 'Fira Code');
+                drawText(demoCtx, 'أحمد | 0101234567', leftX, y + 50, '#FBBF24', 11, 'Cairo, sans-serif');
+                drawText(demoCtx, 'أحمد | 0101234568', leftX, y + 70, '#FBBF24', 11, 'Cairo, sans-serif');
+                drawText(demoCtx, '⚠️ Duplicated!', leftX, y + 95, '#F87171', 10, 'Inter');
+            });
+
+            // RIGHT: One database, one record
+            drawRoundedRect(demoCtx, rightX - 120, 70, 240, 60, 10, 'rgba(16,185,129,0.15)', 'rgba(16,185,129,0.3)');
+            drawText(demoCtx, '🗄️ students table', rightX, 95, '#34D399', 13, 'Fira Code');
+            drawText(demoCtx, 'أحمد | 0101234567 ✓', rightX, 115, '#34D399', 11, 'Cairo, sans-serif');
+
+            drawRoundedRect(demoCtx, rightX - 120, 150, 240, 60, 10, 'rgba(6,182,212,0.15)', 'rgba(6,182,212,0.3)');
+            drawText(demoCtx, '🗄️ grades table', rightX, 175, '#22D3EE', 13, 'Fira Code');
+            drawText(demoCtx, 'student_id → References students', rightX, 195, '#22D3EE', 10, 'Inter');
+
+            drawRoundedRect(demoCtx, rightX - 120, 230, 240, 60, 10, 'rgba(139,92,246,0.15)', 'rgba(139,92,246,0.3)');
+            drawText(demoCtx, '🗄️ fees table', rightX, 255, '#A78BFA', 13, 'Fira Code');
+            drawText(demoCtx, 'student_id → References students', rightX, 275, '#A78BFA', 10, 'Inter');
+
+            // Arrow + label
+            drawText(demoCtx, '☝️ One source of truth!', rightX, 320, '#34D399', 13, 'Inter');
+        }
+
+        function drawInconsistencyScenario(w, h) {
+            const leftX = w * 0.25;
+            const rightX = w * 0.75;
+
+            drawText(demoCtx, '❌ Files: Inconsistent Data', leftX, 35, '#F87171', 16, 'Inter, sans-serif');
+            drawText(demoCtx, '✅ Database: Constraints', rightX, 35, '#34D399', 16, 'Inter, sans-serif');
+
+            demoCtx.beginPath();
+            demoCtx.moveTo(w/2, 45);
+            demoCtx.lineTo(w/2, h - 20);
+            demoCtx.strokeStyle = 'rgba(255,255,255,0.06)';
+            demoCtx.stroke();
+
+            // LEFT: Inconsistent data
+            drawRoundedRect(demoCtx, leftX - 130, 60, 260, 160, 12, 'rgba(239,68,68,0.1)', 'rgba(239,68,68,0.25)');
+            drawText(demoCtx, 'File 1: dept = "هندسة"', leftX, 100, '#FBBF24', 13, 'Cairo');
+            drawText(demoCtx, 'File 2: dept = "هندسه"', leftX, 130, '#F87171', 13, 'Cairo');
+            drawText(demoCtx, 'File 3: dept = "Engineering"', leftX, 160, '#F87171', 13, 'Cairo');
+            drawText(demoCtx, '🤷 Which one is correct??', leftX, 200, '#F87171', 12, 'Inter');
+
+            // RIGHT: Enforced constraints
+            drawRoundedRect(demoCtx, rightX - 130, 60, 260, 160, 12, 'rgba(16,185,129,0.1)', 'rgba(16,185,129,0.25)');
+            drawText(demoCtx, 'departments table', rightX, 90, '#34D399', 14, 'Fira Code');
+            drawText(demoCtx, 'id: 3 | name: "هندسة"', rightX, 120, '#E2E8F0', 12, 'Cairo');
+            drawText(demoCtx, '──────────────────', rightX, 140, 'rgba(255,255,255,0.1)', 12);
+            drawText(demoCtx, 'FOREIGN KEY → dept_id = 3', rightX, 165, '#22D3EE', 12, 'Fira Code');
+            drawText(demoCtx, '✅ Always consistent!', rightX, 200, '#34D399', 12, 'Inter');
+
+            // Bottom explanation
+            drawRoundedRect(demoCtx, rightX - 130, 240, 260, 50, 10, 'rgba(6,182,212,0.08)', 'rgba(6,182,212,0.2)');
+            drawText(demoCtx, '🔐 CONSTRAINT CHECK enforced!', rightX, 270, '#22D3EE', 11, 'Inter');
+        }
+
+        function drawConcurrentScenario(w, h) {
+            const leftX = w * 0.25;
+            const rightX = w * 0.75;
+
+            drawText(demoCtx, '❌ Files: Concurrent Conflict', leftX, 35, '#F87171', 16, 'Inter, sans-serif');
+            drawText(demoCtx, '✅ Database: Safe Locking', rightX, 35, '#34D399', 16, 'Inter, sans-serif');
+
+            demoCtx.beginPath();
+            demoCtx.moveTo(w/2, 45);
+            demoCtx.lineTo(w/2, h - 20);
+            demoCtx.strokeStyle = 'rgba(255,255,255,0.06)';
+            demoCtx.stroke();
+
+            // LEFT: Two users conflicting
+            drawRoundedRect(demoCtx, leftX - 130, 60, 260, 250, 12, 'rgba(239,68,68,0.08)', 'rgba(239,68,68,0.2)');
+            drawText(demoCtx, '👤 User A opens file...', leftX, 90, '#FBBF24', 12, 'Inter');
+            drawText(demoCtx, '👤 User B opens file...', leftX, 115, '#FBBF24', 12, 'Inter');
+            drawText(demoCtx, 'A saves changes ✓', leftX, 150, '#94A3B8', 12, 'Inter');
+            drawText(demoCtx, 'B saves changes ✓', leftX, 175, '#94A3B8', 12, 'Inter');
+            drawText(demoCtx, '💥 A\'s changes are LOST!', leftX, 215, '#F87171', 14, 'Inter');
+            drawText(demoCtx, '"The file is locked"', leftX, 245, '#F87171', 11, 'Fira Code');
+            drawText(demoCtx, '😤 Only 1 user at a time!', leftX, 280, '#F87171', 12, 'Inter');
+
+            // RIGHT: Database locking
+            drawRoundedRect(demoCtx, rightX - 130, 60, 260, 250, 12, 'rgba(16,185,129,0.08)', 'rgba(16,185,129,0.2)');
+            drawText(demoCtx, '👤 User A: BEGIN TRANSACTION', rightX, 90, '#22D3EE', 11, 'Fira Code');
+            drawText(demoCtx, '👤 User B: BEGIN TRANSACTION', rightX, 115, '#22D3EE', 11, 'Fira Code');
+            drawText(demoCtx, '🔐 DBMS manages locks', rightX, 150, '#A78BFA', 12, 'Inter');
+            drawText(demoCtx, 'A commits → success ✅', rightX, 180, '#34D399', 12, 'Inter');
+            drawText(demoCtx, 'B commits → success ✅', rightX, 205, '#34D399', 12, 'Inter');
+            drawText(demoCtx, '✨ Both changes preserved!', rightX, 245, '#34D399', 14, 'Inter');
+            drawText(demoCtx, '100 users? No problem! 🚀', rightX, 280, '#34D399', 12, 'Inter');
+        }
+
+        function drawRecoveryScenario(w, h) {
+            const leftX = w * 0.25;
+            const rightX = w * 0.75;
+
+            drawText(demoCtx, '❌ Files: No Recovery', leftX, 35, '#F87171', 16, 'Inter, sans-serif');
+            drawText(demoCtx, '✅ Database: ACID Recovery', rightX, 35, '#34D399', 16, 'Inter, sans-serif');
+
+            demoCtx.beginPath();
+            demoCtx.moveTo(w/2, 45);
+            demoCtx.lineTo(w/2, h - 20);
+            demoCtx.strokeStyle = 'rgba(255,255,255,0.06)';
+            demoCtx.stroke();
+
+            // LEFT: Transfer fails
+            drawRoundedRect(demoCtx, leftX - 130, 60, 260, 270, 12, 'rgba(239,68,68,0.08)', 'rgba(239,68,68,0.2)');
+            drawText(demoCtx, '💰 Transfer 1000 EGP', leftX, 90, '#FBBF24', 13, 'Inter');
+            drawText(demoCtx, 'Step 1: Account A -= 1000 ✓', leftX, 125, '#94A3B8', 11, 'Fira Code');
+            drawText(demoCtx, '⚡ POWER FAILURE! ⚡', leftX, 165, '#F87171', 15, 'Inter');
+            drawText(demoCtx, 'Step 2: Account B += 1000 ✗', leftX, 200, '#F87171', 11, 'Fira Code');
+            drawText(demoCtx, '─────────────────', leftX, 220, 'rgba(255,255,255,0.1)', 12);
+            drawText(demoCtx, 'A lost 1000 💸', leftX, 250, '#F87171', 13, 'Inter');
+            drawText(demoCtx, 'B received 0', leftX, 275, '#F87171', 13, 'Inter');
+            drawText(demoCtx, 'Money vanished! 😱', leftX, 305, '#F87171', 14, 'Inter');
+
+            // RIGHT: Database recovery
+            drawRoundedRect(demoCtx, rightX - 130, 60, 260, 270, 12, 'rgba(16,185,129,0.08)', 'rgba(16,185,129,0.2)');
+            drawText(demoCtx, '💰 Transfer 1000 EGP', rightX, 90, '#FBBF24', 13, 'Inter');
+            drawText(demoCtx, 'BEGIN TRANSACTION;', rightX, 120, '#22D3EE', 11, 'Fira Code');
+            drawText(demoCtx, 'A -= 1000 (logged)', rightX, 145, '#94A3B8', 11, 'Fira Code');
+            drawText(demoCtx, '⚡ POWER FAILURE! ⚡', rightX, 180, '#FBBF24', 15, 'Inter');
+            drawText(demoCtx, '↩️ ROLLBACK automatic', rightX, 215, '#A78BFA', 13, 'Inter');
+            drawText(demoCtx, '─────────────────', rightX, 235, 'rgba(255,255,255,0.1)', 12);
+            drawText(demoCtx, 'A: 1000 ✅ (restored)', rightX, 260, '#34D399', 13, 'Inter');
+            drawText(demoCtx, 'B: 0 ✅ (nothing lost)', rightX, 285, '#34D399', 13, 'Inter');
+            drawText(demoCtx, 'Data is SAFE! 🛡️', rightX, 315, '#34D399', 14, 'Inter');
+        }
+
+        // ── Quiz System ──
+        let quizScore = 0;
+        let questionsAnswered = 0;
+        const totalQuestions = 4;
+
+        const feedbackMessages = {
+            1: { correct: '🎉 صح! أكبر مشكلة هي تكرار البيانات واللي بيسبب عدم الاتساق — ده أساس كل المشاكل التانية!', wrong: '❌ مش بالظبط. المشكلة الأساسية هي Data Redundancy — التكرار — واللي بيسبب Inconsistency — عدم الاتساق.' },
+            2: { correct: '✅ بالظبط! الـ DBMS هو البرنامج اللي بيدير البيانات — بيخزنها، بيحميها، بينظم الوصول ليها، وبيضمن سلامتها.', wrong: '❌ الـ DBMS هو برنامج متخصص في إدارة البيانات — مش تصميم مواقع ولا نسخ احتياطية.' },
+            3: { correct: '🎯 ممتاز! الـ Database هي "البيانات" نفسها، والـ DBMS هو "البرنامج" اللي بيدير البيانات دي. زي الفرق بين الكتب والمكتبة!', wrong: '❌ الـ Database هي البيانات المخزنة، والـ DBMS هو البرنامج اللي بيديرها. فيه فرق كبير بينهم!' },
+            4: { correct: '💪 صح! الـ Concurrency Control هو اللي بيمنع مشاكل التعامل المتزامن — بيضمن إن كل العمليات بتتم بشكل آمن حتى لو في نفس الوقت.', wrong: '❌ الإجابة الصح هي Concurrency Control — ده المكون اللي بيدير التعامل المتزامن على نفس البيانات.' },
+        };
+
+        function checkAnswer(qNum, element, isCorrect) {
+            const question = document.getElementById('q' + qNum);
+            if (question.classList.contains('answered')) return;
+            question.classList.add('answered');
+
+            questionsAnswered++;
+
+            const options = question.querySelectorAll('.quiz-option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+            });
+
+            const feedback = document.getElementById('q' + qNum + '-feedback');
+
+            if (isCorrect) {
+                element.classList.add('correct');
+                feedback.className = 'quiz-feedback show correct-fb';
+                feedback.textContent = feedbackMessages[qNum].correct;
+                quizScore++;
+            } else {
+                element.classList.add('wrong');
+                feedback.className = 'quiz-feedback show wrong-fb';
+                feedback.textContent = feedbackMessages[qNum].wrong;
+                // Highlight correct answer
+                options.forEach(opt => {
+                    if (opt.getAttribute('onclick').includes('true')) {
+                        opt.classList.add('correct');
+                    }
+                });
+            }
+
+            if (questionsAnswered === totalQuestions) {
+                showFinalScore();
+            }
+        }
+
+        function showFinalScore() {
+            const scoreDiv = document.getElementById('quiz-score');
+            const scoreText = document.getElementById('score-text');
+            const scoreMsg = document.getElementById('score-msg');
+            scoreDiv.style.display = 'block';
+
+            scoreText.textContent = `🏆 النتيجة: ${quizScore} / ${totalQuestions}`;
+
+            if (quizScore === totalQuestions) {
+                scoreMsg.textContent = '🎉🎉🎉 ماشاء الله! درجة كاملة!! إنت جاهز للدرس الجاي! 🚀';
+                scoreMsg.style.color = '#34D399';
+            } else if (quizScore >= 3) {
+                scoreMsg.textContent = '👏 ممتاز! فاهم كويس. ممكن تراجع اللي غلطت فيه وتكمل!';
+                scoreMsg.style.color = '#FBBF24';
+            } else {
+                scoreMsg.textContent = '💪 محتاج تراجع الدرس تاني. مفيش مشكلة — التكرار بيثبت المعلومة!';
+                scoreMsg.style.color = '#F87171';
+            }
+
+            scoreDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // ── DBMS Layer Click ──
+        function toggleLayerDetail(el) {
+            const allLayers = document.querySelectorAll('.dbms-layer');
+            allLayers.forEach(l => {
+                if (l !== el) l.style.background = '';
+            });
+            el.style.background = el.style.background ? '' : 'rgba(255,255,255,0.04)';
+        }
+    </script>
+</body>
+</html>
