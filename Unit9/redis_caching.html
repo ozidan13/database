@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redis — التخزين المؤقت والـ Cache | Database Mastery</title>
+    <meta name="description" content="دليل شامل لـ Redis: Data Structures (String/Hash/List/Set/ZSet)، Caching Patterns، Session Management، Pub/Sub، Redis Streams، Distributed Locks، Expiry — مع أمثلة Node.js كاملة.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global-db.css">
+    <style>
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;text-decoration:none;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#DC2626,#7F1D1D);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#FCA5A5;}
+        .nav-toc{display:flex;gap:1.2rem;font-size:.8rem;}
+        .nav-toc a{color:#64748B;text-decoration:none;transition:.2s;}
+        .nav-toc a:hover{color:#FCA5A5;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#DC2626,#F59E0B);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(220,38,38,.1),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#FCA5A5;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#DC2626;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2rem,5vw,3.6rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#F87171,#FCD34D);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.05rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);font-size:.78rem;color:#FCA5A5;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.tip{background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.2);}
+        .callout.tip .chead{color:#FCA5A5;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);}
+        .callout.realworld .chead{color:#34D399;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
+        .ds-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin:1.5rem 0;}
+        @media(max-width:640px){.ds-grid{grid-template-columns:1fr;}}
+        .ds-card{background:rgba(15,23,42,.8);border-radius:14px;padding:1.1rem;border:1px solid rgba(255,255,255,.07);border-right:4px solid;}
+        .ds-card h3{font-size:.9rem;font-weight:900;margin-bottom:.3rem;}
+        .ds-card p{font-size:.82rem;color:#64748B;line-height:1.9;margin:.2rem 0;}
+        .ds-card .use{font-size:.73rem;color:#34D399;margin-top:.4rem;font-family:'Fira Code',monospace;}
+        .code-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:1rem 0;border:1px solid rgba(255,255,255,.05);}
+        .code-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .cdot{width:9px;height:9px;border-radius:50%;}.cdot.r{background:#FF5F57}.cdot.y{background:#FDBC40}.cdot.g{background:#27C93F}
+        .clabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .cbody{padding:1rem 1.2rem;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.fn{color:#22D3EE}.cn{color:#A5B4FC}
+        .rcmd{color:#F87171;font-weight:700}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;text-decoration:none;color:#E2E8F0;}
+        .bnav-btn:hover{background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.3);transform:translateY(-2px);}
+    </style>
+</head>
+<body>
+<nav class="lesson-nav-bar">
+    <div class="nav-inner">
+        <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-bolt-lightning"></i></div>العودة للبوابة</a>
+        <div class="nav-toc">
+            <a href="#why">لماذا Redis؟</a>
+            <a href="#structures">Data Structures</a>
+            <a href="#caching">Caching Patterns</a>
+            <a href="#sessions">Sessions</a>
+            <a href="#advanced">Advanced</a>
+            <a href="#quiz">اختبار</a>
+        </div>
+    </div>
+</nav>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
+
+<header class="hero" data-aos="fade-up">
+    <div class="lesson-badge"><span class="pulse"></span>الوحدة 9 — الدرس 3</div>
+    <h1><span class="grad">Redis</span> — السرعة المطلقة</h1>
+    <p class="en-title">Redis — In-Memory Data Structures, Caching, Sessions, Pub/Sub, Streams, Distributed Locks</p>
+    <p class="desc">Redis = Remote Dictionary Server. يعمل في الذاكرة (RAM) — 100K-1M عملية/ثانية. GitHub يستخدمه لتخزين 1.3 مليون Session. Twitter لتغذية الـ Timeline. Amazon لتقليل DB Load بـ 90%.</p>
+    <div class="learn-pills">
+        <span class="pill">In-Memory Storage</span>
+        <span class="pill">String / Hash / List</span>
+        <span class="pill">Set / Sorted Set</span>
+        <span class="pill">Cache-Aside Pattern</span>
+        <span class="pill">Write-Through</span>
+        <span class="pill">Session Management</span>
+        <span class="pill">Rate Limiting</span>
+        <span class="pill">Pub/Sub</span>
+        <span class="pill">Distributed Lock</span>
+    </div>
+</header>
+
+<div class="lesson-body">
+
+<!-- WHY REDIS -->
+<div class="section-block" id="why" data-aos="fade-up">
+    <div class="section-title"><span>⚡</span> لماذا Redis؟</div>
+    <p class="section-en">Redis vs Traditional Database — When Sub-Millisecond Latency Matters</p>
+
+    <p class="body-text">PostgreSQL Query وقتها 2-50ms. Redis Operation وقتها &lt;1ms (Microseconds). عندك API يُستدعى 1000 مرة/ثانية وكل استدعاء يتطلب Query ثقيلة — Redis هو الحل.</p>
+
+    <div class="callout realworld">
+        <div class="chead">🌍 حالات الاستخدام الحقيقية</div>
+        <p>
+        🔴 <strong>Caching:</strong> نتائج Queries الثقيلة — بدلاً من 50ms كل مرة → 0.1ms<br>
+        🟠 <strong>Session Storage:</strong> JWT Revocation، User Sessions المشتركة عبر Servers<br>
+        🟡 <strong>Rate Limiting:</strong> "100 request/minute لكل IP" — بدون DB queries<br>
+        🟢 <strong>Real-time Leaderboard:</strong> Sorted Set للرانكينج الفوري<br>
+        🔵 <strong>Job Queues:</strong> Background Tasks بـ BullMQ<br>
+        🟣 <strong>Pub/Sub:</strong> Real-time Notifications وChat
+        </p>
+    </div>
+</div>
+
+<!-- DATA STRUCTURES -->
+<div class="section-block" id="structures" data-aos="fade-up">
+    <div class="section-title"><span>🧱</span> أنواع البيانات في Redis</div>
+    <p class="section-en">Redis Data Structures — The Secret Power of Redis</p>
+
+    <div class="ds-grid">
+        <div class="ds-card" style="border-right-color:#F87171;">
+            <h3 style="color:#F87171;">String</h3>
+            <p>أي نص أو رقم أو Binary. حتى 512MB. يدعم INCR/DECR الـ Atomic.</p>
+            <div class="use">Cache، Counters، Flags، JSON strings</div>
+        </div>
+        <div class="ds-card" style="border-right-color:#FBBF24;">
+            <h3 style="color:#FBBF24;">Hash</h3>
+            <p>Map من Field→Value. مثالي للـ Objects — تحديث Field واحد فقط.</p>
+            <div class="use">User Profile، Product، Session Data</div>
+        </div>
+        <div class="ds-card" style="border-right-color:#34D399;">
+            <h3 style="color:#34D399;">List</h3>
+            <p>LinkedList من Strings. يدعم Push/Pop من الطرفين. Blocking Commands.</p>
+            <div class="use">Job Queues، Activity Feed، Recent Items</div>
+        </div>
+        <div class="ds-card" style="border-right-color:#38BDF8;">
+            <h3 style="color:#38BDF8;">Set</h3>
+            <p>مجموعة Unique Strings. عمليات Union/Intersection/Difference.</p>
+            <div class="use">Tags، Online Users، Unique Visitors</div>
+        </div>
+        <div class="ds-card" style="border-right-color:#A78BFA;">
+            <h3 style="color:#A78BFA;">Sorted Set (ZSet) ⭐</h3>
+            <p>Set مع Score. مُرتّب دائماً. الأقوى في Redis — Range Queries بالـ Score.</p>
+            <div class="use">Leaderboard، Priority Queue، Trending</div>
+        </div>
+        <div class="ds-card" style="border-right-color:#FB923C;">
+            <h3 style="color:#FB923C;">Stream</h3>
+            <p>Log-like Data Structure. كل Entry له ID وFields. يدعم Consumer Groups.</p>
+            <div class="use">Event Sourcing، Message Brokers، Audit Logs</div>
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Redis Commands — أهم العمليات</span></div>
+        <div class="cbody">
+<span class="cmt"># ══ String ══</span>
+<span class="rcmd">SET</span>  user:1:name <span class="str">"Ahmed"</span>        <span class="cmt"># Simple set</span>
+<span class="rcmd">SET</span>  product:123:views <span class="num">0</span>
+<span class="rcmd">INCR</span> product:123:views           <span class="cmt"># Atomic increment → 1</span>
+<span class="rcmd">INCRBY</span> product:123:views <span class="num">5</span>     <span class="cmt"># → 6</span>
+<span class="rcmd">SET</span>  session:abc123 <span class="str">"{userId:1}"</span> <span class="cn">EX</span> <span class="num">3600</span>  <span class="cmt"># Expire after 1hr</span>
+<span class="rcmd">TTL</span>  session:abc123             <span class="cmt"># Remaining seconds</span>
+<span class="rcmd">GET</span>  user:1:name                <span class="cmt"># "Ahmed"</span>
+
+<span class="cmt"># ══ Hash ══</span>
+<span class="rcmd">HSET</span> user:1 name <span class="str">"Ahmed"</span> email <span class="str">"a@b.com"</span> age <span class="num">28</span>
+<span class="rcmd">HGET</span> user:1 name                <span class="cmt"># "Ahmed"</span>
+<span class="rcmd">HGETALL</span> user:1                  <span class="cmt"># كل الـ Fields</span>
+<span class="rcmd">HINCRBY</span> user:1 login_count <span class="num">1</span>   <span class="cmt"># Atomic increment</span>
+<span class="rcmd">HDEL</span> user:1 age
+
+<span class="cmt"># ══ Sorted Set — Leaderboard ══</span>
+<span class="rcmd">ZADD</span> game:leaderboard <span class="num">9500</span> <span class="str">"ahmed"</span>
+<span class="rcmd">ZADD</span> game:leaderboard <span class="num">8200</span> <span class="str">"sara"</span>
+<span class="rcmd">ZADD</span> game:leaderboard <span class="num">11000</span> <span class="str">"omar"</span>
+<span class="rcmd">ZINCRBY</span> game:leaderboard <span class="num">500</span> <span class="str">"ahmed"</span>   <span class="cmt"># +500 score</span>
+<span class="rcmd">ZREVRANGE</span> game:leaderboard <span class="num">0</span> <span class="num">9</span> WITHSCORES  <span class="cmt"># Top 10 (DESC)</span>
+<span class="rcmd">ZRANK</span> game:leaderboard <span class="str">"ahmed"</span>               <span class="cmt"># ترتيب اللاعب</span>
+
+<span class="cmt"># ══ Set — Online Users ══</span>
+<span class="rcmd">SADD</span>   online:users user:1 user:2 user:5
+<span class="rcmd">SISMEMBER</span> online:users user:1   <span class="cmt"># هل الـ User Online؟</span>
+<span class="rcmd">SCARD</span>  online:users             <span class="cmt"># عدد الـ Online Users</span>
+<span class="rcmd">SREM</span>   online:users user:2      <span class="cmt"># Logout</span>
+        </div>
+    </div>
+</div>
+
+<!-- CACHING PATTERNS -->
+<div class="section-block" id="caching" data-aos="fade-up">
+    <div class="section-title"><span>🗄️</span> Caching Patterns</div>
+    <p class="section-en">Cache-Aside, Write-Through, Write-Behind — Cache Invalidation</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Cache-Aside Pattern — Node.js مع ioredis</span></div>
+        <div class="cbody">
+<span class="kw">import</span> Redis <span class="kw">from</span> <span class="str">'ioredis'</span>;
+<span class="kw">const</span> redis = <span class="kw">new</span> <span class="fn">Redis</span>({ host: <span class="str">'localhost'</span>, port: <span class="num">6379</span> });
+
+<span class="kw">async function</span> <span class="fn">getProduct</span>(productId: <span class="cn">string</span>) {
+  <span class="kw">const</span> cacheKey = <span class="str">`product:</span>${productId}<span class="str">`</span>;
+
+  <span class="cmt">// 1. Check Cache First</span>
+  <span class="kw">const</span> cached = <span class="kw">await</span> redis.<span class="fn">get</span>(cacheKey);
+  <span class="kw">if</span> (cached) {
+    <span class="kw">return</span> { source: <span class="str">'cache'</span>, data: <span class="fn">JSON</span>.<span class="fn">parse</span>(cached) };
+  }
+
+  <span class="cmt">// 2. Cache Miss → Hit DB</span>
+  <span class="kw">const</span> product = <span class="kw">await</span> db.<span class="fn">query</span>(
+    <span class="str">'SELECT * FROM products WHERE id = $1'</span>, [productId]
+  );
+
+  <span class="kw">if</span> (product) {
+    <span class="cmt">// 3. Store in Cache with 1hr TTL</span>
+    <span class="kw">await</span> redis.<span class="fn">setex</span>(cacheKey, <span class="num">3600</span>, <span class="fn">JSON</span>.<span class="fn">stringify</span>(product));
+  }
+  <span class="kw">return</span> { source: <span class="str">'database'</span>, data: product };
+}
+
+<span class="cmt">// Cache Invalidation — عند UPDATE</span>
+<span class="kw">async function</span> <span class="fn">updateProduct</span>(productId: <span class="cn">string</span>, updates: <span class="cn">any</span>) {
+  <span class="kw">await</span> db.<span class="fn">query</span>(<span class="str">'UPDATE products SET ... WHERE id=$1'</span>, [productId]);
+  <span class="kw">await</span> redis.<span class="fn">del</span>(<span class="str">`product:</span>${productId}<span class="str">`</span>);  <span class="cmt">// Invalidate Cache</span>
+}
+
+<span class="cmt">// Bulk Invalidation بالـ Pattern</span>
+<span class="kw">async function</span> <span class="fn">invalidateCategory</span>(category: <span class="cn">string</span>) {
+  <span class="kw">const</span> keys = <span class="kw">await</span> redis.<span class="fn">keys</span>(<span class="str">`products:category:</span>${category}<span class="str">:*`</span>);
+  <span class="kw">if</span> (keys.length) <span class="kw">await</span> redis.<span class="fn">del</span>(...keys);
+  <span class="cmt">// ⚠️ KEYS في Production: استخدم SCAN بدلاً منه (لا يُحجب)</span>
+}
+        </div>
+    </div>
+</div>
+
+<!-- SESSIONS & RATE LIMITING -->
+<div class="section-block" id="sessions" data-aos="fade-up">
+    <div class="section-title"><span>🔐</span> Sessions وRate Limiting</div>
+    <p class="section-en">Session Management, JWT Blocklist, Rate Limiting with Sliding Window</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Rate Limiting — Sliding Window Algorithm</span></div>
+        <div class="cbody">
+<span class="cmt">// Rate Limiting: 100 requests/minute per IP</span>
+<span class="kw">async function</span> <span class="fn">rateLimit</span>(ip: <span class="cn">string</span>): <span class="cn">Promise</span>&lt;{ allowed: <span class="cn">boolean</span>; remaining: <span class="cn">number</span> }&gt; {
+  <span class="kw">const</span> key   = <span class="str">`rate:</span>${ip}<span class="str">`</span>;
+  <span class="kw">const</span> limit = <span class="num">100</span>;
+  <span class="kw">const</span> now   = <span class="fn">Date</span>.<span class="fn">now</span>();
+  <span class="kw">const</span> window = <span class="num">60000</span>;  <span class="cmt">// 60 seconds in ms</span>
+
+  <span class="kw">const</span> pipeline = redis.<span class="fn">pipeline</span>();
+  pipeline.<span class="fn">zremrangebyscore</span>(key, <span class="num">0</span>, now - window);  <span class="cmt">// Remove old entries</span>
+  pipeline.<span class="fn">zadd</span>(key, now, <span class="str">`</span>${now}<span class="str">-</span>${<span class="fn">Math</span>.<span class="fn">random</span>()}<span class="str">`</span>);   <span class="cmt">// Add current request</span>
+  pipeline.<span class="fn">zcard</span>(key);                               <span class="cmt">// Count requests</span>
+  pipeline.<span class="fn">expire</span>(key, <span class="num">60</span>);                          <span class="cmt">// TTL</span>
+
+  <span class="kw">const</span> results = <span class="kw">await</span> pipeline.<span class="fn">exec</span>();
+  <span class="kw">const</span> count = results[<span class="num">2</span>][<span class="num">1</span>] <span class="kw">as</span> <span class="cn">number</span>;
+
+  <span class="kw">return</span> {
+    allowed:   count <= limit,
+    remaining: <span class="fn">Math</span>.<span class="fn">max</span>(<span class="num">0</span>, limit - count)
+  };
+}
+
+<span class="cmt">// JWT Blocklist — Logout يُبطل الـ Token</span>
+<span class="kw">async function</span> <span class="fn">logout</span>(token: <span class="cn">string</span>, expiresAt: <span class="cn">number</span>) {
+  <span class="kw">const</span> ttl = expiresAt - <span class="fn">Math</span>.<span class="fn">floor</span>(<span class="fn">Date</span>.<span class="fn">now</span>() / <span class="num">1000</span>);
+  <span class="kw">await</span> redis.<span class="fn">setex</span>(<span class="str">`blocklist:</span>${token}<span class="str">`</span>, ttl, <span class="str">'1'</span>);
+}
+
+<span class="kw">async function</span> <span class="fn">isTokenBlocked</span>(token: <span class="cn">string</span>): <span class="cn">Promise</span>&lt;<span class="cn">boolean</span>&gt; {
+  <span class="kw">return</span> (<span class="kw">await</span> redis.<span class="fn">exists</span>(<span class="str">`blocklist:</span>${token}<span class="str">`</span>)) === <span class="num">1</span>;
+}
+        </div>
+    </div>
+</div>
+
+<!-- ADVANCED -->
+<div class="section-block" id="advanced" data-aos="fade-up">
+    <div class="section-title"><span>🚀</span> Advanced — Pub/Sub وDistributed Locks</div>
+    <p class="section-en">Pub/Sub Messaging, Distributed Locks with Redlock, Lua Scripts</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Pub/Sub وDistributed Lock</span></div>
+        <div class="cbody">
+<span class="cmt">// ══ Pub/Sub — Real-time Notifications ══</span>
+<span class="cmt">// Publisher:</span>
+<span class="kw">await</span> redis.<span class="fn">publish</span>(<span class="str">'order:updates'</span>, <span class="fn">JSON</span>.<span class="fn">stringify</span>({
+  orderId: <span class="str">'123'</span>,
+  status:  <span class="str">'shipped'</span>,
+  customer: <span class="str">'ahmed@email.com'</span>
+}));
+
+<span class="cmt">// Subscriber (عملية منفصلة):</span>
+<span class="kw">const</span> subscriber = <span class="kw">new</span> <span class="fn">Redis</span>();
+subscriber.<span class="fn">subscribe</span>(<span class="str">'order:updates'</span>);
+subscriber.<span class="fn">on</span>(<span class="str">'message'</span>, (channel, message) => {
+  <span class="kw">const</span> data = <span class="fn">JSON</span>.<span class="fn">parse</span>(message);
+  <span class="fn">sendEmailNotification</span>(data.customer, data.status);
+});
+
+<span class="cmt">// ══ Distributed Lock — Redlock Algorithm ══</span>
+<span class="cmt">// منع تنفيذ نفس العملية على 2 server في نفس الوقت</span>
+<span class="kw">async function</span> <span class="fn">processOrder</span>(orderId: <span class="cn">string</span>) {
+  <span class="kw">const</span> lockKey = <span class="str">`lock:order:</span>${orderId}<span class="str">`</span>;
+  <span class="kw">const</span> lockValue = <span class="fn">crypto</span>.<span class="fn">randomUUID</span>();
+  <span class="kw">const</span> ttl = <span class="num">30</span>;  <span class="cmt">// 30 seconds</span>
+
+  <span class="cmt">// SET NX EX — Atomic Lock Acquisition</span>
+  <span class="kw">const</span> acquired = <span class="kw">await</span> redis.<span class="fn">set</span>(lockKey, lockValue, <span class="str">'EX'</span>, ttl, <span class="str">'NX'</span>);
+  <span class="kw">if</span> (!acquired) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'Order already being processed'</span>);
+
+  <span class="kw">try</span> {
+    <span class="kw">await</span> <span class="fn">actuallyProcessOrder</span>(orderId);
+  } <span class="kw">finally</span> {
+    <span class="cmt">// Release Lock — Lua Script للـ Atomicity</span>
+    <span class="kw">const</span> luaScript = <span class="str">`
+      if redis.call('get', KEYS[1]) == ARGV[1] then
+        return redis.call('del', KEYS[1])
+      else return 0 end`</span>;
+    <span class="kw">await</span> redis.<span class="fn">eval</span>(luaScript, <span class="num">1</span>, lockKey, lockValue);
+  }
+}
+        </div>
+    </div>
+
+    <div class="callout mistake">
+        <div class="chead">⚠️ Redis Gotchas — تجنّبها</div>
+        <p>
+        🔴 <strong>لا تُخزّن Secret Keys في Redis بدون Encryption</strong><br>
+        🔴 <strong>KEYS * في Production = يُحجب Server</strong> — استخدم SCAN بدلاً منه<br>
+        🔴 <strong>لا تُخزّن بيانات لا يمكن إعادة بنائها في Redis فقط</strong> — هو Cache لا Database<br>
+        🔴 <strong>maxmemory-policy</strong> مهم — اختر allkeys-lru للـ Cache
+        </p>
+    </div>
+</div>
+
+<!-- QUIZ -->
+<div class="section-block" id="quiz" data-aos="fade-up">
+    <div class="section-title"><span>🧠</span> اختبار الفهم</div>
+    <div class="quiz-card" id="qq1">
+        <div class="quiz-q">١. تريد بناء Leaderboard لعبة يتحدث في Real-time. أي Redis Data Structure تستخدم؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(1,this,false)">Hash — لأنه يُخزّن Player وScore</div>
+            <div class="quiz-opt" onclick="ans(1,this,true)">Sorted Set (ZSet) — مُرتّب تلقائياً بالـ Score. ZADD لإضافة/تحديث Score، ZREVRANGE للـ Top-N، ZRANK لإيجاد ترتيب لاعب محدد. كل هذا بـ O(log n).</div>
+            <div class="quiz-opt" onclick="ans(1,this,false)">String — لكل لاعب key منفصل</div>
+        </div>
+        <div class="quiz-fb" id="fb1"></div>
+    </div>
+    <div class="quiz-card" id="qq2">
+        <div class="quiz-q">٢. ما الـ Cache-Aside Pattern وما نقطة ضعفه؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(2,this,false)">Cache يُكتب فيه مع كل Database Write</div>
+            <div class="quiz-opt" onclick="ans(2,this,true)">Cache-Aside: اقرأ من Cache أولاً. إذا Cache Miss: اقرأ من DB وخزّن في Cache. نقطة الضعف: خلال Cache Miss Window قد يصل طلبات كثيرة للـ DB معاً (Cache Stampede/Thundering Herd). الحل: Mutex Lock للـ Key أثناء الجلب.</div>
+            <div class="quiz-opt" onclick="ans(2,this,false)">Cache يُحدَّث Asynchronously</div>
+        </div>
+        <div class="quiz-fb" id="fb2"></div>
+    </div>
+    <div class="quiz-card" id="qq3">
+        <div class="quiz-q">٣. لماذا نستخدم Lua Script لتحرير الـ Distributed Lock؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(3,this,false)">لأن Lua أسرع</div>
+            <div class="quiz-opt" onclick="ans(3,this,true)">لضمان الـ Atomicity — التحقق أن القيمة هي قيمتنا ثم الحذف يجب أن يحدث بشكل Atomic. بدون Lua: قد يتحقق Server A من الـ Lock ثم قبل الحذف يُنتهي الـ TTL ويأخذ Server B الـ Lock ثم يحذفه Server A خطأً!</div>
+            <div class="quiz-opt" onclick="ans(3,this,false)">Lua الوحيد الذي يدعم DEL</div>
+        </div>
+        <div class="quiz-fb" id="fb3"></div>
+    </div>
+    <div class="quiz-card" id="qq4">
+        <div class="quiz-q">٤. لماذا يجب تجنّب KEYS * في Production؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(4,this,false)">لأنه يُرجع نتائج غلط</div>
+            <div class="quiz-opt" onclick="ans(4,this,true)">Redis Single-Threaded — KEYS * يُحجب الـ Server أثناء البحث في كل الـ Keys. مع ملايين الـ Keys = Server يتوقف عن الاستجابة لثوانٍ. SCAN: يبحث بشكل Incremental بدون blocking — آمن للـ Production.</div>
+            <div class="quiz-opt" onclick="ans(4,this,false)">KEYS * غير موجود في Redis 7</div>
+        </div>
+        <div class="quiz-fb" id="fb4"></div>
+    </div>
+    <div class="quiz-score-box" id="score-box">
+        <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+        <p id="score-msg" style="color:#94A3B8;"></p>
+    </div>
+</div>
+<div class="bottom-nav">
+    <a href="mongodb_basics.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: MongoDB</a>
+    <a href="choosing_database.html" class="bnav-btn" style="color:#FCA5A5;">التالي: Choosing a DB <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 9: Redis</footer>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+AOS.init({duration:700,once:true,offset:80});
+window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+const fbs={
+    1:{c:'✅ Sorted Set (ZSet): القيم مُرتّبة بالـ Score تلقائياً. ZADD يُضيف أو يُحدّث. ZINCRBY يزيد Score. ZREVRANGE O(log n + k). ZRANK لإيجاد الترتيب. Twitter Trends، GitHub Stars Rankings — كلها Sorted Set.',w:'❌ Hash لا يدعم الترتيب. String يحتاج قراءة الكل للترتيب. Sorted Set مُصمَّم خصيصاً للـ Leaderboards — هذه هي قوته الحقيقية.'},
+    2:{c:'✅ Cache-Aside (Lazy Loading): Application تتحكم في الـ Cache. Queue: (1) Check Cache (2) Cache Miss → DB (3) Save to Cache. نقطة الضعف الكبيرة: Cache Stampede — مئات الطلبات تجد Cache Miss في وقت واحد وتكسر الـ DB. الحل: Mutex/Semaphore أو Probabilistic Early Expiration.',w:'❌ Write-Through = يُكتب في Cache مع كل DB Write. بخلاف Cache-Aside الذي يُكتب عند القراءة (Lazy). Cache-Aside هو الـ Pattern الأكثر شيوعاً.'},
+    3:{c:'✅ المشكلة بدون Atomicity: GET lockValue → compare → DEL ثلاث خطوات منفصلة. بين GET وDEL قد يُنتهي TTL ويأخذ Server آخر الـ Lock ثم نحذفه نحن! Lua Script في Redis يُنفَّذ Atomically — لا interruption بينهم.',w:'❌ السبب ليس الأداء. السبب هو الـ Atomicity. الـ Race Condition بين التحقق والحذف هو المشكلة. Lua يحلّها بضمان الـ Check-and-Delete كعملية واحدة.'},
+    4:{c:'✅ Redis Single-Threaded: كل Commands تُنفَّذ بالتسلسل. KEYS * = O(N) حيث N = عدد الـ Keys. مع 10M keys → يستغرق ثوانٍ → Server لا يستجيب كلياً → Timeout كامل. SCAN يُعيد Cursor وbatch صغير في كل مرة → لا blocking → آمن للـ Production.',w:'❌ KEYS * يُرجع نتائج صحيحة لكن مشكلته الـ Blocking. مع Redis 7+ لا يزال KEYS موجوداً لكن تجنّبه في Production تماماً.'}
+};
+let answered=0,score=0;
+function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';document.getElementById('score-text').textContent=`نتيجتك: ${score} / 4`;document.getElementById('score-msg').textContent=score===4?'🎉 Redis Expert!':score>=3?'👏 كويس!':'💪 راجع الدرس.';document.getElementById('score-text').style.color=score===4?'#34D399':score>=3?'#FBBF24':'#F87171';}}
+</script>
+</body>
+</html>

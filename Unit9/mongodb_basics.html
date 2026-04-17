@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MongoDB — أساسيات MongoDB | Database Mastery</title>
+    <meta name="description" content="دليل شامل لـ MongoDB: Documents و Collections، CRUD Operations، Aggregation Pipeline، Indexes في MongoDB، Schema Design، Mongoose ODM — مع أمثلة E-Commerce كاملة في Node.js.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global-db.css">
+    <style>
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;text-decoration:none;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#15803D,#052E16);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#4ADE80;}
+        .nav-toc{display:flex;gap:1.2rem;font-size:.8rem;}
+        .nav-toc a{color:#64748B;text-decoration:none;transition:.2s;}
+        .nav-toc a:hover{color:#4ADE80;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#15803D,#F59E0B);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(21,128,61,.1),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#4ADE80;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#15803D;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2rem,5vw,3.6rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#4ADE80,#F59E0B);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.05rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(21,128,61,.1);border:1px solid rgba(21,128,61,.2);font-size:.78rem;color:#4ADE80;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.tip{background:rgba(21,128,61,.07);border:1px solid rgba(21,128,61,.2);}
+        .callout.tip .chead{color:#4ADE80;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);}
+        .callout.realworld .chead{color:#FCD34D;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
+        .code-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:1rem 0;border:1px solid rgba(255,255,255,.05);}
+        .code-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .cdot{width:9px;height:9px;border-radius:50%;}.cdot.r{background:#FF5F57}.cdot.y{background:#FDBC40}.cdot.g{background:#27C93F}
+        .clabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .cbody{padding:1rem 1.2rem;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.fn{color:#22D3EE}.cn{color:#A5B4FC}
+        .jk{color:#4ADE80}.jv{color:#FBBF24}.jo{color:#67E8F9}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;text-decoration:none;color:#E2E8F0;}
+        .bnav-btn:hover{background:rgba(21,128,61,.1);border-color:rgba(21,128,61,.3);transform:translateY(-2px);}
+    </style>
+</head>
+<body>
+<nav class="lesson-nav-bar">
+    <div class="nav-inner">
+        <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-leaf"></i></div>العودة للبوابة</a>
+        <div class="nav-toc">
+            <a href="#concepts">المفاهيم</a>
+            <a href="#crud">CRUD</a>
+            <a href="#aggregation">Aggregation</a>
+            <a href="#indexes">Indexes</a>
+            <a href="#schema">Schema Design</a>
+            <a href="#quiz">اختبار</a>
+        </div>
+    </div>
+</nav>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
+
+<header class="hero" data-aos="fade-up">
+    <div class="lesson-badge"><span class="pulse"></span>الوحدة 9 — الدرس 2</div>
+    <h1><span class="grad">MongoDB</span> — من الصفر للاحتراف</h1>
+    <p class="en-title">MongoDB CRUD, Aggregation Pipeline, Indexes, Schema Design, Mongoose ODM</p>
+    <p class="desc">MongoDB هي Document Database # 1 في العالم — تُخزّن البيانات كـ JSON Documents. بدلاً من جداول وصفوف، عندك Collections وDocuments. الفهم الحقيقي يأتي بالممارسة.</p>
+    <div class="learn-pills">
+        <span class="pill">Collections & Documents</span>
+        <span class="pill">BSON & ObjectId</span>
+        <span class="pill">CRUD Operations</span>
+        <span class="pill">Query Operators</span>
+        <span class="pill">Aggregation Pipeline</span>
+        <span class="pill">Indexes في MongoDB</span>
+        <span class="pill">Embedding vs Referencing</span>
+        <span class="pill">Mongoose ODM</span>
+    </div>
+</header>
+
+<div class="lesson-body">
+
+<!-- CORE CONCEPTS -->
+<div class="section-block" id="concepts" data-aos="fade-up">
+    <div class="section-title"><span>📚</span> المفاهيم الأساسية</div>
+    <p class="section-en">MongoDB Core Concepts — Collections, Documents, BSON, ObjectId</p>
+
+    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.85rem;margin:1rem 0;">
+        <thead><tr style="background:rgba(21,128,61,.08);">
+            <th style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.06);color:#4ADE80;text-align:right;">MongoDB</th>
+            <th style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.06);color:#67E8F9;text-align:right;">Relational SQL</th>
+            <th style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.06);color:#94A3B8;text-align:right;">الوصف</th>
+        </tr></thead>
+        <tbody>
+            <tr><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-weight:700;color:#4ADE80;">Database</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);">Database</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-size:.82rem;">نفس المفهوم</td></tr>
+            <tr><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-weight:700;color:#4ADE80;">Collection</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);">Table</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-size:.82rem;">مجموعة Documents</td></tr>
+            <tr><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-weight:700;color:#4ADE80;">Document</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);">Row</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-size:.82rem;">JSON Object — يحمل بياناته كاملة</td></tr>
+            <tr><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-weight:700;color:#4ADE80;">Field</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);">Column</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-size:.82rem;">Key في الـ JSON Object</td></tr>
+            <tr><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-weight:700;color:#4ADE80;">_id (ObjectId)</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);">Primary Key</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-size:.82rem;">12 bytes: timestamp+machine+counter</td></tr>
+            <tr><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-weight:700;color:#4ADE80;">Embedded Document</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);">JOIN</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-size:.82rem;">Document داخل Document</td></tr>
+        </tbody>
+    </table></div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Product Document — E-Commerce MongoDB</span></div>
+        <div class="cbody">
+{
+  <span class="jk">"_id"</span>: <span class="fn">ObjectId</span>(<span class="str">"64f1a2b3c4d5e6f7a8b9c0d1"</span>),
+  <span class="jk">"name"</span>: <span class="str">"Laptop Dell XPS 15"</span>,
+  <span class="jk">"price"</span>: <span class="jv">35000</span>,
+  <span class="jk">"currency"</span>: <span class="str">"EGP"</span>,
+  <span class="jk">"category"</span>: <span class="str">"Electronics"</span>,
+  <span class="jk">"tags"</span>: [<span class="str">"laptop"</span>, <span class="str">"dell"</span>, <span class="str">"gaming"</span>],
+  <span class="jk">"specs"</span>: {                        <span class="cmt">// Embedded Document</span>
+    <span class="jk">"ram"</span>: <span class="str">"32GB"</span>,
+    <span class="jk">"storage"</span>: <span class="str">"1TB SSD"</span>,
+    <span class="jk">"cpu"</span>: <span class="str">"Intel i9"</span>
+  },
+  <span class="jk">"variants"</span>: [                    <span class="cmt">// Array of Embedded Documents</span>
+    { <span class="jk">"color"</span>: <span class="str">"Silver"</span>, <span class="jk">"stock"</span>: <span class="jv">15</span> },
+    { <span class="jk">"color"</span>: <span class="str">"Black"</span>,  <span class="jk">"stock"</span>: <span class="jv">8</span>  }
+  ],
+  <span class="jk">"seller_id"</span>: <span class="fn">ObjectId</span>(<span class="str">"64f1a2b3..."</span>), <span class="cmt">// Reference</span>
+  <span class="jk">"created_at"</span>: <span class="fn">ISODate</span>(<span class="str">"2024-01-15T10:00:00Z"</span>)
+}
+        </div>
+    </div>
+</div>
+
+<!-- CRUD -->
+<div class="section-block" id="crud" data-aos="fade-up">
+    <div class="section-title"><span>✏️</span> CRUD Operations</div>
+    <p class="section-en">Create, Read, Update, Delete — MongoDB Shell & Node.js</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">MongoDB CRUD — Shell Commands</span></div>
+        <div class="cbody">
+<span class="cmt">// ══ CREATE ══</span>
+db.products.<span class="fn">insertOne</span>({ name: <span class="str">"iPhone 15"</span>, price: <span class="num">45000</span>, stock: <span class="num">100</span> });
+db.products.<span class="fn">insertMany</span>([
+  { name: <span class="str">"Samsung S24"</span>, price: <span class="num">38000</span> },
+  { name: <span class="str">"Pixel 8"</span>,    price: <span class="num">30000</span> }
+]);
+
+<span class="cmt">// ══ READ — Query Operators ══</span>
+db.products.<span class="fn">find</span>({ price: { <span class="fn">$gte</span>: <span class="num">30000</span>, <span class="fn">$lte</span>: <span class="num">50000</span> } });
+db.products.<span class="fn">find</span>({ category: <span class="str">"Electronics"</span>, stock: { <span class="fn">$gt</span>: <span class="num">0</span> } });
+db.products.<span class="fn">find</span>({ tags: { <span class="fn">$in</span>: [<span class="str">"gaming"</span>, <span class="str">"laptop"</span>] } });
+db.products.<span class="fn">find</span>({ <span class="str">"specs.ram"</span>: <span class="str">"32GB"</span> });         <span class="cmt">// Nested field query</span>
+db.products.<span class="fn">find</span>({ <span class="fn">$or</span>: [{ price: { <span class="fn">$lt</span>: <span class="num">10000</span> } }, { stock: <span class="num">0</span> }] });
+
+<span class="cmt">// Projection, Sort, Limit, Skip</span>
+db.products
+  .<span class="fn">find</span>({ category: <span class="str">"Electronics"</span> }, { name: <span class="num">1</span>, price: <span class="num">1</span>, _id: <span class="num">0</span> })
+  .<span class="fn">sort</span>({ price: -<span class="num">1</span> })   <span class="cmt">// -1 = DESC</span>
+  .<span class="fn">skip</span>(<span class="num">20</span>)
+  .<span class="fn">limit</span>(<span class="num">10</span>);
+
+<span class="cmt">// ══ UPDATE ══</span>
+db.products.<span class="fn">updateOne</span>(
+  { _id: <span class="fn">ObjectId</span>(<span class="str">"64f1..."</span>) },
+  { <span class="fn">$set</span>: { price: <span class="num">32000</span>, <span class="str">"specs.ram"</span>: <span class="str">"64GB"</span> } }
+);
+db.products.<span class="fn">updateMany</span>(
+  { category: <span class="str">"Electronics"</span> },
+  { <span class="fn">$inc</span>: { stock: -<span class="num">1</span> } }  <span class="cmt">// يُنقص الـ stock بـ 1</span>
+);
+<span class="cmt">// Update Operators: $set، $unset، $inc، $push، $pull، $addToSet</span>
+db.products.<span class="fn">findOneAndUpdate</span>(
+  { _id: <span class="fn">ObjectId</span>(<span class="str">"64f1..."</span>) },
+  { <span class="fn">$push</span>: { tags: <span class="str">"sale"</span> } },
+  { returnDocument: <span class="str">"after"</span> }
+);
+
+<span class="cmt">// ══ DELETE ══</span>
+db.products.<span class="fn">deleteOne</span>({ _id: <span class="fn">ObjectId</span>(<span class="str">"64f1..."</span>) });
+db.products.<span class="fn">deleteMany</span>({ stock: <span class="num">0</span>, is_discontinued: <span class="kw">true</span> });
+        </div>
+    </div>
+</div>
+
+<!-- AGGREGATION -->
+<div class="section-block" id="aggregation" data-aos="fade-up">
+    <div class="section-title"><span>🔬</span> Aggregation Pipeline</div>
+    <p class="section-en">MongoDB Aggregation — The Equivalent of SQL GROUP BY + JOINs + Window Functions</p>
+
+    <p class="body-text">الـ Aggregation Pipeline هو أقوى ميزة في MongoDB — تُمرّر Documents عبر مراحل (Stages) للتحويل والتحليل، مثل Unix Pipes.</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Aggregation Pipeline — Sales Report by Category</span></div>
+        <div class="cbody">
+db.orders.<span class="fn">aggregate</span>([
+  <span class="cmt">// Stage 1: $match — فلتر (مثل WHERE)</span>
+  { <span class="fn">$match</span>: {
+    status: <span class="str">"delivered"</span>,
+    order_date: { <span class="fn">$gte</span>: <span class="kw">new</span> <span class="fn">Date</span>(<span class="str">"2024-01-01"</span>) }
+  }},
+
+  <span class="cmt">// Stage 2: $lookup — JOIN مع collection أخرى</span>
+  { <span class="fn">$lookup</span>: {
+    from: <span class="str">"products"</span>,
+    localField: <span class="str">"product_id"</span>,
+    foreignField: <span class="str">"_id"</span>,
+    as: <span class="str">"product"</span>
+  }},
+  { <span class="fn">$unwind</span>: <span class="str">"$product"</span> },     <span class="cmt">// Array → Single Document</span>
+
+  <span class="cmt">// Stage 3: $group — GROUP BY</span>
+  { <span class="fn">$group</span>: {
+    _id: <span class="str">"$product.category"</span>,
+    total_revenue: { <span class="fn">$sum</span>: { <span class="fn">$multiply</span>: [<span class="str">"$quantity"</span>, <span class="str">"$unit_price"</span>] } },
+    order_count:   { <span class="fn">$sum</span>: <span class="num">1</span> },
+    avg_order_val: { <span class="fn">$avg</span>: <span class="str">"$total"</span> },
+    unique_customers: { <span class="fn">$addToSet</span>: <span class="str">"$customer_id"</span> }
+  }},
+
+  <span class="cmt">// Stage 4: $addFields — حقل محسوب</span>
+  { <span class="fn">$addFields</span>: {
+    unique_customer_count: { <span class="fn">$size</span>: <span class="str">"$unique_customers"</span> }
+  }},
+
+  <span class="cmt">// Stage 5: $sort وLimit</span>
+  { <span class="fn">$sort</span>: { total_revenue: -<span class="num">1</span> } },
+  { <span class="fn">$limit</span>: <span class="num">10</span> },
+
+  <span class="cmt">// Stage 6: $project — اختر الحقول</span>
+  { <span class="fn">$project</span>: {
+    category: <span class="str">"$_id"</span>,
+    total_revenue: <span class="num">1</span>,
+    order_count: <span class="num">1</span>,
+    unique_customer_count: <span class="num">1</span>,
+    _id: <span class="num">0</span>
+  }}
+]);
+<span class="cmt">// أهم Stages: $match، $group، $lookup، $unwind، $project、$sort، $limit، $facet</span>
+        </div>
+    </div>
+</div>
+
+<!-- INDEXES -->
+<div class="section-block" id="indexes" data-aos="fade-up">
+    <div class="section-title"><span>🗂️</span> Indexes في MongoDB</div>
+    <p class="section-en">MongoDB Indexes — Single, Compound, Text, Geospatial, TTL</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">MongoDB Indexes — أهم الأنواع</span></div>
+        <div class="cbody">
+<span class="cmt">// Single Field Index</span>
+db.products.<span class="fn">createIndex</span>({ price: <span class="num">1</span> });           <span class="cmt">// 1=ASC, -1=DESC</span>
+
+<span class="cmt">// Compound Index (نفس قواعد ESR Rule في PostgreSQL)</span>
+db.products.<span class="fn">createIndex</span>({ category: <span class="num">1</span>, price: -<span class="num">1</span> });
+
+<span class="cmt">// Unique Index</span>
+db.users.<span class="fn">createIndex</span>({ email: <span class="num">1</span> }, { unique: <span class="kw">true</span> });
+
+<span class="cmt">// Text Index للـ Full-Text Search</span>
+db.products.<span class="fn">createIndex</span>({ name: <span class="str">"text"</span>, description: <span class="str">"text"</span> });
+db.products.<span class="fn">find</span>({ <span class="fn">$text</span>: { <span class="fn">$search</span>: <span class="str">"laptop gaming dell"</span> } },
+                  { score: { <span class="fn">$meta</span>: <span class="str">"textScore"</span> } })
+           .<span class="fn">sort</span>({ score: { <span class="fn">$meta</span>: <span class="str">"textScore"</span> } });
+
+<span class="cmt">// TTL Index — حذف تلقائي بعد مدة (للـ Sessions، Logs)</span>
+db.sessions.<span class="fn">createIndex</span>(
+  { created_at: <span class="num">1</span> },
+  { expireAfterSeconds: <span class="num">3600</span> }  <span class="cmt">// حذف بعد ساعة</span>
+);
+
+<span class="cmt">// Partial Index (نفس فكرة PostgreSQL)</span>
+db.orders.<span class="fn">createIndex</span>(
+  { customer_id: <span class="num">1</span>, order_date: -<span class="num">1</span> },
+  { partialFilterExpression: { status: { <span class="fn">$in</span>: [<span class="str">"pending"</span>, <span class="str">"shipped"</span>] } } }
+);
+
+<span class="cmt">// Geospatial Index للمواقع</span>
+db.restaurants.<span class="fn">createIndex</span>({ location: <span class="str">"2dsphere"</span> });
+db.restaurants.<span class="fn">find</span>({
+  location: {
+    <span class="fn">$near</span>: {
+      <span class="fn">$geometry</span>: { type: <span class="str">"Point"</span>, coordinates: [<span class="num">31.2357</span>, <span class="num">30.0444</span>] },  <span class="cmt">// Cairo</span>
+      <span class="fn">$maxDistance</span>: <span class="num">5000</span>  <span class="cmt">// 5km</span>
+    }
+  }
+});
+        </div>
+    </div>
+</div>
+
+<!-- SCHEMA DESIGN -->
+<div class="section-block" id="schema" data-aos="fade-up">
+    <div class="section-title"><span>🏗️</span> Schema Design — Embedding vs Referencing</div>
+    <p class="section-en">The Most Important MongoDB Design Decision — Embed or Reference?</p>
+
+    <div class="callout tip">
+        <div class="chead">📌 Embedding — متى تستخدمه؟</div>
+        <p>
+        ✅ البيانات تُقرأ معاً دائماً (One Query بدلاً من JOIN)<br>
+        ✅ علاقة 1:1 أو 1:N لعدد محدود صغير<br>
+        ✅ البيانات الفرعية لا معنى لها بدون الـ Parent<br>
+        مثال: User Profile مع Address وSocial Links<br>
+        ⚠️ حد Document في MongoDB = 16MB
+        </p>
+    </div>
+
+    <div class="callout realworld">
+        <div class="chead">🔗 Referencing — متى تستخدمه؟</div>
+        <p>
+        ✅ البيانات الفرعية كثيرة جداً (Orders لـ User)<br>
+        ✅ البيانات مُستخدمة بشكل مستقل كثيراً<br>
+        ✅ Many-to-Many relationships<br>
+        مثال: Product → Category (Reference لأن Category تُقرأ بشكل مستقل)<br>
+        استخدم $lookup في Aggregation للـ JOIN
+        </p>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Mongoose ODM — Node.js Schema + Model</span></div>
+        <div class="cbody">
+<span class="kw">import</span> mongoose <span class="kw">from</span> <span class="str">'mongoose'</span>;
+
+<span class="cmt">// Schema Definition</span>
+<span class="kw">const</span> productSchema = <span class="kw">new</span> mongoose.<span class="fn">Schema</span>({
+  name:     { type: String, required: <span class="kw">true</span>, trim: <span class="kw">true</span> },
+  price:    { type: Number, required: <span class="kw">true</span>, min: <span class="num">0</span> },
+  category: { type: String, enum: [<span class="str">'electronics'</span>, <span class="str">'clothing'</span>, <span class="str">'food'</span>] },
+  tags:     [String],
+  specs:    mongoose.Schema.Types.Mixed,  <span class="cmt">// Any shape</span>
+  seller:   { type: mongoose.Schema.Types.ObjectId, ref: <span class="str">'User'</span> }
+}, { timestamps: <span class="kw">true</span> });  <span class="cmt">// auto createdAt, updatedAt</span>
+
+<span class="cmt">// Indexes</span>
+productSchema.<span class="fn">index</span>({ price: <span class="num">1</span>, category: <span class="num">1</span> });
+productSchema.<span class="fn">index</span>({ name: <span class="str">'text'</span> });
+
+<span class="cmt">// Virtual Field</span>
+productSchema.<span class="fn">virtual</span>(<span class="str">'priceInUSD'</span>).<span class="fn">get</span>(<span class="kw">function</span>() {
+  <span class="kw">return</span> (<span class="kw">this</span>.price / <span class="num">48</span>).<span class="fn">toFixed</span>(<span class="num">2</span>);
+});
+
+<span class="kw">export const</span> Product = mongoose.<span class="fn">model</span>(<span class="str">'Product'</span>, productSchema);
+
+<span class="cmt">// Usage — Populate (JOIN-like)</span>
+<span class="kw">const</span> products = <span class="kw">await</span> Product
+  .<span class="fn">find</span>({ category: <span class="str">'electronics'</span>, price: { $gte: <span class="num">1000</span> } })
+  .<span class="fn">populate</span>(<span class="str">'seller'</span>, <span class="str">'name email'</span>)  <span class="cmt">// JOIN مع Users</span>
+  .<span class="fn">sort</span>({ price: -<span class="num">1</span> })
+  .<span class="fn">limit</span>(<span class="num">20</span>)
+  .<span class="fn">lean</span>();  <span class="cmt">// Plain JS Object — أسرع من Mongoose Document</span>
+        </div>
+    </div>
+</div>
+
+<!-- QUIZ -->
+<div class="section-block" id="quiz" data-aos="fade-up">
+    <div class="section-title"><span>🧠</span> اختبار الفهم</div>
+    <div class="quiz-card" id="qq1">
+        <div class="quiz-q">١. عندك User لديه ملايين Orders. هل تعمل Embedding أم Referencing للـ Orders؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(1,this,false)">Embedding — أسرع</div>
+            <div class="quiz-opt" onclick="ans(1,this,true)">Referencing — الـ Embedding يتجاوز حد 16MB بسرعة مع ملايين Orders. Orders تُقرأ وتُبحث بشكل مستقل. الحل: orders collection منفصلة مع user_id reference.</div>
+            <div class="quiz-opt" onclick="ans(1,this,false)">لا فرق</div>
+        </div>
+        <div class="quiz-fb" id="fb1"></div>
+    </div>
+    <div class="quiz-card" id="qq2">
+        <div class="quiz-q">٢. ما الـ TTL Index ومتى تستخدمه؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(2,this,false)">Index على حقل الوقت فقط</div>
+            <div class="quiz-opt" onclick="ans(2,this,true)">يحذف Documents تلقائياً بعد مدة محددة (expireAfterSeconds). مثالي للـ Sessions (انتهاء Timeout)، Verification Tokens، Cache Data، Logs مؤقتة — بدون Cron Job يدوي.</div>
+            <div class="quiz-opt" onclick="ans(2,this,false)">Index يُسرّع Query الوقت فقط</div>
+        </div>
+        <div class="quiz-fb" id="fb2"></div>
+    </div>
+    <div class="quiz-card" id="qq3">
+        <div class="quiz-q">٣. في Aggregation Pipeline، ما وظيفة $unwind؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(3,this,false)">يُلغي الـ Pipeline</div>
+            <div class="quiz-opt" onclick="ans(3,this,true)">يُحوّل Array field إلى Documents منفصلة — كل عنصر في الـ Array يُصبح Document مستقل. ضروري بعد $lookup لأنه يُرجع Array، وقبل $group على عناصر Array.</div>
+            <div class="quiz-opt" onclick="ans(3,this,false)">يُزيل الـ Duplicate Documents</div>
+        </div>
+        <div class="quiz-fb" id="fb3"></div>
+    </div>
+    <div class="quiz-card" id="qq4">
+        <div class="quiz-q">٤. ما الفرق بين .find() العادي و.lean() في Mongoose؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(4,this,false)">lean() يُرجع نتائج أقل</div>
+            <div class="quiz-opt" onclick="ans(4,this,true)">بدون .lean(): يُرجع Mongoose Documents كاملة (مع Methods، Virtuals، Validators) — أثقل. مع .lean(): يُرجع Plain JavaScript Objects — أخف بـ 5-10x وأسرع. استخدمه في القراءة فقط حيث لا تحتاج Mongoose Methods.</div>
+            <div class="quiz-opt" onclick="ans(4,this,false)">lean() أبطأ لأنه يُحوّل البيانات</div>
+        </div>
+        <div class="quiz-fb" id="fb4"></div>
+    </div>
+    <div class="quiz-score-box" id="score-box">
+        <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+        <p id="score-msg" style="color:#94A3B8;"></p>
+    </div>
+</div>
+<div class="bottom-nav">
+    <a href="nosql_overview.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: NoSQL Overview</a>
+    <a href="redis_caching.html" class="bnav-btn" style="color:#4ADE80;">التالي: Redis <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 9: MongoDB</footer>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+AOS.init({duration:700,once:true,offset:80});
+window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+const fbs={
+    1:{c:'✅ Referencing للـ Orders الكثيرة: Document size limit = 16MB. مليون Order = مستحيل embedded. Orders collection مستقلة مع user_id field — يمكن paginate وquery بشكل مستقل. Embedding للـ Address (عدد محدود، تُقرأ مع الـ User).',w:'❌ Embedding مع ملايين Orders سيتجاوز 16MB بسرعة جداً — MongoDB سيرفض الـ Write! Referencing هو الحل الصحيح للعلاقات 1:N الكبيرة.'},
+    2:{c:'✅ TTL Index: يضع MongoDB بدالة Background Thread تُراجع Documents بشكل دوري (كل 60 ثانية) وتحذف التي تجاوزت الـ expireAfterSeconds. مثالي للـ: JWT Refresh Tokens، Email Verification، Session Storage، Rate Limit Windows.',w:'❌ TTL ليس مجرد Query Index — هو آلية Auto-Delete تعتمد على Background Process في MongoDB نفسها. لا تحتاج Cron Job خارجي.'},
+    3:{c:'✅ $unwind: يُفرّد الـ Array — Document مع array = N documents. مثال: بعد $lookup، كل document يحتوي array من related docs → $unwind تُحوّلها لـ rows منفصلة يمكن $group عليها. ضروري مع Arrays قبل التجميع.',w:'❌ $unwind لا يُلغي Pipeline ولا يُزيل Duplicates. هو حصراً لتفريد الـ Arrays — كل element يُصبح document مستقل بنفس باقي الـ Fields.'},
+    4:{c:'✅ .lean(): يُخطر Mongoose أن يُرجع Plain JS Objects بدلاً من Mongoose Documents. الـ Mongoose Documents أثقل لأنها تحمل: Methods، Getters، Setters، ValidationState، toObject/toJSON. .lean() = أسرع بـ 5-10x في الذاكرة والمعالجة.',w:'❌ .lean() أسرع، ليس أبطأ. هو يتجنب overhead بناء الـ Mongoose Document. الأسرع في القراءة read-only operations.'}
+};
+let answered=0,score=0;
+function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';document.getElementById('score-text').textContent=`نتيجتك: ${score} / 4`;document.getElementById('score-msg').textContent=score===4?'🎉 MongoDB Expert!':score>=3?'👏 كويس!':'💪 راجع الدرس.';document.getElementById('score-text').style.color=score===4?'#34D399':score>=3?'#FBBF24':'#F87171';}}
+</script>
+</body>
+</html>
