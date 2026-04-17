@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACID Properties — خصائص المعاملات | Database Mastery</title>
+    <meta name="description" content="دليل شامل لخصائص ACID: Atomicity، Consistency، Isolation، Durability — مع أمثلة Banking كاملة في PostgreSQL، BEGIN/COMMIT/ROLLBACK، SAVEPOINT، WAL.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global-db.css">
+    <style>
+        :root{--accent:#38BDF8;--accent-lt:#7DD3FC;}
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;text-decoration:none;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#0284C7,#075985);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#7DD3FC;}
+        .nav-toc{display:flex;gap:1.3rem;font-size:.82rem;}
+        .nav-toc a{color:#64748B;text-decoration:none;transition:.2s;}
+        .nav-toc a:hover{color:#7DD3FC;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#0284C7,#7C3AED);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(2,132,199,.12),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#7DD3FC;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#0284C7;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2rem,5vw,3.6rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#38BDF8,#7C3AED);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.05rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(2,132,199,.1);border:1px solid rgba(2,132,199,.2);font-size:.78rem;color:#7DD3FC;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .acid-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin:1.5rem 0;}
+        @media(max-width:640px){.acid-grid{grid-template-columns:1fr;}}
+        .acid-card{border-radius:16px;padding:1.5rem;border-top:4px solid;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.why{background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);}
+        .callout.why .chead{color:#22D3EE;font-weight:800;margin-bottom:.5rem;}
+        .callout.tip{background:rgba(2,132,199,.07);border:1px solid rgba(2,132,199,.2);}
+        .callout.tip .chead{color:#7DD3FC;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);}
+        .callout.realworld .chead{color:#34D399;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
+        .code-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:1rem 0;border:1px solid rgba(255,255,255,.05);}
+        .code-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .cdot{width:9px;height:9px;border-radius:50%;}.cdot.r{background:#FF5F57}.cdot.y{background:#FDBC40}.cdot.g{background:#27C93F}
+        .clabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .cbody{padding:1rem 1.2rem;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.fn{color:#22D3EE}.cn{color:#A5B4FC}
+        .timeline{position:relative;padding-right:1.5rem;margin:1.5rem 0;}
+        .timeline::before{content:'';position:absolute;right:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,#0284C7,#7C3AED);}
+        .tl-item{position:relative;margin-bottom:1.5rem;padding-right:1.5rem;}
+        .tl-item::before{content:'';position:absolute;right:-6px;top:4px;width:10px;height:10px;border-radius:50%;border:2px solid #0284C7;background:#020617;}
+        .tl-item h4{font-size:.95rem;font-weight:800;color:#7DD3FC;margin-bottom:.3rem;}
+        .tl-item p{font-size:.88rem;color:#94A3B8;line-height:1.9;margin:0;}
+        .practice-block{background:rgba(15,23,42,.8);border:1px solid rgba(255,255,255,.07);border-radius:18px;overflow:hidden;margin:2rem 0;}
+        .practice-header{background:rgba(2,132,199,.1);padding:1.2rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.06);}
+        .practice-header h3{font-size:1.1rem;font-weight:800;color:#7DD3FC;margin:0;}
+        .practice-body{padding:1.8rem;}
+        .task-list{list-style:none;padding:0;margin-bottom:1.5rem;}
+        .task-list li{padding:.5rem 0;font-size:.93rem;color:#CBD5E1;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:.5rem;align-items:flex-start;}
+        .tnum{background:rgba(2,132,199,.15);color:#7DD3FC;font-weight:800;font-size:.78rem;padding:.1rem .5rem;border-radius:5px;flex-shrink:0;font-family:'Inter',sans-serif;margin-top:.2rem;}
+        .sol-btn{width:100%;padding:.9rem;border-radius:10px;background:rgba(2,132,199,.1);border:1px solid rgba(2,132,199,.2);color:#7DD3FC;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:.3s;}
+        .sol-btn:hover{background:rgba(2,132,199,.2);}
+        .sol-content{display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.05);}
+        .sol-content.open{display:block;}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;text-decoration:none;color:#E2E8F0;}
+        .bnav-btn:hover{background:rgba(2,132,199,.1);border-color:rgba(2,132,199,.3);transform:translateY(-2px);}
+    </style>
+</head>
+<body>
+<nav class="lesson-nav-bar">
+    <div class="nav-inner">
+        <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-flask"></i></div>العودة للبوابة</a>
+        <div class="nav-toc">
+            <a href="#intro">لماذا ACID؟</a>
+            <a href="#atomicity">Atomicity</a>
+            <a href="#consistency">Consistency</a>
+            <a href="#isolation">Isolation</a>
+            <a href="#durability">Durability</a>
+            <a href="#savepoint">SAVEPOINT</a>
+            <a href="#quiz">اختبار</a>
+        </div>
+    </div>
+</nav>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
+
+<header class="hero" data-aos="fade-up">
+    <div class="lesson-badge"><span class="pulse"></span>الوحدة 7 — الدرس 1</div>
+    <h1>خصائص <span class="grad">ACID</span></h1>
+    <p class="en-title">Atomicity · Consistency · Isolation · Durability — The Four Pillars of Reliable Transactions</p>
+    <p class="desc">تخيّل تحوّل 1000 جنيه لحساب صاحبك — النقود خرجت من حسابك لكن الكهرباء انقطعت قبل ما توصل له. مين المسؤول؟ ACID هو الضمان الذي يمنع هذا من الحدوث.</p>
+    <div class="learn-pills">
+        <span class="pill">Atomicity كل أو لا شيء</span>
+        <span class="pill">Consistency قواعد لا تُكسر</span>
+        <span class="pill">Isolation عزل المعاملات</span>
+        <span class="pill">Durability البقاء بعد الكارثة</span>
+        <span class="pill">BEGIN/COMMIT/ROLLBACK</span>
+        <span class="pill">SAVEPOINT</span>
+        <span class="pill">WAL — Write-Ahead Log</span>
+        <span class="pill">Banking Case Study</span>
+    </div>
+</header>
+
+<div class="lesson-body">
+
+<!-- WHY ACID -->
+<div class="section-block" id="intro" data-aos="fade-up">
+    <div class="section-title"><span>🤔</span> لماذا نحتاج ACID؟</div>
+    <p class="section-en">The Problem Without ACID — Why Transactions Exist</p>
+
+    <p class="body-text">في النظام المصرفي، لو حصل تحويل مالي:</p>
+
+    <div class="callout mistake">
+        <div class="chead">❌ بدون Transaction — الكارثة ممكنة</div>
+        <p>
+        <strong>خطوة 1:</strong> اخصم 1000 جنيه من حساب A → ✅ تمّت<br>
+        <strong>خطوة 2:</strong> أضف 1000 جنيه لحساب B → 💥 Server crash!<br>
+        <strong>النتيجة:</strong> النقود اختفت من حساب A ولم تظهر في B — كارثة مالية!
+        </p>
+    </div>
+
+    <div class="callout tip">
+        <div class="chead">✅ مع ACID Transaction — الأمان مضمون</div>
+        <p>إما تنجح الخطوتان معاً (COMMIT) أو يُلغى كلاهما (ROLLBACK) — لا يوجد حالة وسطى.</p>
+    </div>
+
+    <div class="acid-grid">
+        <div class="acid-card" style="background:rgba(2,132,199,.07);border-top-color:#0284C7;">
+            <div style="font-size:2rem;margin-bottom:.5rem;">⚛️</div>
+            <h3 style="color:#38BDF8;font-weight:900;font-size:1.1rem;margin-bottom:.4rem;">Atomicity</h3>
+            <p style="font-size:.88rem;color:#94A3B8;line-height:1.9;">كل أو لا شيء — إما كل خطوات الـ Transaction تنجح، أو لا تُطبَّق أي منها.</p>
+        </div>
+        <div class="acid-card" style="background:rgba(16,185,129,.07);border-top-color:#10B981;">
+            <div style="font-size:2rem;margin-bottom:.5rem;">📏</div>
+            <h3 style="color:#34D399;font-weight:900;font-size:1.1rem;margin-bottom:.4rem;">Consistency</h3>
+            <p style="font-size:.88rem;color:#94A3B8;line-height:1.9;">قاعدة البيانات تبقى في حالة صحيحة — Constraints وRules لا تُكسر أبداً.</p>
+        </div>
+        <div class="acid-card" style="background:rgba(124,58,237,.07);border-top-color:#7C3AED;">
+            <div style="font-size:2rem;margin-bottom:.5rem;">🏝️</div>
+            <h3 style="color:#A78BFA;font-weight:900;font-size:1.1rem;margin-bottom:.4rem;">Isolation</h3>
+            <p style="font-size:.88rem;color:#94A3B8;line-height:1.9;">كل Transaction تعمل كأنها وحيدة — لا ترى تأثيرات الـ Transactions الأخرى غير المكتملة.</p>
+        </div>
+        <div class="acid-card" style="background:rgba(245,158,11,.07);border-top-color:#F59E0B;">
+            <div style="font-size:2rem;margin-bottom:.5rem;">🪨</div>
+            <h3 style="color:#FCD34D;font-weight:900;font-size:1.1rem;margin-bottom:.4rem;">Durability</h3>
+            <p style="font-size:.88rem;color:#94A3B8;line-height:1.9;">بعد COMMIT، البيانات تبقى حتى لو سقط السيرفر — مكتوبة على الـ Disk بشكل دائم.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ATOMICITY -->
+<div class="section-block" id="atomicity" data-aos="fade-up">
+    <div class="section-title"><span>⚛️</span> Atomicity — كل أو لا شيء</div>
+    <p class="section-en">All-or-Nothing — BEGIN, COMMIT, ROLLBACK</p>
+
+    <p class="body-text">كلمة "Atom" (ذرة) بالمعنى القديم = لا يمكن تقسيمها. Transaction الـ Atomic لا يمكن أن تكون "نصف مكتملة" — إما تكتمل بالكامل أو لا يحدث شيء.</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">PostgreSQL — Bank Transfer Transaction</span></div>
+        <div class="cbody">
+<span class="cmt">-- ══ الطريقة الصحيحة: Transaction كاملة ══</span>
+<span class="kw">BEGIN</span>;
+
+<span class="cmt">-- الخطوة 1: اخصم من المُرسِل</span>
+<span class="kw">UPDATE</span> <span class="tb">accounts</span>
+<span class="kw">SET</span>    balance = balance - <span class="num">1000</span>
+<span class="kw">WHERE</span>  account_id = <span class="num">1</span>      <span class="cmt">-- حساب المُرسِل</span>
+  <span class="kw">AND</span>  balance >= <span class="num">1000</span>;     <span class="cmt">-- تحقق من الرصيد الكافي</span>
+
+<span class="cmt">-- تحقق من نجاح الخصم (rowCount = 1 تعني نجاح)</span>
+<span class="kw">DO</span> $$
+<span class="kw">DECLARE</span> affected_rows <span class="fn">INT</span>;
+<span class="kw">BEGIN</span>
+  <span class="kw">GET DIAGNOSTICS</span> affected_rows = <span class="cn">ROW_COUNT</span>;
+  <span class="kw">IF</span> affected_rows = <span class="num">0</span> <span class="kw">THEN</span>
+    <span class="kw">RAISE EXCEPTION</span> <span class="str">'Insufficient balance or account not found'</span>;
+  <span class="kw">END IF</span>;
+<span class="kw">END</span>
+$$;
+
+<span class="cmt">-- الخطوة 2: أضف للمُستقبِل</span>
+<span class="kw">UPDATE</span> <span class="tb">accounts</span>
+<span class="kw">SET</span>    balance = balance + <span class="num">1000</span>
+<span class="kw">WHERE</span>  account_id = <span class="num">2</span>;      <span class="cmt">-- حساب المُستقبِل</span>
+
+<span class="cmt">-- الخطوة 3: سجّل العملية في سجل التدقيق</span>
+<span class="kw">INSERT INTO</span> <span class="tb">transaction_log</span> (from_account, to_account, amount, status)
+<span class="kw">VALUES</span> (<span class="num">1</span>, <span class="num">2</span>, <span class="num">1000</span>, <span class="str">'completed'</span>);
+
+<span class="cmt">-- كل الخطوات نجحت → COMMIT</span>
+<span class="kw">COMMIT</span>;
+
+<span class="cmt">-- ══ إذا حدث خطأ في أي خطوة → ROLLBACK تلقائي بالـ EXCEPTION ══</span>
+<span class="cmt">-- أو يدوياً: ROLLBACK;</span>
+        </div>
+    </div>
+
+    <div class="callout tip">
+        <div class="chead">💡 Transaction في PostgreSQL — الضمانات</div>
+        <p>إذا حدث خطأ بعد BEGIN وقبل COMMIT، PostgreSQL يُنفّذ ROLLBACK تلقائياً عند انتهاء الاتصال — حتى لو انقطع الكهرباء مع فترة وجيزة بعد COMMIT، الـ WAL يضمن اكتمال الكتابة.</p>
+    </div>
+</div>
+
+<!-- CONSISTENCY -->
+<div class="section-block" id="consistency" data-aos="fade-up">
+    <div class="section-title"><span>📏</span> Consistency — القواعد لا تُكسر</div>
+    <p class="section-en">Consistency — Constraints, Triggers, and Business Rules Always Hold</p>
+
+    <p class="body-text">Consistency تعني أن قاعدة البيانات تنتقل من حالة صحيحة إلى حالة صحيحة أخرى — لا يمكن لـ Transaction أن تكسر أي Constraint أو Business Rule.</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Consistency — Constraints Enforcement PostgreSQL</span></div>
+        <div class="cbody">
+<span class="cmt">-- تعريف الـ Constraints التي تضمن الـ Consistency</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">accounts</span> (
+  account_id  <span class="fn">BIGSERIAL</span>    <span class="cn">PRIMARY KEY</span>,
+  owner_name  <span class="fn">TEXT</span>         <span class="cn">NOT NULL</span>,
+  balance     <span class="fn">NUMERIC</span>(<span class="num">15</span>,<span class="num">2</span>) <span class="cn">NOT NULL DEFAULT</span> <span class="num">0</span>
+                             <span class="cn">CHECK</span> (balance >= <span class="num">0</span>),   <span class="cmt">-- لا رصيد سالب!</span>
+  account_type <span class="fn">TEXT</span>        <span class="cn">CHECK</span> (account_type <span class="kw">IN</span> (<span class="str">'savings'</span>,<span class="str">'checking'</span>,<span class="str">'investment'</span>))
+);
+
+<span class="cmt">-- هذا ROLLBACK تلقائياً لأن balance سيصبح سالباً (CHECK constraint)</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">UPDATE</span> <span class="tb">accounts</span> <span class="kw">SET</span> balance = balance - <span class="num">9999999</span> <span class="kw">WHERE</span> account_id = <span class="num">1</span>;
+<span class="cmt">-- ERROR: new row for relation "accounts" violates check constraint "accounts_balance_check"</span>
+<span class="kw">ROLLBACK</span>;  <span class="cmt">-- أو يحدث تلقائياً</span>
+
+<span class="cmt">-- Trigger لـ Consistency إضافية (مثلاً: منع التحويل من حساب مجمّد)</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> <span class="fn">check_transfer_allowed</span>()
+<span class="kw">RETURNS TRIGGER AS</span> $$
+<span class="kw">BEGIN</span>
+  <span class="kw">IF</span> <span class="kw">EXISTS</span> (<span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> <span class="tb">accounts</span>
+              <span class="kw">WHERE</span> account_id = <span class="cn">OLD</span>.account_id <span class="kw">AND</span> is_frozen = <span class="kw">true</span>) <span class="kw">THEN</span>
+    <span class="kw">RAISE EXCEPTION</span> <span class="str">'Account % is frozen'</span>, <span class="cn">OLD</span>.account_id;
+  <span class="kw">END IF</span>;
+  <span class="kw">RETURN NEW</span>;
+<span class="kw">END</span>;
+$$ <span class="kw">LANGUAGE</span> plpgsql;
+        </div>
+    </div>
+</div>
+
+<!-- ISOLATION -->
+<div class="section-block" id="isolation" data-aos="fade-up">
+    <div class="section-title"><span>🏝️</span> Isolation — العزل بين المعاملات</div>
+    <p class="section-en">Isolation — Concurrent Transactions See Consistent Snapshots</p>
+
+    <p class="body-text">تخيّل 1000 مستخدم يحجزون نفس مقعد الطيارة في نفس اللحظة. كيف تمنع أن يحصل اثنان منهم على نفس المقعد؟ الـ Isolation هو الجواب.</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Isolation — Seat Booking با SELECT FOR UPDATE</span></div>
+        <div class="cbody">
+<span class="cmt">-- المشكلة: بدون Isolation -- Lost Update</span>
+<span class="cmt">-- T1: SELECT balance → 500</span>
+<span class="cmt">-- T2: SELECT balance → 500</span>
+<span class="cmt">-- T1: UPDATE balance = 500 - 200 = 300</span>
+<span class="cmt">-- T2: UPDATE balance = 500 - 300 = 200  ← يتجاهل خصم T1!</span>
+<span class="cmt">-- النتيجة: 200 بدلاً من 0 — نقود من الهواء!</span>
+
+<span class="cmt">-- ✅ الحل: SELECT FOR UPDATE (Pessimistic Locking)</span>
+<span class="kw">BEGIN</span>;
+
+<span class="kw">SELECT</span> seat_number, is_available
+<span class="kw">FROM</span>   <span class="tb">flight_seats</span>
+<span class="kw">WHERE</span>  seat_number = <span class="str">'12A'</span>
+  <span class="kw">AND</span>  flight_id   = <span class="num">100</span>
+<span class="kw">FOR UPDATE</span>;  <span class="cmt">-- يُقفّل الصف — T2 ستنتظر حتى COMMIT/ROLLBACK</span>
+
+<span class="cmt">-- لو الكرسي متاح:</span>
+<span class="kw">UPDATE</span> <span class="tb">flight_seats</span>
+<span class="kw">SET</span>    is_available = <span class="kw">false</span>,
+       passenger_id = <span class="num">42</span>
+<span class="kw">WHERE</span>  seat_number = <span class="str">'12A'</span> <span class="kw">AND</span> flight_id = <span class="num">100</span>;
+
+<span class="kw">INSERT INTO</span> <span class="tb">bookings</span> (passenger_id, seat_number, flight_id) <span class="kw">VALUES</span> (<span class="num">42</span>, <span class="str">'12A'</span>, <span class="num">100</span>);
+
+<span class="kw">COMMIT</span>;  <span class="cmt">-- T2 تُفرَج وتجد is_available = false → تُخفق أو تختار مقعدًا آخر</span>
+
+<span class="cmt">-- ✅ Optimistic Locking — لـ Low Contention Scenarios</span>
+<span class="kw">UPDATE</span> <span class="tb">products</span>
+<span class="kw">SET</span>    stock    = stock - <span class="num">1</span>,
+       version  = version + <span class="num">1</span>
+<span class="kw">WHERE</span>  product_id = <span class="num">1</span>
+  <span class="kw">AND</span>  version    = <span class="num">5</span>    <span class="cmt">-- يفشل لو T2 غيّرت الـ version</span>
+  <span class="kw">AND</span>  stock      > <span class="num">0</span>;
+<span class="cmt">-- إذا rowCount = 0 → conflict → أعد المحاولة</span>
+        </div>
+    </div>
+</div>
+
+<!-- DURABILITY -->
+<div class="section-block" id="durability" data-aos="fade-up">
+    <div class="section-title"><span>🪨</span> Durability — البقاء بعد الكارثة</div>
+    <p class="section-en">Durability — WAL Ensures Data Survives Crashes</p>
+
+    <p class="body-text">بعد COMMIT، البيانات يجب أن تبقى حتى لو انقطع الكهرباء فوراً بعدها. PostgreSQL يحقق هذا بالـ <strong>Write-Ahead Log (WAL)</strong>.</p>
+
+    <div class="timeline">
+        <div class="tl-item">
+            <h4>① COMMIT يُنفَّذ</h4>
+            <p>PostgreSQL يكتب التغيير في الـ WAL على الـ Disk أولاً قبل أي شيء آخر.</p>
+        </div>
+        <div class="tl-item">
+            <h4>② WAL فقط يضمن الـ Durability</h4>
+            <p>حتى لو البيانات لم تُكتب بعد في الـ Data Pages (في الـ shared_buffers)، الـ WAL كافٍ للاسترداد.</p>
+        </div>
+        <div class="tl-item">
+            <h4>③ Crash Recovery</h4>
+            <p>عند إعادة التشغيل بعد crash، PostgreSQL يقرأ الـ WAL ويُطبّق كل الـ Committed transactions تلقائياً.</p>
+        </div>
+        <div class="tl-item">
+            <h4>④ Checkpoint</h4>
+            <p>بشكل دوري (كل 5 دقائق افتراضياً)، PostgreSQL يكتب الـ Buffer Pool على الـ Disk — ينظّف الـ WAL القديم.</p>
+        </div>
+    </div>
+</div>
+
+<!-- SAVEPOINT -->
+<div class="section-block" id="savepoint" data-aos="fade-up">
+    <div class="section-title"><span>📌</span> SAVEPOINT — نقاط الحفظ</div>
+    <p class="section-en">SAVEPOINT — Partial Rollback within a Transaction</p>
+
+    <p class="body-text">SAVEPOINT يُتيح لك التراجع جزئياً داخل نفس Transaction بدون إلغاء كل شيء — مفيد في العمليات الطويلة.</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">SAVEPOINT — Partial Rollback Pattern</span></div>
+        <div class="cbody">
+<span class="kw">BEGIN</span>;
+
+<span class="cmt">-- الخطوة 1: إنشاء الطلب</span>
+<span class="kw">INSERT INTO</span> <span class="tb">orders</span> (customer_id, total) <span class="kw">VALUES</span> (<span class="num">1</span>, <span class="num">5000</span>);
+
+<span class="kw">SAVEPOINT</span> after_order;  <span class="cmt">-- حفظ نقطة هنا</span>
+
+<span class="cmt">-- الخطوة 2: محاولة تطبيق الكوبون</span>
+<span class="kw">UPDATE</span> <span class="tb">coupons</span>
+<span class="kw">SET</span>    usage_count = usage_count + <span class="num">1</span>
+<span class="kw">WHERE</span>  code = <span class="str">'SUMMER20'</span>
+  <span class="kw">AND</span>  usage_count < usage_limit
+  <span class="kw">AND</span>  expires_at > <span class="fn">NOW</span>();
+
+<span class="cmt">-- إذا الكوبون غير صالح → تراجع جزئي فقط عن الكوبون</span>
+<span class="kw">DO</span> $$
+<span class="kw">BEGIN</span>
+  <span class="kw">IF</span> (<span class="kw">SELECT</span> <span class="fn">ROW_COUNT</span>()) = <span class="num">0</span> <span class="kw">THEN</span>
+    <span class="kw">ROLLBACK TO SAVEPOINT</span> after_order;  <span class="cmt">-- يُلغي فقط تحديث الكوبون</span>
+    <span class="cmt">-- يواصل: الطلب لا يزال موجوداً</span>
+  <span class="kw">END IF</span>;
+<span class="kw">END</span> $$;
+
+<span class="cmt">-- الخطوة 3: خصم المخزون</span>
+<span class="kw">UPDATE</span> <span class="tb">inventory</span>
+<span class="kw">SET</span>    quantity_in_stock = quantity_in_stock - <span class="num">1</span>
+<span class="kw">WHERE</span>  product_id = <span class="num">101</span>;
+
+<span class="kw">RELEASE SAVEPOINT</span> after_order;  <span class="cmt">-- حذف الـ savepoint (اختياري)</span>
+<span class="kw">COMMIT</span>;
+        </div>
+    </div>
+</div>
+
+<!-- PRACTICE -->
+<div class="section-block" id="practice" data-aos="fade-up">
+    <div class="section-title"><span>✍️</span> تمرين عملي</div>
+    <div class="practice-block">
+        <div class="practice-header"><h3>🏦 تمرين: Banking System Transactions</h3></div>
+        <div class="practice-body">
+            <ul class="task-list">
+                <li><span class="tnum">A</span>اكتب Transaction لتحويل مبلغ بين حسابين مع التحقق من: الرصيد الكافي، وجود الحسابين، عدم تجاوز الحد اليومي.</li>
+                <li><span class="tnum">B</span>أي الخصائص الأربعة تضمن أن رصيد الحساب لا يصبح سالباً؟ فسّر.</li>
+                <li><span class="tnum">C</span>متى تستخدم SAVEPOINT؟ اذكر مثالاً من الواقع.</li>
+            </ul>
+            <button class="sol-btn" onclick="toggleSol(this)">👁️ اظهر الحل</button>
+            <div class="sol-content">
+                <p><strong>B:</strong> <strong>Consistency</strong> — الـ CHECK constraint هو جزء من تعريف الـ Consistency. يمنع أي Transaction من ترك قاعدة البيانات في حالة تنتهك القواعد المعرّفة (مثل balance ≥ 0). كذلك <strong>Atomicity</strong> تدعم هذا — إذا كسرت Constraint، الـ Transaction كلها تُلغى.</p>
+                <p><strong>C:</strong> مثال عملي — في نظام E-Commerce: البدء بـ Transaction لإتمام الطلب، ثم SAVEPOINT. نحاول تطبيق الكوبون — إذا انتهت صلاحيته، ROLLBACK TO SAVEPOINT ونكمل بدون خصم. هكذا لا نُلغي الطلب كله بسبب كوبون خاطئ.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QUIZ -->
+<div class="section-block" id="quiz" data-aos="fade-up">
+    <div class="section-title"><span>🧠</span> اختبار الفهم</div>
+    <div class="quiz-card" id="qq1">
+        <div class="quiz-q">١. ما الخاصية التي تضمن أنه بعد COMMIT، البيانات تبقى حتى لو انقطع التيار مباشرة بعدها؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(1,this,false)">Atomicity</div>
+            <div class="quiz-opt" onclick="ans(1,this,true)">Durability — تضمنها الـ WAL (Write-Ahead Log). PostgreSQL يكتب الـ WAL على الـ Disk قبل الإقرار بالـ COMMIT.</div>
+            <div class="quiz-opt" onclick="ans(1,this,false)">Consistency</div>
+        </div>
+        <div class="quiz-fb" id="fb1"></div>
+    </div>
+    <div class="quiz-card" id="qq2">
+        <div class="quiz-q">٢. تحويل بنكي: خُصم المبلغ من A ثم حدث خطأ قبل إضافته لـ B. ما الذي يحدث في نظام ACID؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(2,this,false)">المبلغ يُفقد إلى الأبد</div>
+            <div class="quiz-opt" onclick="ans(2,this,true)">Atomicity تضمن ROLLBACK كامل — خصم A يُلغى أيضاً. كلا الحسابين يعودان لحالتهما الأصلية.</div>
+            <div class="quiz-opt" onclick="ans(2,this,false)">يُضاف المبلغ لـ B لاحقاً تلقائياً</div>
+        </div>
+        <div class="quiz-fb" id="fb2"></div>
+    </div>
+    <div class="quiz-card" id="qq3">
+        <div class="quiz-q">٣. ما المقصود بـ SELECT FOR UPDATE؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(3,this,false)">SELECT مع تعديل</div>
+            <div class="quiz-opt" onclick="ans(3,this,true)">يُقفّل الصفوف المُستعلَم عنها ضد التعديل بواسطة Transactions أخرى حتى COMMIT/ROLLBACK — Pessimistic Locking للـ Critical Resources.</div>
+            <div class="quiz-opt" onclick="ans(3,this,false)">يحدّث الـ SELECT نفسه</div>
+        </div>
+        <div class="quiz-fb" id="fb3"></div>
+    </div>
+    <div class="quiz-card" id="qq4">
+        <div class="quiz-q">٤. ما الفرق بين ROLLBACK و ROLLBACK TO SAVEPOINT؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(4,this,false)">لا فرق</div>
+            <div class="quiz-opt" onclick="ans(4,this,true)">ROLLBACK: يُلغي كل التغييرات منذ BEGIN. ROLLBACK TO SAVEPOINT: يُلغي فقط التغييرات بعد نقطة الـ SAVEPOINT — الـ Transaction لا تزال مفتوحة.</div>
+            <div class="quiz-opt" onclick="ans(4,this,false)">SAVEPOINT أبطأ</div>
+        </div>
+        <div class="quiz-fb" id="fb4"></div>
+    </div>
+    <div class="quiz-score-box" id="score-box">
+        <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+        <p id="score-msg" style="color:#94A3B8;"></p>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <a href="../Unit6/migrations_seeding.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: Migrations</a>
+    <a href="concurrency_problems.html" class="bnav-btn" style="color:#7DD3FC;">التالي: Concurrency Problems <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 7: ACID Properties</footer>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+AOS.init({duration:700,once:true,offset:80});
+window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+function toggleSol(btn){const sc=btn.nextElementSibling;sc.classList.toggle('open');btn.textContent=sc.classList.contains('open')?'🙈 إخفاء الحل':'👁️ اظهر الحل';}
+const fbs={
+    1:{c:'✅ Durability: WAL (Write-Ahead Log) يكتب على الـ Disk قبل COMMIT. حتى لو انقطع التيار فوراً، بعد إعادة التشغيل PostgreSQL يُطبّق الـ WAL ويستعيد البيانات كاملة.',w:'❌ Atomicity تضمن all-or-nothing. Consistency تضمن صحة القواعد. Durability هي من تضمن البقاء بعد الكارثة.'},
+    2:{c:'✅ Atomicity: كل أو لا شيء. إذا فشلت أي خطوة، كل التغييرات تُلغى (ROLLBACK). حساب A يعود لرصيده الأصلي تلقائياً — لا يوجد "نصف تحويل".',w:'❌ ACID لا تُفقد النقود أبداً. Atomicity تضمن أن كلا الخطوتين تنجحان معاً أو تُلغيان معاً.'},
+    3:{c:'✅ SELECT FOR UPDATE: يضع Exclusive Lock على الصفوف المُقروءة. أي Transaction أخرى تحاول تعديل أو قراءة نفس الصفوف بـ FOR UPDATE ستنتظر. يحل مشكلة Lost Update في Concurrent Systems.',w:'❌ FOR UPDATE لا يُعدّل — هو فقط Lock mechanism. يمنع التعديل المتزامن من Transactions أخرى حتى COMMIT.'},
+    4:{c:'✅ ROLLBACK = إلغاء كامل للـ Transaction. ROLLBACK TO SAVEPOINT = ROLLBACK جزئي — تعود لنقطة الـ SAVEPOINT لكن الـ Transaction لا تزال مفتوحة ويمكن متابعتها. ROLLBACK TO SAVEPOINT لا يُغلق الـ Transaction.',w:'❌ هما مختلفان جداً. ROLLBACK يُغلق Transaction. ROLLBACK TO SAVEPOINT يُتيح متابعة الـ Transaction من نقطة محددة.'}
+};
+let answered=0,score=0;
+function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';document.getElementById('score-text').textContent=`نتيجتك: ${score} / 4`;document.getElementById('score-msg').textContent=score===4?'🎉 ACID Expert!':score>=3?'👏 كويس!':'💪 راجع الدرس.';document.getElementById('score-text').style.color=score===4?'#34D399':score>=3?'#FBBF24':'#F87171';}}
+</script>
+</body>
+</html>

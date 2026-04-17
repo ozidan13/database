@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Locks & Recovery — الأقفال والاستعادة | Database Mastery</title>
+    <meta name="description" content="دليل شامل للأقفال والاستعادة: Row Locks، Table Locks، Deadlock، Deadlock Detection، WAL Recovery، Point-in-Time Recovery، Backup Strategies في PostgreSQL.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global-db.css">
+    <style>
+        :root{--accent:#34D399;--accent-lt:#6EE7B7;}
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;text-decoration:none;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#059669,#064E3B);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#6EE7B7;}
+        .nav-toc{display:flex;gap:1.3rem;font-size:.82rem;}
+        .nav-toc a{color:#64748B;text-decoration:none;transition:.2s;}
+        .nav-toc a:hover{color:#6EE7B7;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#059669,#E11D48);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(5,150,105,.1),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#6EE7B7;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#059669;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2rem,5vw,3.6rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#34D399,#E11D48);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.05rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(5,150,105,.1);border:1px solid rgba(5,150,105,.2);font-size:.78rem;color:#6EE7B7;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.tip{background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.2);}
+        .callout.tip .chead{color:#34D399;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);}
+        .callout.realworld .chead{color:#FCD34D;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
+        .lock-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0;}
+        @media(max-width:640px){.lock-grid{grid-template-columns:1fr;}}
+        .lock-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1.2rem;}
+        .lock-card h3{font-size:.9rem;font-weight:900;margin-bottom:.4rem;}
+        .lock-card p{font-size:.83rem;color:#64748B;line-height:1.9;margin:0;}
+        .code-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:1rem 0;border:1px solid rgba(255,255,255,.05);}
+        .code-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .cdot{width:9px;height:9px;border-radius:50%;}.cdot.r{background:#FF5F57}.cdot.y{background:#FDBC40}.cdot.g{background:#27C93F}
+        .clabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .cbody{padding:1rem 1.2rem;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.fn{color:#22D3EE}.cn{color:#A5B4FC}
+        .deadlock-vis{background:rgba(15,23,42,.9);border:1px solid rgba(239,68,68,.2);border-radius:16px;padding:1.5rem;margin:1.5rem 0;text-align:center;}
+        .dl-row{display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap;margin:.5rem 0;}
+        .dl-box{padding:.5rem 1rem;border-radius:10px;font-size:.82rem;font-weight:700;}
+        .dl-arr{color:#F87171;font-weight:900;}
+        .unit-complete{background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(59,130,246,.08));border:1px solid rgba(16,185,129,.3);border-radius:20px;padding:2rem;text-align:center;margin:2rem 0;}
+        .unit-complete h3{font-size:1.6rem;font-weight:900;background:linear-gradient(135deg,#34D399,#60A5FA);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem;}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;text-decoration:none;color:#E2E8F0;}
+        .bnav-btn:hover{background:rgba(5,150,105,.1);border-color:rgba(5,150,105,.3);transform:translateY(-2px);}
+    </style>
+</head>
+<body>
+<nav class="lesson-nav-bar">
+    <div class="nav-inner">
+        <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-lock"></i></div>العودة للبوابة</a>
+        <div class="nav-toc">
+            <a href="#locks">أنواع الأقفال</a>
+            <a href="#deadlock">Deadlock</a>
+            <a href="#monitoring">المراقبة</a>
+            <a href="#recovery">Recovery</a>
+            <a href="#backup">Backup</a>
+            <a href="#quiz">اختبار</a>
+        </div>
+    </div>
+</nav>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
+
+<header class="hero" data-aos="fade-up">
+    <div class="lesson-badge"><span class="pulse"></span>الوحدة 7 — الدرس 4 (الختامي)</div>
+    <h1><span class="grad">Locks & Recovery</span></h1>
+    <p class="en-title">Lock Types, Deadlock Detection, WAL Recovery, PITR, Backup Strategies</p>
+    <p class="desc">الـ Lock هو الحارس الذي يمنع الفوضى — والـ Recovery هو شبكة الأمان التي تُنقذ قاعدة بياناتك من الكوارث. فهم كليهما ضروري لأي DBA محترف.</p>
+    <div class="learn-pills">
+        <span class="pill">Row-Level Locks</span>
+        <span class="pill">Table-Level Locks</span>
+        <span class="pill">Advisory Locks</span>
+        <span class="pill">Deadlock Detection</span>
+        <span class="pill">pg_locks View</span>
+        <span class="pill">WAL Recovery</span>
+        <span class="pill">Point-in-Time Recovery</span>
+        <span class="pill">pg_dump Backup</span>
+    </div>
+</header>
+
+<div class="lesson-body">
+
+<!-- LOCK TYPES -->
+<div class="section-block" id="locks" data-aos="fade-up">
+    <div class="section-title"><span>🔒</span> أنواع الأقفال في PostgreSQL</div>
+    <p class="section-en">Lock Types — Row Locks, Table Locks, Advisory Locks</p>
+
+    <div class="lock-grid">
+        <div class="lock-card" style="border-top:3px solid #38BDF8;">
+            <h3 style="color:#38BDF8;">Row-Level Locks</h3>
+            <p>الأكثر شيوعاً. تنشأ تلقائياً مع UPDATE/DELETE/SELECT FOR UPDATE. تُقفّل صفاً واحداً دون التأثير على باقي الصفوف.</p>
+        </div>
+        <div class="lock-card" style="border-top:3px solid #FBBF24;">
+            <h3 style="color:#FBBF24;">Table-Level Locks</h3>
+            <p>تنشأ مع DDL (ALTER TABLE, TRUNCATE) أو LOCK TABLE. ثقيلة — تمنع كل العمليات. تجنّبها في ساعات الذروة.</p>
+        </div>
+        <div class="lock-card" style="border-top:3px solid #F472B6;">
+            <h3 style="color:#F472B6;">Advisory Locks</h3>
+            <p>تتحكم فيها أنت بشكل صريح. مثالية لـ Application-Level locking (مثل منع تشغيل job مرتين).</p>
+        </div>
+        <div class="lock-card" style="border-top:3px solid #A78BFA;">
+            <h3 style="color:#A78BFA;">Page Locks</h3>
+            <p>داخلية في PostgreSQL — تُقفّل صفحة الـ Storage أثناء عمليات Sequential Scan. نادراً ما تؤثر على الـ Application.</p>
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Lock Modes — من الأضعف للأقوى</span></div>
+        <div class="cbody">
+<span class="cmt">-- ══ Row Locks ══</span>
+<span class="kw">SELECT</span> ... <span class="kw">FOR SHARE</span>;          <span class="cmt">-- Shared: يسمح FOR SHARE آخر لكنه يمنع FOR UPDATE</span>
+<span class="kw">SELECT</span> ... <span class="kw">FOR NO KEY UPDATE</span>;   <span class="cmt">-- يسمح FOR SHARE & FOR KEY SHARE</span>
+<span class="kw">SELECT</span> ... <span class="kw">FOR UPDATE</span>;          <span class="cmt">-- Exclusive: يمنع كل الـ Locks الأخرى</span>
+<span class="kw">SELECT</span> ... <span class="kw">FOR KEY SHARE</span>;       <span class="cmt">-- أضعف — يُستخدم للـ FK checks</span>
+
+<span class="cmt">-- NOWAIT: لا تنتظر — أُخفق فوراً إذا كان هناك Lock</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">accounts</span> <span class="kw">WHERE</span> id = <span class="num">1</span> <span class="kw">FOR UPDATE NOWAIT</span>;
+<span class="cmt">-- ERROR: could not obtain lock on row in relation "accounts"</span>
+
+<span class="cmt">-- SKIP LOCKED: تجاهل الصفوف المُقفّلة (مثالي للـ Job Queues)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">job_queue</span>
+<span class="kw">WHERE</span>  status = <span class="str">'pending'</span>
+<span class="kw">LIMIT</span>  <span class="num">10</span>
+<span class="kw">FOR UPDATE SKIP LOCKED</span>;  <span class="cmt">-- Worker يأخذ 10 jobs بدون انتظار</span>
+
+<span class="cmt">-- ══ Table Locks ══</span>
+<span class="kw">LOCK TABLE</span> <span class="tb">orders</span> <span class="kw">IN</span> <span class="cn">SHARE ROW EXCLUSIVE MODE</span>;
+<span class="kw">LOCK TABLE</span> <span class="tb">orders</span> <span class="kw">IN</span> <span class="cn">EXCLUSIVE MODE</span>;   <span class="cmt">-- يمنع كل القراءات والكتابات</span>
+
+<span class="cmt">-- ══ Advisory Locks ══</span>
+<span class="kw">SELECT</span> <span class="fn">pg_advisory_xact_lock</span>(<span class="num">1234</span>);       <span class="cmt">-- يُحرَّر مع Transaction</span>
+<span class="kw">SELECT</span> <span class="fn">pg_advisory_lock</span>(<span class="num">1234</span>);            <span class="cmt">-- يُحرَّر يدوياً</span>
+<span class="kw">SELECT</span> <span class="fn">pg_advisory_unlock</span>(<span class="num">1234</span>);          <span class="cmt">-- تحرير يدوي</span>
+<span class="kw">SELECT</span> <span class="fn">pg_try_advisory_lock</span>(<span class="num">1234</span>);       <span class="cmt">-- يُرجع false إذا مُقفّل (لا ينتظر)</span>
+        </div>
+    </div>
+</div>
+
+<!-- DEADLOCK -->
+<div class="section-block" id="deadlock" data-aos="fade-up">
+    <div class="section-title"><span>💀</span> Deadlock — الطريق المسدود</div>
+    <p class="section-en">Deadlock — When Two Transactions Wait for Each Other Forever</p>
+
+    <p class="body-text">Deadlock يحدث عندما كل Transaction تنتظر الـ Lock الذي تُمسكه Transaction أخرى — دوامة لا تنتهي. PostgreSQL يكتشفها ويُلغي واحدة.</p>
+
+    <div class="deadlock-vis">
+        <h4 style="color:#F87171;margin-bottom:1rem;font-size:.9rem;">سيناريو Deadlock</h4>
+        <div class="dl-row">
+            <div class="dl-box" style="background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);color:#38BDF8;">T1 يُقفّل</div>
+            <span class="dl-arr">→ Account A ←</span>
+            <div class="dl-box" style="background:rgba(244,114,182,.1);border:1px solid rgba(244,114,182,.2);color:#F472B6;">T2 تنتظر</div>
+        </div>
+        <div class="dl-row">
+            <div class="dl-box" style="background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);color:#38BDF8;">T1 تنتظر</div>
+            <span class="dl-arr">→ Account B ←</span>
+            <div class="dl-box" style="background:rgba(244,114,182,.1);border:1px solid rgba(244,114,182,.2);color:#F472B6;">T2 يُقفّل</div>
+        </div>
+        <p style="font-size:.82rem;color:#64748B;margin-top:.8rem;">PostgreSQL يكتشف الدائرة → يُلغي T1 → T2 تكمل → T1 يُعيد المحاولة</p>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Deadlock — Cause and Prevention</span></div>
+        <div class="cbody">
+<span class="cmt">-- ❌ سيناريو Deadlock (T1 وT2 معاً)</span>
+<span class="cmt">-- T1:</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">UPDATE</span> <span class="tb">accounts</span> <span class="kw">SET</span> balance = balance - <span class="num">100</span> <span class="kw">WHERE</span> id = <span class="num">1</span>; <span class="cmt">-- يُقفّل Row 1</span>
+<span class="cmt">-- T2:</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">UPDATE</span> <span class="tb">accounts</span> <span class="kw">SET</span> balance = balance - <span class="num">50</span>  <span class="kw">WHERE</span> id = <span class="num">2</span>;  <span class="cmt">-- يُقفّل Row 2</span>
+<span class="cmt">-- T1 يحاول قفل Row 2 → ينتظر T2</span>
+<span class="cmt">-- T2 يحاول قفل Row 1 → ينتظر T1 → DEADLOCK!</span>
+
+<span class="cmt">-- ✅ الحل: دائماً أُقفّل الصفوف بنفس الترتيب</span>
+<span class="cmt">-- T1 وT2 كلاهما يُقفّل Row 1 أولاً ثم Row 2</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">accounts</span>
+<span class="kw">WHERE</span>  id <span class="kw">IN</span> (<span class="num">1</span>, <span class="num">2</span>)
+<span class="kw">ORDER BY</span> id   <span class="cmt">-- ORDER BY يضمن الترتيب الثابت!</span>
+<span class="kw">FOR UPDATE</span>;
+
+<span class="cmt">-- ✅ Deadlock Detection Settings</span>
+<span class="kw">SHOW</span> deadlock_timeout;  <span class="cmt">-- الافتراضي: 1s (PostgreSQL ينتظر ثانية قبل الكشف)</span>
+<span class="cmt">-- إذا حدث Deadlock → ERROR 40P01 في الـ Application → يجب Retry</span>
+
+<span class="cmt">-- ✅ تقليل Deadlock: استخدم Transactions قصيرة وسريعة</span>
+<span class="cmt">-- لا تضع عمليات بطيئة (HTTP calls, file I/O) داخل Transaction</span>
+        </div>
+    </div>
+</div>
+
+<!-- MONITORING -->
+<div class="section-block" id="monitoring" data-aos="fade-up">
+    <div class="section-title"><span>👁️</span> مراقبة الـ Locks — pg_locks</div>
+    <p class="section-en">Monitoring Active Locks and Blocking Queries</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">pg_locks — Find and Kill Blocking Queries</span></div>
+        <div class="cbody">
+<span class="cmt">-- ══ إيجاد كل الـ Locks الحالية ══</span>
+<span class="kw">SELECT</span>
+  pid,
+  relation::regclass AS table_name,
+  mode,
+  granted,
+  <span class="fn">query_start</span>,
+  state,
+  query
+<span class="kw">FROM</span>  pg_locks l
+<span class="kw">JOIN</span>  pg_stat_activity a <span class="kw">USING</span> (pid)
+<span class="kw">WHERE</span> relation IS NOT NULL
+<span class="kw">ORDER BY</span> query_start;
+
+<span class="cmt">-- ══ إيجاد الـ Blocking Queries (مَن يمنع مَن) ══</span>
+<span class="kw">SELECT</span>
+  blocked_locks.pid       AS blocked_pid,
+  blocked_activity.query  AS blocked_query,
+  blocking_locks.pid      AS blocking_pid,
+  blocking_activity.query AS blocking_query,
+  blocked_activity.wait_event_type,
+  blocked_activity.wait_event
+<span class="kw">FROM</span>  pg_catalog.pg_locks blocked_locks
+<span class="kw">JOIN</span>  pg_catalog.pg_stat_activity blocked_activity  <span class="kw">ON</span> blocked_activity.pid = blocked_locks.pid
+<span class="kw">JOIN</span>  pg_catalog.pg_locks blocking_locks
+    <span class="kw">ON</span>  blocking_locks.locktype  = blocked_locks.locktype
+    <span class="kw">AND</span> blocking_locks.relation  = blocked_locks.relation
+    <span class="kw">AND</span> blocking_locks.pid      != blocked_locks.pid
+<span class="kw">JOIN</span>  pg_catalog.pg_stat_activity blocking_activity <span class="kw">ON</span> blocking_activity.pid = blocking_locks.pid
+<span class="kw">WHERE</span> NOT blocked_locks.granted;
+
+<span class="cmt">-- ══ إنهاء Query تعيق العمل ══</span>
+<span class="kw">SELECT</span> <span class="fn">pg_cancel_backend</span>(<span class="num">12345</span>);  <span class="cmt">-- يُرسل SIGINT → يُلغي Query فقط</span>
+<span class="kw">SELECT</span> <span class="fn">pg_terminate_backend</span>(<span class="num">12345</span>); <span class="cmt">-- يُنهي الـ Connection كاملاً</span>
+
+<span class="cmt">-- ══ lock_timeout: لا تنتظر أكثر من N ثانية ══</span>
+<span class="kw">SET</span> lock_timeout = <span class="str">'5s'</span>;
+<span class="cmt">-- إذا لم يُحصل على الـ Lock في 5 ثوانٍ → ERROR: canceling statement due to lock timeout</span>
+        </div>
+    </div>
+</div>
+
+<!-- RECOVERY -->
+<div class="section-block" id="recovery" data-aos="fade-up">
+    <div class="section-title"><span>🔄</span> Recovery — الاسترداد بعد الكارثة</div>
+    <p class="section-en">WAL-Based Crash Recovery and Point-in-Time Recovery (PITR)</p>
+
+    <div class="callout tip">
+        <div class="chead">🛡️ Crash Recovery — يعمل تلقائياً</div>
+        <p>عند إعادة تشغيل PostgreSQL بعد Crash، يقرأ الـ WAL (Write-Ahead Log) تلقائياً ويُطبق كل الـ Committed transactions. لا حاجة لتدخل يدوي. هذا يضمن الـ Durability من ACID.</p>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Backup & PITR — Point-in-Time Recovery</span></div>
+        <div class="cbody">
+<span class="cmt">-- ══ pg_dump: منطقي (الأسرع للـ Small-Medium DBs) ══</span>
+<span class="cmt"># Backup</span>
+pg_dump -U postgres -d ecommerce_db -F c -f backup.dump
+
+<span class="cmt"># Restore</span>
+pg_restore -U postgres -d ecommerce_db_new backup.dump
+
+<span class="cmt"># جميع الـ Databases</span>
+pg_dumpall -U postgres > all_databases.sql
+
+<span class="cmt">-- ══ pg_basebackup: فيزيائي (للـ PITR) ══</span>
+pg_basebackup -D /backup/base -Ft -z -P -U postgres
+<span class="cmt"># -D: destination, -Ft: tar format, -z: gzip, -P: progress</span>
+
+<span class="cmt">-- ══ PostgreSQL PITR Setup (postgresql.conf) ══</span>
+wal_level = replica        <span class="cmt"># enable WAL archiving</span>
+archive_mode = on
+archive_command = <span class="str">'cp %p /wal_archive/%f'</span>  <span class="cmt">-- أو S3</span>
+
+<span class="cmt">-- ══ Recovery (recovery.conf أو postgresql.conf في PG v12+) ══</span>
+restore_command = <span class="str">'cp /wal_archive/%f %p'</span>
+recovery_target_time = <span class="str">'2024-03-15 14:30:00'</span>  <span class="cmt">-- PITR: استعادة قبل الحادثة</span>
+recovery_target_action = <span class="str">'promote'</span>             <span class="cmt">-- تصبح Primary بعد الاسترداد</span>
+
+<span class="cmt">-- ══ Continuous Archiving Check ══</span>
+<span class="kw">SELECT</span> <span class="fn">pg_switch_wal</span>();  <span class="cmt">-- يُجبر archiving لملف WAL الحالي</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> pg_stat_archiver;  <span class="cmt">-- حالة الـ archiver وآخر ملف مُرشَفَ</span>
+        </div>
+    </div>
+</div>
+
+<!-- BACKUP STRATEGIES -->
+<div class="section-block" id="backup" data-aos="fade-up">
+    <div class="section-title"><span>💾</span> استراتيجية النسخ الاحتياطي</div>
+    <p class="section-en">Backup Strategies — RTO vs RPO</p>
+
+    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.82rem;margin:1rem 0;">
+        <thead><tr style="background:rgba(5,150,105,.08);">
+            <th style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.06);color:#34D399;text-align:right;">الاستراتيجية</th>
+            <th style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.06);color:#34D399;text-align:center;">RPO</th>
+            <th style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.06);color:#34D399;text-align:center;">RTO</th>
+            <th style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.06);color:#34D399;text-align:right;">متى تستخدم</th>
+        </tr></thead>
+        <tbody>
+            <tr><td style="padding:.45rem 1rem;border:1px solid rgba(255,255,255,.05);">pg_dump يومي</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#F87171;">~24 ساعة</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#FBBF24;">ساعات</td><td style="padding:.45rem 1rem;border:1px solid rgba(255,255,255,.05);font-size:.78rem;">Dev/Test environments</td></tr>
+            <tr><td style="padding:.45rem 1rem;border:1px solid rgba(255,255,255,.05);">Base Backup + WAL</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#FBBF24;">دقائق</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#34D399;">دقائق</td><td style="padding:.45rem 1rem;border:1px solid rgba(255,255,255,.05);font-size:.78rem;">Production — الأنسب</td></tr>
+            <tr><td style="padding:.45rem 1rem;border:1px solid rgba(255,255,255,.05);">Streaming Replication</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#34D399;">ثوانٍ</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#34D399;">ثوانٍ</td><td style="padding:.45rem 1rem;border:1px solid rgba(255,255,255,.05);font-size:.78rem;">Mission Critical Systems</td></tr>
+        </tbody>
+    </table></div>
+
+    <div class="callout realworld">
+        <div class="chead">🎯 RPO وRTO — المقياسان الأساسيان</div>
+        <p>
+        <strong>RPO (Recovery Point Objective):</strong> ما أكبر قدر من البيانات يمكنك تحمّل خسارته؟ (مثلاً: 5 دقائق من البيانات)<br>
+        <strong>RTO (Recovery Time Objective):</strong> ما أطول وقت مقبول للتعطل قبل الاستعادة؟ (مثلاً: 30 دقيقة)<br>
+        كلما كانت RPO وRTO أقل, احتجت استثماراً أكبر في البنية التحتية.
+        </p>
+    </div>
+
+    <div class="unit-complete">
+        <div style="font-size:3rem;margin-bottom:.8rem;">🎓</div>
+        <h3>أنهيت الوحدة 7 بالكامل!</h3>
+        <p style="color:#94A3B8;">أتقنت ACID Properties، مشاكل التزامن الأربعة، مستويات العزل والـ MVCC، والأقفال والاستعادة. أنت الآن تفهم كيف تعمل قواعد البيانات من الداخل.</p>
+    </div>
+</div>
+
+<!-- QUIZ -->
+<div class="section-block" id="quiz" data-aos="fade-up">
+    <div class="section-title"><span>🧠</span> اختبار الفهم</div>
+    <div class="quiz-card" id="qq1">
+        <div class="quiz-q">١. ما الفرق بين SELECT FOR UPDATE وSELECT FOR UPDATE SKIP LOCKED؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(1,this,false)">لا فرق</div>
+            <div class="quiz-opt" onclick="ans(1,this,true)">FOR UPDATE: ينتظر حتى يُحرَّر الـ Lock. FOR UPDATE SKIP LOCKED: يتخطى الصفوف المُقفّلة ويأخذ فقط المتاحة — مثالي للـ Job Queues لمنع الـ Workers من الانتظار.</div>
+            <div class="quiz-opt" onclick="ans(1,this,false)">SKIP LOCKED أبطأ</div>
+        </div>
+        <div class="quiz-fb" id="fb1"></div>
+    </div>
+    <div class="quiz-card" id="qq2">
+        <div class="quiz-q">٢. كيف تمنع Deadlock في عمليات التحويل المصرفي؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(2,this,false)">استخدام SERIALIZABLE</div>
+            <div class="quiz-opt" onclick="ans(2,this,true)">قفل الصفوف بنفس الترتيب دائماً (SELECT FOR UPDATE ORDER BY account_id) — إذا كانت T1 وT2 يُقفّلان نفس الصفوف بنفس الترتيب، لا دوامة انتظار ممكنة.</div>
+            <div class="quiz-opt" onclick="ans(2,this,false)">استخدام Advisory Locks</div>
+        </div>
+        <div class="quiz-fb" id="fb2"></div>
+    </div>
+    <div class="quiz-card" id="qq3">
+        <div class="quiz-q">٣. ما الفرق بين pg_cancel_backend وpg_terminate_backend؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(3,this,false)">لا فرق</div>
+            <div class="quiz-opt" onclick="ans(3,this,true)">pg_cancel_backend: يُرسل SIGINT — يُلغي الـ Query الحالية لكن الـ Connection يبقى مفتوحاً. pg_terminate_backend: يُرسل SIGTERM — يُنهي الـ Connection كاملاً. استخدم cancel أولاً.</div>
+            <div class="quiz-opt" onclick="ans(3,this,false)">cancel يُنهي الـ DB</div>
+        </div>
+        <div class="quiz-fb" id="fb3"></div>
+    </div>
+    <div class="quiz-card" id="qq4">
+        <div class="quiz-q">٤. ما الفرق بين RPO وRTO في استراتيجية النسخ الاحتياطي؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(4,this,false)">مترادفان</div>
+            <div class="quiz-opt" onclick="ans(4,this,true)">RPO (Recovery Point Objective): أقصى قدر مقبول من البيانات المُفقودة (Time كم). RTO (Recovery Time Objective): أقصى وقت مقبول للتعطل قبل الاستعادة. كلاهما يحدد مستوى الاستثمار في البنية التحتية.</div>
+            <div class="quiz-opt" onclick="ans(4,this,false)">RTO هو RPO بالثواني</div>
+        </div>
+        <div class="quiz-fb" id="fb4"></div>
+    </div>
+    <div class="quiz-score-box" id="score-box">
+        <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+        <p id="score-msg" style="color:#94A3B8;"></p>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <a href="isolation_levels.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: Isolation Levels</a>
+    <a href="../index.html" class="bnav-btn" style="color:#6EE7B7;">العودة للبوابة <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 7: Locks & Recovery</footer>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+AOS.init({duration:700,once:true,offset:80});
+window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+const fbs={
+    1:{c:'✅ SKIP LOCKED: يتخطى الصفوف المُقفّلة ويُرجع الصفوف المتاحة فقط. مثالي للـ Job Queue Workers — أفضل من الانتظار. FOR UPDATE بدونها: ينتظر حتى يُحرَّر الـ Lock.',w:'❌ SKIP LOCKED لا تنتظر — تتجاهل المُقفّل. FOR UPDATE تنتظر. الفرق حيوي للـ Job Processing Systems.'},
+    2:{c:'✅ قفل بنفس الترتيب دائماً: SELECT FOR UPDATE WHERE id IN (1,2) ORDER BY id. هذا يمنع الـ Circular Wait — شرط الـ Deadlock. إذا T1 وT2 يُقفّلان بنفس الترتيب، الأول سيحصل على القفل والثاني ينتظر بدون دوامة.',w:'❌ SERIALIZABLE يكشف الـ Conflict لكن لا يمنع بالضرورة الـ Deadlock نفسه البسيط. الحل الأبسط والأفضل: نفس الترتيب.'},
+    3:{c:'✅ pg_cancel_backend: يُلغي الـ Query الحالية (SIGINT) — الـ Connection يبقى مفتوحاً. pg_terminate_backend: يُنهي الـ Connection كاملاً (SIGTERM). ابدأ بـ cancel فإذا لم يُجدِ استخدم terminate.',w:'❌ cancel لا يُنهي الـ DB — يُلغي Query واحدة فقط. terminate يقطع الـ Connection الكامل.'},
+    4:{c:'✅ RPO = Recovery Point: كم بيانات تقبل أن تُفقد (مثلاً 5 دقائق = WAL archiving كل 5 دقائق). RTO = Recovery Time: كم وقت مقبول للتعطل (مثلاً 30 دقيقة). تحديدهما يُوجّه اختيار الاستراتيجية المناسبة.',w:'❌ RPO عن البيانات المُفقودة (point في الزمن). RTO عن وقت التعطل (duration للاستعادة). مختلفان تماماً.'}
+};
+let answered=0,score=0;
+function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';document.getElementById('score-text').textContent=`نتيجتك: ${score} / 4`;document.getElementById('score-msg').textContent=score===4?'🎉 DBA Expert!':score>=3?'👏 كويس!':'💪 راجع الدرس.';document.getElementById('score-text').style.color=score===4?'#34D399':score>=3?'#FBBF24':'#F87171';}}
+</script>
+</body>
+</html>

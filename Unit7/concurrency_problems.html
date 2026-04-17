@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concurrency Problems — مشاكل التزامن | Database Mastery</title>
+    <meta name="description" content="دليل شامل لمشاكل التزامن: Dirty Read، Non-Repeatable Read، Phantom Read، Lost Update — مع سيناريوهات Banking وTicketing كاملة في PostgreSQL.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global-db.css">
+    <style>
+        :root{--accent:#FB923C;--accent-lt:#FDBA74;}
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;text-decoration:none;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#EA580C,#7C2D12);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#FDBA74;}
+        .nav-toc{display:flex;gap:1.3rem;font-size:.82rem;}
+        .nav-toc a{color:#64748B;text-decoration:none;transition:.2s;}
+        .nav-toc a:hover{color:#FDBA74;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#EA580C,#7C3AED);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(234,88,12,.1),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#FDBA74;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#EA580C;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2rem,5vw,3.6rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#FB923C,#7C3AED);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.05rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(234,88,12,.1);border:1px solid rgba(234,88,12,.2);font-size:.78rem;color:#FDBA74;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.why{background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);}
+        .callout.why .chead{color:#22D3EE;font-weight:800;margin-bottom:.5rem;}
+        .callout.tip{background:rgba(234,88,12,.07);border:1px solid rgba(234,88,12,.2);}
+        .callout.tip .chead{color:#FDBA74;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);}
+        .callout.realworld .chead{color:#34D399;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
+        .prob-card{background:rgba(15,23,42,.8);border-radius:16px;border:1px solid rgba(255,255,255,.06);overflow:hidden;margin:1.5rem 0;}
+        .prob-header{padding:1rem 1.5rem;display:flex;align-items:center;gap:.8rem;}
+        .prob-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+        .prob-title{font-weight:900;font-size:1rem;}
+        .prob-body{padding:0 1.5rem 1.5rem;}
+        .prob-desc{font-size:.92rem;color:#94A3B8;line-height:2;margin-bottom:1rem;}
+        .concur-table{width:100%;border-collapse:collapse;font-size:.82rem;margin:1rem 0;}
+        .concur-table th{padding:.5rem 1rem;background:rgba(234,88,12,.08);border:1px solid rgba(255,255,255,.06);color:#FDBA74;text-align:center;}
+        .concur-table td{padding:.45rem 1rem;border:1px solid rgba(255,255,255,.05);color:#CBD5E1;text-align:center;}
+        .concur-table .t1{color:#38BDF8;}.concur-table .t2{color:#F472B6;}
+        .code-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:1rem 0;border:1px solid rgba(255,255,255,.05);}
+        .code-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .cdot{width:9px;height:9px;border-radius:50%;}.cdot.r{background:#FF5F57}.cdot.y{background:#FDBC40}.cdot.g{background:#27C93F}
+        .clabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .cbody{padding:1rem 1.2rem;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.fn{color:#22D3EE}.cn{color:#A5B4FC}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;text-decoration:none;color:#E2E8F0;}
+        .bnav-btn:hover{background:rgba(234,88,12,.1);border-color:rgba(234,88,12,.3);transform:translateY(-2px);}
+    </style>
+</head>
+<body>
+<nav class="lesson-nav-bar">
+    <div class="nav-inner">
+        <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-users"></i></div>العودة للبوابة</a>
+        <div class="nav-toc">
+            <a href="#dirty">Dirty Read</a>
+            <a href="#nonrep">Non-Repeatable</a>
+            <a href="#phantom">Phantom</a>
+            <a href="#lost">Lost Update</a>
+            <a href="#quiz">اختبار</a>
+        </div>
+    </div>
+</nav>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
+
+<header class="hero" data-aos="fade-up">
+    <div class="lesson-badge"><span class="pulse"></span>الوحدة 7 — الدرس 2</div>
+    <h1>مشاكل <span class="grad">التزامن</span></h1>
+    <p class="en-title">Concurrency Problems — Dirty Read, Non-Repeatable Read, Phantom Read, Lost Update</p>
+    <p class="desc">لما 1000 مستخدم يشتغلوا على نفس قاعدة البيانات في نفس الوقت — ماذا يمكن أن يحدث بدون الـ Isolation الصحيح؟ كل مشكلة لها سيناريو حقيقي وحل.</p>
+    <div class="learn-pills">
+        <span class="pill">Dirty Read</span>
+        <span class="pill">Non-Repeatable Read</span>
+        <span class="pill">Phantom Read</span>
+        <span class="pill">Lost Update</span>
+        <span class="pill">Write Skew</span>
+        <span class="pill">SELECT FOR UPDATE</span>
+        <span class="pill">Optimistic Locking</span>
+    </div>
+</header>
+
+<div class="lesson-body">
+
+<!-- OVERVIEW TABLE -->
+<div class="section-block" id="overview" data-aos="fade-up">
+    <div class="section-title"><span>📊</span> نظرة عامة — المشاكل الأربع</div>
+    <p class="section-en">Four Concurrency Anomalies — What They Are and When They Happen</p>
+
+    <div style="overflow-x:auto;">
+    <table class="concur-table">
+        <thead><tr>
+            <th>المشكلة</th><th>يحدث عندما</th><th>المتضرر</th><th>مستوى العزل الكافي</th>
+        </tr></thead>
+        <tbody>
+            <tr><td style="font-weight:700;color:#F87171;">Dirty Read</td><td>T1 يقرأ بيانات T2 غير المُعتمدة</td><td>T1</td><td style="color:#34D399;">READ COMMITTED</td></tr>
+            <tr><td style="font-weight:700;color:#FBBF24;">Non-Repeatable Read</td><td>T1 يقرأ صفاً مرتين ويجده مختلفاً</td><td>T1</td><td style="color:#34D399;">REPEATABLE READ</td></tr>
+            <tr><td style="font-weight:700;color:#FB923C;">Phantom Read</td><td>T1 يجد صفوفاً جديدة في نفس الـ Query</td><td>T1</td><td style="color:#34D399;">SERIALIZABLE</td></tr>
+            <tr><td style="font-weight:700;color:#F472B6;">Lost Update</td><td>T2 يُلغي تعديل T1 دون علمه</td><td>T1</td><td style="color:#34D399;">FOR UPDATE / SERIALIZABLE</td></tr>
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<!-- DIRTY READ -->
+<div class="section-block" id="dirty" data-aos="fade-up">
+    <div class="section-title"><span>🦠</span> Dirty Read — قراءة البيانات الملوّثة</div>
+    <p class="section-en">Dirty Read — Reading Uncommitted Data from Another Transaction</p>
+
+    <div class="prob-card">
+        <div class="prob-header" style="background:rgba(239,68,68,.07);">
+            <div class="prob-icon" style="background:rgba(239,68,68,.15);color:#F87171;"><i class="fas fa-bug"></i></div>
+            <div><div class="prob-title" style="color:#F87171;">Dirty Read</div><div style="font-size:.78rem;color:#64748B;">Severity: خطير</div></div>
+        </div>
+        <div class="prob-body">
+            <p class="prob-desc">T1 تقرأ بيانات كتبتها T2 لكن T2 لم تُعتمد بعد (لم تُنفّذ COMMIT). إذا أجرت T2 ROLLBACK، T1 بنت قراراتها على بيانات وهمية!</p>
+
+            <table class="concur-table">
+                <thead><tr><th>الوقت</th><th class="t1">T1 (Report)</th><th class="t2">T2 (Transfer)</th></tr></thead>
+                <tbody>
+                    <tr><td>t1</td><td class="t1">BEGIN</td><td class="t2">BEGIN</td></tr>
+                    <tr><td>t2</td><td></td><td class="t2">UPDATE balance = 5000 WHERE id=1 (لم COMMIT بعد)</td></tr>
+                    <tr><td>t3</td><td class="t1">SELECT balance → 5000 ← <strong>Dirty!</strong></td><td></td></tr>
+                    <tr><td>t4</td><td></td><td class="t2">ROLLBACK (العملية فشلت)</td></tr>
+                    <tr><td>t5</td><td class="t1">يبني تقريره على 5000 ← <strong>كاذب!</strong></td><td></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">الحل: READ COMMITTED (الافتراضي في PostgreSQL)</span></div>
+        <div class="cbody">
+<span class="cmt">-- PostgreSQL الافتراضي = READ COMMITTED → لا Dirty Reads أبداً</span>
+<span class="cmt">-- رؤية T1 دائماً للبيانات المُعتمدة فقط</span>
+
+<span class="cmt">-- تغيير الـ Isolation Level لـ Transaction محددة:</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">SET TRANSACTION ISOLATION LEVEL</span> <span class="cn">READ COMMITTED</span>;
+
+<span class="cmt">-- أو إذا حدث Dirty Read في نظام آخر (MySQL مثلاً بـ READ UNCOMMITTED):</span>
+<span class="kw">SET TRANSACTION ISOLATION LEVEL</span> <span class="cn">READ UNCOMMITTED</span>;  <span class="cmt">-- يسمح Dirty Reads!</span>
+
+<span class="cmt">-- Good news: PostgreSQL لا يدعم READ UNCOMMITTED فعلياً</span>
+<span class="cmt">-- حتى لو حددته، يتصرف كـ READ COMMITTED</span>
+        </div>
+    </div>
+</div>
+
+<!-- NON-REPEATABLE READ -->
+<div class="section-block" id="nonrep" data-aos="fade-up">
+    <div class="section-title"><span>🔄</span> Non-Repeatable Read — القراءة غير المتسقة</div>
+    <p class="section-en">Non-Repeatable Read — Same Query, Different Results in Same Transaction</p>
+
+    <div class="prob-card">
+        <div class="prob-header" style="background:rgba(251,191,36,.07);">
+            <div class="prob-icon" style="background:rgba(251,191,36,.15);color:#FBBF24;"><i class="fas fa-rotate"></i></div>
+            <div><div class="prob-title" style="color:#FBBF24;">Non-Repeatable Read</div><div style="font-size:.78rem;color:#64748B;">Severity: متوسط</div></div>
+        </div>
+        <div class="prob-body">
+            <p class="prob-desc">T1 تقرأ صفاً، ثم T2 تُعدّله وتُعتمد، ثم T1 تقرأ نفس الصف مرة أخرى — تجد قيمة مختلفة! التقرير لم يأتِ من "لحظة واحدة متسقة".</p>
+
+            <table class="concur-table">
+                <thead><tr><th>الوقت</th><th class="t1">T1 (Audit Report)</th><th class="t2">T2 (Price Update)</th></tr></thead>
+                <tbody>
+                    <tr><td>t1</td><td class="t1">BEGIN</td><td></td></tr>
+                    <tr><td>t2</td><td class="t1">SELECT price WHERE id=1 → 100 LE</td><td></td></tr>
+                    <tr><td>t3</td><td></td><td class="t2">UPDATE price = 150 WHERE id=1; COMMIT;</td></tr>
+                    <tr><td>t4</td><td class="t1">SELECT price WHERE id=1 → 150 LE ← <strong>مختلف!</strong></td><td></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">الحل: REPEATABLE READ في PostgreSQL</span></div>
+        <div class="cbody">
+<span class="kw">BEGIN</span>;
+<span class="kw">SET TRANSACTION ISOLATION LEVEL</span> <span class="cn">REPEATABLE READ</span>;
+
+<span class="cmt">-- الآن: T1 ترى Snapshot ثابت من لحظة BEGIN</span>
+<span class="cmt">-- حتى لو T2 عدّلت وCOMMIT، T1 لن ترى التغيير</span>
+
+<span class="kw">SELECT</span> price <span class="kw">FROM</span> <span class="tb">products</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;  <span class="cmt">-- → 100</span>
+<span class="cmt">-- [T2 تُعدّل price=150 وتُعتمد]</span>
+<span class="kw">SELECT</span> price <span class="kw">FROM</span> <span class="tb">products</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;  <span class="cmt">-- → 100 (نفس الـ snapshot)</span>
+
+<span class="kw">COMMIT</span>;  <span class="cmt">-- الآن يرى T1 الـ value المحدّثة إذا قرأ مرة أخرى</span>
+
+<span class="cmt">-- PostgreSQL يُحقق هذا بـ MVCC (Multi-Version Concurrency Control)</span>
+<span class="cmt">-- يحتفظ بـ snapshots متعددة للبيانات — لا locking على القراءة</span>
+        </div>
+    </div>
+</div>
+
+<!-- PHANTOM READ -->
+<div class="section-block" id="phantom" data-aos="fade-up">
+    <div class="section-title"><span>👻</span> Phantom Read — الصفوف الشبحية</div>
+    <p class="section-en">Phantom Read — New Rows Appear Within the Same Transaction</p>
+
+    <div class="prob-card">
+        <div class="prob-header" style="background:rgba(251,146,60,.07);">
+            <div class="prob-icon" style="background:rgba(251,146,60,.15);color:#FDBA74;"><i class="fas fa-ghost"></i></div>
+            <div><div class="prob-title" style="color:#FDBA74;">Phantom Read</div><div style="font-size:.78rem;color:#64748B;">Severity: متوسط-عالي</div></div>
+        </div>
+        <div class="prob-body">
+            <p class="prob-desc">T1 تُنفّذ نفس الـ Query مرتين — في المرة الثانية تجد صفوفاً جديدة (أضافتها T2). المشكلة ليست في صف موجود بل في صفوف إضافية ظهرت!</p>
+
+            <table class="concur-table">
+                <thead><tr><th>الوقت</th><th class="t1">T1 (Capacity Check)</th><th class="t2">T2 (New Booking)</th></tr></thead>
+                <tbody>
+                    <tr><td>t1</td><td class="t1">SELECT COUNT(*) WHERE flight=100 → 149 (متاح مقعد واحد)</td><td></td></tr>
+                    <tr><td>t2</td><td></td><td class="t2">INSERT booking (flight=100); COMMIT;</td></tr>
+                    <tr><td>t3</td><td class="t1">يحجز المقعد الأخير</td><td></td></tr>
+                    <tr><td>t4</td><td class="t1">SELECT COUNT(*) WHERE flight=100 → 151! ← <strong>Phantom!</strong></td><td></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">الحل: SERIALIZABLE أو SELECT FOR UPDATE مع Range Lock</span></div>
+        <div class="cbody">
+<span class="cmt">-- الحل 1: SERIALIZABLE Isolation Level</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">SET TRANSACTION ISOLATION LEVEL</span> <span class="cn">SERIALIZABLE</span>;
+
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> <span class="tb">bookings</span> <span class="kw">WHERE</span> flight_id = <span class="num">100</span>;
+<span class="cmt">-- إذا T2 أضافت booking جديد بعد هذا → Serialization Failure عند COMMIT</span>
+<span class="cmt">-- PostgreSQL يُعيد ERROR: could not serialize access due to concurrent update</span>
+<span class="cmt">-- يجب إعادة المحاولة (retry)</span>
+
+<span class="cmt">-- الحل 2: Advisory Lock للـ Flight Capacity</span>
+<span class="kw">SELECT</span> <span class="fn">pg_advisory_xact_lock</span>(<span class="num">100</span>);  <span class="cmt">-- يُقفّل الـ flight_id=100</span>
+<span class="kw">SELECT COUNT</span>(*) <span class="kw">FROM</span> <span class="tb">bookings</span> <span class="kw">WHERE</span> flight_id = <span class="num">100</span>;
+<span class="cmt">-- الآن T2 ستنتظر حتى يُفرَج القفل</span>
+        </div>
+    </div>
+</div>
+
+<!-- LOST UPDATE -->
+<div class="section-block" id="lost" data-aos="fade-up">
+    <div class="section-title"><span>💨</span> Lost Update — التعديل المفقود</div>
+    <p class="section-en">Lost Update — One Transaction's Write Overwrites Another's</p>
+
+    <div class="prob-card">
+        <div class="prob-header" style="background:rgba(244,114,182,.07);">
+            <div class="prob-icon" style="background:rgba(244,114,182,.15);color:#F472B6;"><i class="fas fa-eraser"></i></div>
+            <div><div class="prob-title" style="color:#F472B6;">Lost Update</div><div style="font-size:.78rem;color:#64748B;">Severity: خطير جداً</div></div>
+        </div>
+        <div class="prob-body">
+            <p class="prob-desc">T1 وT2 يقرآن نفس الرصيد، كل منهما يُعدّله، لكن T2 تكتب فوق تعديل T1 — التعديل الأول يُفقد تماماً!</p>
+
+            <table class="concur-table">
+                <thead><tr><th>الوقت</th><th class="t1">T1 (User A — يضيف 500)</th><th class="t2">T2 (User B — يضيف 1000)</th></tr></thead>
+                <tbody>
+                    <tr><td>t1</td><td class="t1">SELECT stock → 10</td><td></td></tr>
+                    <tr><td>t2</td><td></td><td class="t2">SELECT stock → 10</td></tr>
+                    <tr><td>t3</td><td class="t1">UPDATE stock = 10 + 5 = 15</td><td></td></tr>
+                    <tr><td>t4</td><td></td><td class="t2">UPDATE stock = 10 + 3 = 13 ← يمسح تعديل T1!</td></tr>
+                    <tr><td>t5</td><td class="t1">COMMIT</td><td class="t2">COMMIT → النتيجة 13 بدلاً من 18!</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">الحلول: Atomic UPDATE و SELECT FOR UPDATE</span></div>
+        <div class="cbody">
+<span class="cmt">-- ❌ الطريقة الخاطئة (Read-Modify-Write في الـ Application)</span>
+<span class="cmt">-- stock = SELECT stock → تعديل في الكود → UPDATE stock = new_value</span>
+
+<span class="cmt">-- ✅ الحل 1: Atomic UPDATE — لا قراءة في الـ Application</span>
+<span class="kw">UPDATE</span> <span class="tb">inventory</span>
+<span class="kw">SET</span>    quantity_in_stock = quantity_in_stock + <span class="num">5</span>
+<span class="kw">WHERE</span>  product_id = <span class="num">101</span>;
+<span class="cmt">-- PostgreSQL ينفّذ هذا كـ Atomic operation بدون Lost Update</span>
+
+<span class="cmt">-- ✅ الحل 2: SELECT FOR UPDATE (Pessimistic Lock)</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">SELECT</span> quantity_in_stock <span class="kw">FROM</span> <span class="tb">inventory</span>
+<span class="kw">WHERE</span>  product_id = <span class="num">101</span>
+<span class="kw">FOR UPDATE</span>;  <span class="cmt">-- يُقفّل الصف — T2 تنتظر</span>
+
+<span class="cmt">-- الآن آمن للـ Read-Modify-Write</span>
+<span class="kw">UPDATE</span> <span class="tb">inventory</span>
+<span class="kw">SET</span>    quantity_in_stock = quantity_in_stock - <span class="num">3</span>
+<span class="kw">WHERE</span>  product_id = <span class="num">101</span>;
+<span class="kw">COMMIT</span>;  <span class="cmt">-- T2 تُفرَج وترى القيمة المُحدَّثة</span>
+
+<span class="cmt">-- ✅ الحل 3: Optimistic Locking (version column)</span>
+<span class="kw">UPDATE</span> <span class="tb">inventory</span>
+<span class="kw">SET</span>    quantity_in_stock = quantity_in_stock - <span class="num">3</span>,
+       version = version + <span class="num">1</span>
+<span class="kw">WHERE</span>  product_id = <span class="num">101</span>
+  <span class="kw">AND</span>  version = <span class="num">7</span>;  <span class="cmt">-- يفشل إذا T2 غيّر version قبلنا → rowCount=0 → retry</span>
+        </div>
+    </div>
+
+    <div class="callout realworld">
+        <div class="chead">🌍 Write Skew — مشكلة أعمق</div>
+        <p>Write Skew = نوع متقدم من Lost Update. مثال: مستشفى — قاعدة "يجب أن يكون هناك طبيب على الأقل في كل وقت". T1 تقرأ: 2 أطباء موجودون → الطبيب أ يأخذ إجازة. T2 تقرأ: 2 موجودون → الطبيب ب يأخذ إجازة. النتيجة: 0 أطباء! الحل: SERIALIZABLE Isolation.</p>
+    </div>
+</div>
+
+<!-- QUIZ -->
+<div class="section-block" id="quiz" data-aos="fade-up">
+    <div class="section-title"><span>🧠</span> اختبار الفهم</div>
+    <div class="quiz-card" id="qq1">
+        <div class="quiz-q">١. T1 تقرأ صفاً، T2 تُعدّله وتُعتمد، T1 تقرأه مرة أخرى وتجده مختلفاً. ما هذه المشكلة؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(1,this,false)">Dirty Read</div>
+            <div class="quiz-opt" onclick="ans(1,this,true)">Non-Repeatable Read — نفس الصف، نفس الـ Transaction، نتائج مختلفة. الحل: REPEATABLE READ.</div>
+            <div class="quiz-opt" onclick="ans(1,this,false)">Phantom Read</div>
+        </div>
+        <div class="quiz-fb" id="fb1"></div>
+    </div>
+    <div class="quiz-card" id="qq2">
+        <div class="quiz-q">٢. ما الفرق بين Phantom Read وNon-Repeatable Read؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(2,this,false)">لا فرق</div>
+            <div class="quiz-opt" onclick="ans(2,this,true)">Non-Repeatable: صف موجود يتغيّر (UPDATE من T2). Phantom: صفوف جديدة تظهر (INSERT من T2). الأول يحتاج REPEATABLE READ، الثاني يحتاج SERIALIZABLE.</div>
+            <div class="quiz-opt" onclick="ans(2,this,false)">Phantom أبسط وأقل خطورة</div>
+        </div>
+        <div class="quiz-fb" id="fb2"></div>
+    </div>
+    <div class="quiz-card" id="qq3">
+        <div class="quiz-q">٣. ما أبسط وأأمن طريقة لتجنب Lost Update عند زيادة stock؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(3,this,false)">SELECT stock ثم UPDATE stock = stock_var + 1</div>
+            <div class="quiz-opt" onclick="ans(3,this,true)">UPDATE inventory SET stock = stock + 1 WHERE id = ? — Atomic operation مباشرة بدون Read في الـ Application. PostgreSQL يُقفّل داخلياً.</div>
+            <div class="quiz-opt" onclick="ans(3,this,false)">SERIALIZABLE دائماً</div>
+        </div>
+        <div class="quiz-fb" id="fb3"></div>
+    </div>
+    <div class="quiz-card" id="qq4">
+        <div class="quiz-q">٤. T1 تقرأ بيانات T2 قبل أن تُعتمدها، ثم T2 تُنفّذ ROLLBACK. ما المشكلة؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(4,this,false)">Lost Update</div>
+            <div class="quiz-opt" onclick="ans(4,this,true)">Dirty Read — T1 بنت قرارات على بيانات غير معتمدة اختفت لاحقاً. الحل: READ COMMITTED (الافتراضي في PostgreSQL يمنعه أصلاً).</div>
+            <div class="quiz-opt" onclick="ans(4,this,false)">Phantom Read</div>
+        </div>
+        <div class="quiz-fb" id="fb4"></div>
+    </div>
+    <div class="quiz-score-box" id="score-box">
+        <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+        <p id="score-msg" style="color:#94A3B8;"></p>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <a href="acid_transactions.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: ACID</a>
+    <a href="isolation_levels.html" class="bnav-btn" style="color:#FDBA74;">التالي: Isolation Levels <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 7: Concurrency Problems</footer>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+AOS.init({duration:700,once:true,offset:80});
+window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+const fbs={
+    1:{c:'✅ Non-Repeatable Read: نفس الصف يُعاد قراءته بنتيجة مختلفة في نفس Transaction (T2 عدّلته واعتمدته). الحل في PostgreSQL: SET TRANSACTION ISOLATION LEVEL REPEATABLE READ.',w:'❌ Dirty Read: T1 تقرأ بيانات T2 قبل COMMIT. Phantom: صفوف جديدة تظهر من INSERT. Non-Repeatable: تغيير صف موجود من UPDATE.'},
+    2:{c:'✅ Non-Repeatable: T2 تُعدّل صفاً موجوداً (UPDATE) → T1 تراه مختلفاً في نفس الـ Transaction. Phantom: T2 تُضيف صفوفاً جديدة (INSERT) → T1 تجد عددا مختلفاً في نفس الـ Query. المستويات مختلفة.',w:'❌ الفرق جوهري: UPDATE يسبب Non-Repeatable, INSERT يسبب Phantom. الحلول مختلفة أيضاً.'},
+    3:{c:'✅ UPDATE stock = stock + 1 هي Atomic Operation في قاعدة البيانات — القراءة والتعديل يحدثان في عملية atomic واحدة داخل الـ DB Engine بدون Window للـ Race Condition. هذا أفضل من SELECT+UPDATE منفصلتين.',w:'❌ SELECT stock ثم UPDATE stock = var + 1: هذا Read-Modify-Write في الـ Application — حساس جداً للـ Race Condition. بعد SELECT وقبل UPDATE، T2 قادرة على تعديل الـ stock.'},
+    4:{c:'✅ Dirty Read: T1 قرأت بيانات uncommitted من T2. بعد ROLLBACK من T2، تلك البيانات اختفت لكن T1 استخدمتها. PostgreSQL بـ READ COMMITTED الافتراضي يمنع هذا تماماً.',w:'❌ Lost Update: T2 تكتب فوق تعديل T1. Phantom: صفوف جديدة. Dirty Read: قراءة uncommitted data.'}
+};
+let answered=0,score=0;
+function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';document.getElementById('score-text').textContent=`نتيجتك: ${score} / 4`;document.getElementById('score-msg').textContent=score===4?'🎉 Concurrency Expert!':score>=3?'👏 كويس!':'💪 راجع الدرس.';document.getElementById('score-text').style.color=score===4?'#34D399':score>=3?'#FBBF24':'#F87171';}}
+</script>
+</body>
+</html>

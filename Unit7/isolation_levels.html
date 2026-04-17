@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Isolation Levels — مستويات العزل | Database Mastery</title>
+    <meta name="description" content="دليل شامل لمستويات العزل: READ UNCOMMITTED، READ COMMITTED، REPEATABLE READ، SERIALIZABLE — MVCC في PostgreSQL، متى تستخدم كل مستوى، Trade-offs الأداء.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global-db.css">
+    <style>
+        :root{--accent:#818CF8;--accent-lt:#A5B4FC;}
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;text-decoration:none;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#4F46E5,#312E81);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#A5B4FC;}
+        .nav-toc{display:flex;gap:1.3rem;font-size:.82rem;}
+        .nav-toc a{color:#64748B;text-decoration:none;transition:.2s;}
+        .nav-toc a:hover{color:#A5B4FC;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#4F46E5,#10B981);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(79,70,229,.12),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#A5B4FC;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#4F46E5;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2rem,5vw,3.6rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#818CF8,#10B981);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.05rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(79,70,229,.1);border:1px solid rgba(79,70,229,.2);font-size:.78rem;color:#A5B4FC;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.tip{background:rgba(79,70,229,.07);border:1px solid rgba(79,70,229,.2);}
+        .callout.tip .chead{color:#A5B4FC;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);}
+        .callout.realworld .chead{color:#34D399;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
+        .iso-levels{display:flex;flex-direction:column;gap:.8rem;margin:1.5rem 0;}
+        .iso-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1.2rem 1.5rem;border-right:4px solid;}
+        .iso-card h3{font-size:.95rem;font-weight:900;margin-bottom:.4rem;}
+        .iso-card p{font-size:.88rem;color:#94A3B8;line-height:1.9;margin:0;}
+        .anomaly-badge{display:inline-flex;gap:.3rem;flex-wrap:wrap;margin-top:.5rem;}
+        .ab{font-size:.7rem;padding:.15rem .5rem;border-radius:5px;font-weight:700;}
+        .ab.yes{background:rgba(16,185,129,.12);color:#34D399;border:1px solid rgba(16,185,129,.2);}
+        .ab.no{background:rgba(239,68,68,.12);color:#F87171;border:1px solid rgba(239,68,68,.2);}
+        .code-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:1rem 0;border:1px solid rgba(255,255,255,.05);}
+        .code-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .cdot{width:9px;height:9px;border-radius:50%;}.cdot.r{background:#FF5F57}.cdot.y{background:#FDBC40}.cdot.g{background:#27C93F}
+        .clabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .cbody{padding:1rem 1.2rem;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.fn{color:#22D3EE}.cn{color:#A5B4FC}
+        .big-table{width:100%;border-collapse:collapse;font-size:.8rem;margin:1.5rem 0;overflow-x:auto;}
+        .big-table th{padding:.5rem .8rem;background:rgba(79,70,229,.08);border:1px solid rgba(255,255,255,.06);color:#A5B4FC;}
+        .big-table td{padding:.45rem .8rem;border:1px solid rgba(255,255,255,.05);color:#CBD5E1;text-align:center;}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;text-decoration:none;color:#E2E8F0;}
+        .bnav-btn:hover{background:rgba(79,70,229,.1);border-color:rgba(79,70,229,.3);transform:translateY(-2px);}
+    </style>
+</head>
+<body>
+<nav class="lesson-nav-bar">
+    <div class="nav-inner">
+        <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-shield-halved"></i></div>العودة للبوابة</a>
+        <div class="nav-toc">
+            <a href="#levels">المستويات</a>
+            <a href="#matrix">جدول المقارنة</a>
+            <a href="#mvcc">MVCC</a>
+            <a href="#when">متى تستخدم؟</a>
+            <a href="#quiz">اختبار</a>
+        </div>
+    </div>
+</nav>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
+
+<header class="hero" data-aos="fade-up">
+    <div class="lesson-badge"><span class="pulse"></span>الوحدة 7 — الدرس 3</div>
+    <h1>مستويات <span class="grad">العزل</span></h1>
+    <p class="en-title">Isolation Levels — READ COMMITTED · REPEATABLE READ · SERIALIZABLE · MVCC</p>
+    <p class="desc">الـ Isolation Level هو slider بين الأداء والأمان — كلما زاد العزل، ضعف الأداء والعكس. PostgreSQL يعطيك 4 مستويات — الفن هو معرفة متى تستخدم كل منها.</p>
+    <div class="learn-pills">
+        <span class="pill">READ UNCOMMITTED</span>
+        <span class="pill">READ COMMITTED (Default)</span>
+        <span class="pill">REPEATABLE READ</span>
+        <span class="pill">SERIALIZABLE</span>
+        <span class="pill">MVCC في PostgreSQL</span>
+        <span class="pill">SSI — Serializable Snapshot</span>
+        <span class="pill">Performance Trade-offs</span>
+    </div>
+</header>
+
+<div class="lesson-body">
+
+<!-- ISOLATION LEVELS -->
+<div class="section-block" id="levels" data-aos="fade-up">
+    <div class="section-title"><span>🛡️</span> المستويات الأربعة</div>
+    <p class="section-en">Four Isolation Levels — Lowest to Highest Protection</p>
+
+    <div class="iso-levels">
+        <div class="iso-card" style="border-right-color:#64748B;">
+            <h3 style="color:#64748B;">① READ UNCOMMITTED — لا يُستخدم عملياً</h3>
+            <p>يسمح بقراءة بيانات لم تُعتمد بعد. في PostgreSQL لا يُطبَّق فعلياً — يتصرف كـ READ COMMITTED.</p>
+            <div class="anomaly-badge">
+                <span class="ab no">✗ Dirty Read</span>
+                <span class="ab no">✗ Non-Rep</span>
+                <span class="ab no">✗ Phantom</span>
+                <span style="font-size:.72rem;color:#475569;margin-right:.3rem;">← ممكن</span>
+            </div>
+        </div>
+        <div class="iso-card" style="border-right-color:#FBBF24;">
+            <h3 style="color:#FBBF24;">② READ COMMITTED — الافتراضي في PostgreSQL</h3>
+            <p>كل Statement ترى Snapshot من بداية تنفيذها (ليس من بداية الـ Transaction). يمنع Dirty Read. الأداء الجيد مع الحماية الأساسية.</p>
+            <div class="anomaly-badge">
+                <span class="ab yes">✓ Dirty Read محمي</span>
+                <span class="ab no">✗ Non-Rep ممكن</span>
+                <span class="ab no">✗ Phantom ممكن</span>
+            </div>
+        </div>
+        <div class="iso-card" style="border-right-color:#38BDF8;">
+            <h3 style="color:#38BDF8;">③ REPEATABLE READ — Snapshot من بداية الـ Transaction</h3>
+            <p>كل الـ Queries في الـ Transaction ترى نفس الـ Snapshot من لحظة BEGIN. يمنع Dirty وNon-Repeatable. PostgreSQL يمنع Phantoms أيضاً بسبب MVCC.</p>
+            <div class="anomaly-badge">
+                <span class="ab yes">✓ Dirty محمي</span>
+                <span class="ab yes">✓ Non-Rep محمي</span>
+                <span class="ab yes">✓ Phantom محمي (PostgreSQL)</span>
+            </div>
+        </div>
+        <div class="iso-card" style="border-right-color:#A78BFA;">
+            <h3 style="color:#A78BFA;">④ SERIALIZABLE — التنفيذ المتسلسل الكامل</h3>
+            <p>يضمن أن النتيجة هي كما لو كانت كل الـ Transactions تنفّذت واحدة تلو الأخرى. أعلى حماية، أعلى صعوبة للأداء. يستخدم SSI (Serializable Snapshot Isolation).</p>
+            <div class="anomaly-badge">
+                <span class="ab yes">✓ كل الأنواع محمية</span>
+                <span class="ab yes">✓ Write Skew محمي</span>
+                <span style="font-size:.72rem;color:#F87171;margin-right:.3rem;">← قد يُرجع Serialization Error</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- COMPARISON MATRIX -->
+<div class="section-block" id="matrix" data-aos="fade-up">
+    <div class="section-title"><span>📊</span> جدول المقارنة الكامل</div>
+    <p class="section-en">Full Comparison — Anomalies, Performance, and Use Cases</p>
+
+    <div style="overflow-x:auto;">
+    <table class="big-table">
+        <thead><tr>
+            <th>المستوى</th>
+            <th>Dirty Read</th>
+            <th>Non-Repeatable</th>
+            <th>Phantom</th>
+            <th>Write Skew</th>
+            <th>الأداء</th>
+            <th>الاستخدام المثالي</th>
+        </tr></thead>
+        <tbody>
+            <tr>
+                <td style="font-weight:700;color:#64748B;text-align:right;">READ UNCOMMITTED</td>
+                <td style="color:#F87171;">ممكن</td><td style="color:#F87171;">ممكن</td>
+                <td style="color:#F87171;">ممكن</td><td style="color:#F87171;">ممكن</td>
+                <td style="color:#34D399;">⚡⚡⚡⚡</td>
+                <td style="text-align:right;color:#64748B;">لا يُستخدم</td>
+            </tr>
+            <tr style="background:rgba(79,70,229,.04);">
+                <td style="font-weight:700;color:#FBBF24;text-align:right;">READ COMMITTED ★</td>
+                <td style="color:#34D399;">✓ محمي</td><td style="color:#F87171;">ممكن</td>
+                <td style="color:#F87171;">ممكن</td><td style="color:#F87171;">ممكن</td>
+                <td style="color:#34D399;">⚡⚡⚡</td>
+                <td style="text-align:right;font-size:.78rem;">90% من التطبيقات</td>
+            </tr>
+            <tr>
+                <td style="font-weight:700;color:#38BDF8;text-align:right;">REPEATABLE READ</td>
+                <td style="color:#34D399;">✓</td><td style="color:#34D399;">✓</td>
+                <td style="color:#34D399;">✓ (PG)</td><td style="color:#F87171;">ممكن</td>
+                <td style="color:#FBBF24;">⚡⚡</td>
+                <td style="text-align:right;font-size:.78rem;">Reports, Analytics</td>
+            </tr>
+            <tr>
+                <td style="font-weight:700;color:#A78BFA;text-align:right;">SERIALIZABLE</td>
+                <td style="color:#34D399;">✓</td><td style="color:#34D399;">✓</td>
+                <td style="color:#34D399;">✓</td><td style="color:#34D399;">✓</td>
+                <td style="color:#F87171;">⚡</td>
+                <td style="text-align:right;font-size:.78rem;">Financial, Medical</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">PostgreSQL — Setting Isolation Levels</span></div>
+        <div class="cbody">
+<span class="cmt">-- لـ Transaction محددة (الأشيع)</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">SET TRANSACTION ISOLATION LEVEL</span> <span class="cn">REPEATABLE READ</span>;
+<span class="cmt">-- ... queries ...</span>
+<span class="kw">COMMIT</span>;
+
+<span class="cmt">-- مختصر (في نفس السطر)</span>
+<span class="kw">BEGIN ISOLATION LEVEL</span> <span class="cn">SERIALIZABLE</span>;
+
+<span class="cmt">-- لـ Session كاملة</span>
+<span class="kw">SET</span> default_transaction_isolation = <span class="str">'repeatable read'</span>;
+
+<span class="cmt">-- لـ Database كاملة (يحتاج ALTER DATABASE)</span>
+<span class="kw">ALTER DATABASE</span> ecommerce_db <span class="kw">SET</span> default_transaction_isolation = <span class="str">'read committed'</span>;
+
+<span class="cmt">-- الاستعلام عن الـ Level الحالي</span>
+<span class="kw">SHOW</span> transaction_isolation;
+<span class="cmt">-- → read committed</span>
+        </div>
+    </div>
+</div>
+
+<!-- MVCC -->
+<div class="section-block" id="mvcc" data-aos="fade-up">
+    <div class="section-title"><span>🔮</span> MVCC — كيف يُحقق PostgreSQL العزل؟</div>
+    <p class="section-en">MVCC — Multi-Version Concurrency Control — No Read Locks</p>
+
+    <p class="body-text">سرّ قوة PostgreSQL في الـ Concurrency هو <strong>MVCC (Multi-Version Concurrency Control)</strong> — بدلاً من قفل الصفوف عند القراءة، يحتفظ بنسخ متعددة من كل صف.</p>
+
+    <div class="callout tip">
+        <div class="chead">💡 فكرة MVCC</div>
+        <p>
+        كل صف في PostgreSQL لديه:<br>
+        • <code style="font-family:'Fira Code',monospace;color:#A5B4FC;">xmin</code>: الـ Transaction ID التي أنشأته<br>
+        • <code style="font-family:'Fira Code',monospace;color:#A5B4FC;">xmax</code>: الـ Transaction ID التي حذفته (أو 0 لو لا يزال حياً)<br>
+        عند القراءة، PostgreSQL يُفلتر الصفوف المرئية بناءً على الـ Snapshot — بدون locks على القراءة!
+        </p>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">MVCC — رؤية الـ Transaction Metadata</span></div>
+        <div class="cbody">
+<span class="cmt">-- رؤية الـ MVCC metadata</span>
+<span class="kw">SELECT</span>
+  product_id,
+  name,
+  price,
+  xmin,                <span class="cmt">-- Transaction ID التي أنشأت هذه النسخة</span>
+  xmax,                <span class="cmt">-- Transaction ID التي حذفتها (0 = لا يزال حياً)</span>
+  ctid                 <span class="cmt">-- Physical location (page, row)</span>
+<span class="kw">FROM</span> product;
+
+<span class="cmt">-- MVCC يعني: Writers لا يُحجبون Readers والعكس</span>
+<span class="cmt">-- T1 تقرأ بيانات قديمة (Old Snapshot)</span>
+<span class="cmt">-- T2 تكتب نسخة جديدة من نفس الصف</span>
+<span class="cmt">-- كلاهما لا يتعطل بسبب الآخر!</span>
+
+<span class="cmt">-- VACUUM: ينظّف النسخ القديمة (Dead Tuples)</span>
+<span class="kw">VACUUM</span> <span class="tb">product</span>;            <span class="cmt">-- تنظيف يدوي</span>
+<span class="kw">VACUUM ANALYZE</span> <span class="tb">product</span>;  <span class="cmt">-- تنظيف + تحديث الإحصائيات</span>
+<span class="kw">VACUUM FULL</span> <span class="tb">product</span>;     <span class="cmt">-- إعادة كتابة كاملة (يُقفّل الجدول!)</span>
+
+<span class="cmt">-- Autovacuum يعمل تلقائياً في الـ Background</span>
+<span class="cmt">-- يتحكم فيه: autovacuum_vacuum_threshold, autovacuum_vacuum_scale_factor</span>
+        </div>
+    </div>
+</div>
+
+<!-- WHEN TO USE -->
+<div class="section-block" id="when" data-aos="fade-up">
+    <div class="section-title"><span>🎯</span> متى تستخدم كل مستوى؟</div>
+    <p class="section-en">Decision Guide — Which Isolation Level for Your Use Case</p>
+
+    <div class="callout realworld">
+        <div class="chead">🏦 READ COMMITTED — الاختيار الافتراضي (90% من الحالات)</div>
+        <p>
+        ✅ رؤية الإعلانات والمنتجات<br>
+        ✅ قراءة قائمة الطلبات<br>
+        ✅ عمليات CRUD اليومية في E-Commerce<br>
+        ✅ API endpoints عامة<br>
+        لأن كل Statement ترى أحدث بيانات مُعتمدة — مقبول لمعظم Reads.
+        </p>
+    </div>
+
+    <div class="callout tip">
+        <div class="chead">📊 REPEATABLE READ — للتقارير والإحصائيات</div>
+        <p>
+        ✅ إنشاء تقرير مالي شهري<br>
+        ✅ حساب إحصائيات المبيعات لفترة محددة<br>
+        ✅ Export كبير للبيانات<br>
+        لأن التقرير يريد لحظة متسقة واحدة — لا يريد أن يرى بيانات تتغيّر أثناء معالجته.
+        </p>
+    </div>
+
+    <div class="callout" style="background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.2);">
+        <div class="chead" style="color:#A78BFA;font-weight:800;margin-bottom:.5rem;">🔐 SERIALIZABLE — للعمليات الحساسة</div>
+        <p>
+        ✅ تحويلات مالية مع قواعد معقدة<br>
+        ✅ حجز المقاعد في الطيران (Overbooking Prevention)<br>
+        ✅ أنظمة الرعاية الصحية (لا يجوز خطأ!)<br>
+        ✅ عندما تخشى الـ Write Skew<br>
+        ⚠️ تذكّر: يمكن أن يُرجع Serialization Failure — يجب Retry Logic.
+        </p>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">SERIALIZABLE — Retry Pattern</span></div>
+        <div class="cbody">
+<span class="cmt">// Node.js — Retry Pattern for SERIALIZABLE Transactions</span>
+<span class="kw">async function</span> <span class="fn">withSerializableRetry</span>(fn: () => <span class="cls">Promise</span>&lt;<span class="kw">any</span>&gt;, maxRetries = <span class="num">5</span>) {
+  <span class="kw">for</span> (<span class="kw">let</span> attempt = <span class="num">1</span>; attempt <= maxRetries; attempt++) {
+    <span class="kw">const</span> client = <span class="kw">await</span> pool.<span class="fn">connect</span>();
+    <span class="kw">try</span> {
+      <span class="kw">await</span> client.<span class="fn">query</span>(<span class="str">'BEGIN ISOLATION LEVEL SERIALIZABLE'</span>);
+      <span class="kw">const</span> result = <span class="kw">await</span> fn();
+      <span class="kw">await</span> client.<span class="fn">query</span>(<span class="str">'COMMIT'</span>);
+      <span class="kw">return</span> result;
+    } <span class="kw">catch</span> (err: <span class="kw">any</span>) {
+      <span class="kw">await</span> client.<span class="fn">query</span>(<span class="str">'ROLLBACK'</span>);
+      <span class="cmt">// Serialization Failure عند إعادة المحاولة</span>
+      <span class="kw">if</span> (err.code === <span class="str">'40001'</span> && attempt < maxRetries) {
+        <span class="kw">const</span> delay = <span class="num">50</span> * Math.<span class="fn">pow</span>(<span class="num">2</span>, attempt); <span class="cmt">// Exponential backoff</span>
+        <span class="kw">await new</span> <span class="cls">Promise</span>(r => <span class="fn">setTimeout</span>(r, delay));
+        <span class="kw">continue</span>;
+      }
+      <span class="kw">throw</span> err;
+    } <span class="kw">finally</span> {
+      client.<span class="fn">release</span>();
+    }
+  }
+}
+<span class="cmt">// PG Error 40001 = serialization_failure</span>
+<span class="cmt">// PG Error 40P01 = deadlock_detected</span>
+        </div>
+    </div>
+</div>
+
+<!-- QUIZ -->
+<div class="section-block" id="quiz" data-aos="fade-up">
+    <div class="section-title"><span>🧠</span> اختبار الفهم</div>
+    <div class="quiz-card" id="qq1">
+        <div class="quiz-q">١. ما الـ Isolation Level الافتراضي في PostgreSQL وما الذي يمنعه؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(1,this,false)">REPEATABLE READ — يمنع Non-Repeatable وPhantom</div>
+            <div class="quiz-opt" onclick="ans(1,this,true)">READ COMMITTED — يمنع Dirty Read فقط. Non-Repeatable وPhantom ممكنان. مثالي لـ 90% من التطبيقات لأوازن بين الأمان والأداء.</div>
+            <div class="quiz-opt" onclick="ans(1,this,false)">SERIALIZABLE — يمنع كل الأنواع</div>
+        </div>
+        <div class="quiz-fb" id="fb1"></div>
+    </div>
+    <div class="quiz-card" id="qq2">
+        <div class="quiz-q">٢. ما MVCC وكيف يختلف عن Traditional Locking؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(2,this,false)">MVCC أبطأ من Locking</div>
+            <div class="quiz-opt" onclick="ans(2,this,true)">MVCC يحتفظ بنسخ متعددة من كل صف — القراءة ترى snapshot مناسبة بدون Lock. Writers لا يمنعون Readers والعكس. Traditional Locking: القراءة تُقفّل — Writers يمنعون Readers.</div>
+            <div class="quiz-opt" onclick="ans(2,this,false)">MVCC لا يدعم Isolation</div>
+        </div>
+        <div class="quiz-fb" id="fb2"></div>
+    </div>
+    <div class="quiz-card" id="qq3">
+        <div class="quiz-q">٣. تنفّذ تقريراً مالياً يحسب إجمالي المبيعات لشهر كامل — أي مستوى عزل تختار؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(3,this,false)">READ COMMITTED</div>
+            <div class="quiz-opt" onclick="ans(3,this,true)">REPEATABLE READ — يضمن رؤية Snapshot ثابت من بداية التقرير. بدونه، صفقات جديدة مُسجَّلة أثناء معالجة التقرير قد تفسد الأرقام.</div>
+            <div class="quiz-opt" onclick="ans(3,this,false)">READ UNCOMMITTED</div>
+        </div>
+        <div class="quiz-fb" id="fb3"></div>
+    </div>
+    <div class="quiz-card" id="qq4">
+        <div class="quiz-q">٤. ماذا يحدث عند Serialization Failure في PostgreSQL (Error 40001)؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(4,this,false)">يُدمر قاعدة البيانات</div>
+            <div class="quiz-opt" onclick="ans(4,this,true)">PostgreSQL يُلغي Transaction واحدة ويُرجع Error 40001 — يجب الـ Application يُعيد المحاولة (Retry). هذا التصميم طبيعي ومتوقع مع SERIALIZABLE.</div>
+            <div class="quiz-opt" onclick="ans(4,this,false)">يُعيد المحاولة تلقائياً</div>
+        </div>
+        <div class="quiz-fb" id="fb4"></div>
+    </div>
+    <div class="quiz-score-box" id="score-box">
+        <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+        <p id="score-msg" style="color:#94A3B8;"></p>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <a href="concurrency_problems.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: Concurrency Problems</a>
+    <a href="locking_recovery.html" class="bnav-btn" style="color:#A5B4FC;">التالي: Locks &amp; Recovery <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 7: Isolation Levels</footer>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+AOS.init({duration:700,once:true,offset:80});
+window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+const fbs={
+    1:{c:'✅ READ COMMITTED (الافتراضي): كل Statement ترى أحدث committed data وقت تنفيذها. يمنع Dirty Read فقط. مثالي لـ CRUD العادي حيث الأداء مهم.',w:'❌ PostgreSQL الافتراضي = READ COMMITTED. REPEATABLE READ وSERIALIZABLE توفران أمان أكثر لكن أداء أقل.'},
+    2:{c:'✅ MVCC (Multi-Version Concurrency Control): كل صف له نسخ متعددة (xmin/xmax). القراءة لا تُقفّل الكتابة والعكس — Concurrency عالية. Traditional: Readers يُقفلون Readers&Writers أو العكس — يُخلق Contention.',w:'❌ MVCC فكرته Snapshot لا Locking — أسرع للـ Read-Heavy Workloads. لكن يحتاج VACUUM لتنظيف Dead Tuples.'},
+    3:{c:'✅ REPEATABLE READ: يضمن Consistent Snapshot من لحظة BEGIN. التقرير يرى نفس البيانات بغض النظر عن ما يحدث أثناء تنفيذه. بدونه (READ COMMITTED) الأرقام قد تختلف بين أجزاء التقرير.',w:'❌ READ COMMITTED: كل Statement ترى أحدث data — سيئ للتقارير الطويلة. SERIALIZABLE: أفضل لكن أثقل. REPEATABLE READ هو التوازن.'},
+    4:{c:'✅ Error 40001 = serialization_failure: PostgreSQL يُلغي Transaction واحدة. الـ Application يجب أن تُعيد المحاولة مع Exponential Backoff. هذا سلوك طبيعي ومتوقع مع SERIALIZABLE — ليس خطأً مفاجئاً.',w:'❌ 40001 لا يُدمر شيئاً — PostgreSQL متحكّم. Transaction تُلغى فقط. يجب Retry Logic في الـ Application.'}
+};
+let answered=0,score=0;
+function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';document.getElementById('score-text').textContent=`نتيجتك: ${score} / 4`;document.getElementById('score-msg').textContent=score===4?'🎉 Isolation Expert!':score>=3?'👏 كويس!':'💪 راجع الدرس.';document.getElementById('score-text').style.color=score===4?'#34D399':score>=3?'#FBBF24':'#F87171';}}
+</script>
+</body>
+</html>
