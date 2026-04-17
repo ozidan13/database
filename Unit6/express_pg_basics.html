@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Express + PostgreSQL — ربط Node.js | Database Mastery</title>
+    <meta name="description" content="دليل شامل لربط Express.js بـ PostgreSQL: pg library، Connection Pooling، Parameterized Queries، SQL Injection، Error Handling، Repository Pattern — مع أمثلة E-Commerce API كاملة.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global-db.css">
+    <style>
+        :root{--accent:#68D391;--accent-lt:#9AE6B4;}
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;text-decoration:none;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#48BB78,#276749);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#9AE6B4;}
+        .nav-toc{display:flex;gap:1.3rem;font-size:.82rem;}
+        .nav-toc a{color:#64748B;text-decoration:none;transition:.2s;}
+        .nav-toc a:hover{color:#9AE6B4;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#48BB78,#0EA5E9);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(72,187,120,.1),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#9AE6B4;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#48BB78;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2rem,5vw,3.6rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#48BB78,#0EA5E9);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.05rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(72,187,120,.1);border:1px solid rgba(72,187,120,.2);font-size:.78rem;color:#9AE6B4;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.why{background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);}
+        .callout.why .chead{color:#22D3EE;font-weight:800;margin-bottom:.5rem;}
+        .callout.tip{background:rgba(72,187,120,.07);border:1px solid rgba(72,187,120,.2);}
+        .callout.tip .chead{color:#9AE6B4;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.2);}
+        .callout.realworld .chead{color:#A78BFA;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
+        .code-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:1rem 0;border:1px solid rgba(255,255,255,.05);}
+        .code-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .cdot{width:9px;height:9px;border-radius:50%;}.cdot.r{background:#FF5F57}.cdot.y{background:#FDBC40}.cdot.g{background:#27C93F}
+        .clabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .cbody{padding:1rem 1.2rem;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.fn{color:#22D3EE}.cn{color:#A5B4FC}.prop{color:#60A5FA}.cls{color:#FBBF24}.met{color:#22D3EE}
+        .arch-flow{display:flex;flex-direction:column;gap:.5rem;margin:1.5rem 0;}
+        .af-row{display:flex;align-items:center;gap:.8rem;}
+        .af-box{flex:1;padding:.7rem 1rem;border-radius:10px;font-size:.85rem;font-weight:700;text-align:center;}
+        .af-arrow{color:#475569;font-size:1rem;flex-shrink:0;}
+        .practice-block{background:rgba(15,23,42,.8);border:1px solid rgba(255,255,255,.07);border-radius:18px;overflow:hidden;margin:2rem 0;}
+        .practice-header{background:rgba(72,187,120,.1);padding:1.2rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.06);}
+        .practice-header h3{font-size:1.1rem;font-weight:800;color:#9AE6B4;margin:0;}
+        .practice-body{padding:1.8rem;}
+        .task-list{list-style:none;padding:0;margin-bottom:1.5rem;}
+        .task-list li{padding:.5rem 0;font-size:.93rem;color:#CBD5E1;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:.5rem;align-items:flex-start;}
+        .tnum{background:rgba(72,187,120,.15);color:#9AE6B4;font-weight:800;font-size:.78rem;padding:.1rem .5rem;border-radius:5px;flex-shrink:0;font-family:'Inter',sans-serif;margin-top:.2rem;}
+        .sol-btn{width:100%;padding:.9rem;border-radius:10px;background:rgba(72,187,120,.1);border:1px solid rgba(72,187,120,.2);color:#9AE6B4;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:.3s;}
+        .sol-btn:hover{background:rgba(72,187,120,.2);}
+        .sol-content{display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.05);}
+        .sol-content.open{display:block;}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;text-decoration:none;color:#E2E8F0;}
+        .bnav-btn:hover{background:rgba(72,187,120,.1);border-color:rgba(72,187,120,.3);transform:translateY(-2px);}
+    </style>
+</head>
+<body>
+<nav class="lesson-nav-bar">
+    <div class="nav-inner">
+        <a href="../index.html" class="back-btn"><div class="icon"><i class="fab fa-node-js"></i></div>العودة للبوابة</a>
+        <div class="nav-toc">
+            <a href="#setup">Setup</a>
+            <a href="#pool">Connection Pool</a>
+            <a href="#queries">Queries</a>
+            <a href="#security">SQL Injection</a>
+            <a href="#pattern">Repository</a>
+            <a href="#quiz">اختبار</a>
+        </div>
+    </div>
+</nav>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
+
+<header class="hero" data-aos="fade-up">
+    <div class="lesson-badge"><span class="pulse"></span>الوحدة 6 — الدرس 1</div>
+    <h1><span class="grad">Express + PostgreSQL</span></h1>
+    <p class="en-title">Raw pg Driver, Connection Pooling, Parameterized Queries, Repository Pattern</p>
+    <p class="desc">قبل ما تتعلم الـ ORM، لازم تفهم كيف يشتغل الاتصال بقاعدة البيانات مباشرة من Node.js — ده اللي الـ ORM بيعمله تحت الغطاء.</p>
+    <div class="learn-pills">
+        <span class="pill">pg library</span>
+        <span class="pill">Connection Pool</span>
+        <span class="pill">Parameterized Queries</span>
+        <span class="pill">SQL Injection Protection</span>
+        <span class="pill">Transaction في Node.js</span>
+        <span class="pill">Repository Pattern</span>
+        <span class="pill">Error Handling</span>
+        <span class="pill">Environment Variables</span>
+    </div>
+</header>
+
+<div class="lesson-body">
+
+<!-- SETUP -->
+<div class="section-block" id="setup" data-aos="fade-up">
+    <div class="section-title"><span>⚙️</span> Setup — التثبيت والإعداد</div>
+    <p class="section-en">Installing pg and Setting Up the Project Structure</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Terminal — Project Setup</span></div>
+        <div class="cbody">
+<span class="cmt"># إنشاء المشروع</span>
+mkdir ecommerce-api && cd ecommerce-api
+npm init -y
+
+<span class="cmt"># تثبيت الحزم الأساسية</span>
+npm install express pg dotenv
+npm install -D typescript @types/node @types/express @types/pg ts-node nodemon
+
+<span class="cmt"># هيكل المشروع المقترح</span>
+src/
+  db/
+    pool.ts          <span class="cmt"># Connection Pool</span>
+    migrations/      <span class="cmt"># SQL migration files</span>
+  repositories/
+    customer.repo.ts <span class="cmt"># Data Access Layer</span>
+    product.repo.ts
+  routes/
+    customer.routes.ts
+  middleware/
+    error.middleware.ts
+  app.ts
+.env
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">.env — Environment Variables</span></div>
+        <div class="cbody">
+<span class="cmt"># لا ترفع هذا الملف على GitHub أبداً!</span>
+DATABASE_URL=postgresql://user:password@localhost:5432/ecommerce_db
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=ecommerce_db
+DB_USER=postgres
+DB_PASSWORD=secret
+DB_MAX_CONNECTIONS=20
+NODE_ENV=development
+PORT=3000
+        </div>
+    </div>
+</div>
+
+<!-- CONNECTION POOL -->
+<div class="section-block" id="pool" data-aos="fade-up">
+    <div class="section-title"><span>🔌</span> Connection Pool — بركة الاتصالات</div>
+    <p class="section-en">Why Pooling? — Managing Database Connections Efficiently</p>
+
+    <p class="body-text">فتح connection جديد لكل request = بطيء جداً (50-200ms لكل اتصال). الـ Pool بيعمل مجموعة من الاتصالات الجاهزة ويُعيد استخدامها — بينقص وقت الاستجابة بشكل جذري.</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">src/db/pool.ts — Connection Pool Setup</span></div>
+        <div class="cbody">
+<span class="kw">import</span> { Pool, PoolClient } <span class="kw">from</span> <span class="str">'pg'</span>;
+<span class="kw">import</span> <span class="str">'dotenv/config'</span>;
+
+<span class="kw">const</span> pool = <span class="kw">new</span> <span class="cls">Pool</span>({
+  host:     process.env.DB_HOST     || <span class="str">'localhost'</span>,
+  port:     Number(process.env.DB_PORT) || <span class="num">5432</span>,
+  database: process.env.DB_NAME     || <span class="str">'ecommerce_db'</span>,
+  user:     process.env.DB_USER     || <span class="str">'postgres'</span>,
+  password: process.env.DB_PASSWORD || <span class="str">''</span>,
+
+  <span class="cmt">// Pool configuration</span>
+  max:             Number(process.env.DB_MAX_CONNECTIONS) || <span class="num">20</span>,
+  min:             <span class="num">2</span>,           <span class="cmt">// الحد الأدنى من الاتصالات الجاهزة دائماً</span>
+  idleTimeoutMillis:     <span class="num">30000</span>, <span class="cmt">// اتصال خامل يُغلق بعد 30 ثانية</span>
+  connectionTimeoutMillis: <span class="num">5000</span>,<span class="cmt">// ينتظر 5 ثوانٍ إذا الـ Pool ممتلئة</span>
+  allowExitOnIdle: <span class="kw">true</span>,
+});
+
+<span class="cmt">// مراقبة أحداث الـ Pool</span>
+pool.on(<span class="str">'connect'</span>, (client: PoolClient) => {
+  console.log(<span class="str">'New DB connection established'</span>);
+});
+pool.on(<span class="str">'error'</span>, (err: Error) => {
+  console.error(<span class="str">'Unexpected DB pool error:'</span>, err);
+  process.exit(<span class="num">-1</span>); <span class="cmt">// اخرج — الـ Pool في حالة خطأ</span>
+});
+
+<span class="cmt">// Helper: تنفيذ query بسيطة</span>
+<span class="kw">export const</span> <span class="fn">query</span> = (text: <span class="cls">string</span>, params?: <span class="kw">any</span>[]) =>
+  pool.<span class="met">query</span>(text, params);
+
+<span class="cmt">// Helper: فتح client للـ Transactions</span>
+<span class="kw">export const</span> <span class="fn">getClient</span> = () => pool.<span class="met">connect</span>();
+
+<span class="kw">export default</span> pool;
+        </div>
+    </div>
+</div>
+
+<!-- QUERIES -->
+<div class="section-block" id="queries" data-aos="fade-up">
+    <div class="section-title"><span>🔍</span> Queries — أنماط الاستعلام الكاملة</div>
+    <p class="section-en">CRUD, Parameterized Queries, Transactions in Node.js</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">src/repositories/customer.repo.ts — Full CRUD</span></div>
+        <div class="cbody">
+<span class="kw">import</span> { query, getClient } <span class="kw">from</span> <span class="str">'../db/pool'</span>;
+
+<span class="kw">export interface</span> <span class="cls">Customer</span> {
+  customer_id: <span class="cls">number</span>;
+  email: <span class="cls">string</span>;
+  full_name: <span class="cls">string</span>;
+  phone?: <span class="cls">string</span>;
+}
+
+<span class="kw">export class</span> <span class="cls">CustomerRepository</span> {
+
+  <span class="cmt">// ══ READ ALL with pagination ══</span>
+  <span class="kw">async</span> <span class="met">findAll</span>(page = <span class="num">1</span>, limit = <span class="num">20</span>): <span class="cls">Promise</span>&lt;<span class="cls">Customer</span>[]&gt; {
+    <span class="kw">const</span> offset = (page - <span class="num">1</span>) * limit;
+    <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">query</span>(
+      <span class="str">`SELECT customer_id, email, full_name, phone
+       FROM   customer
+       WHERE  is_active = true
+       ORDER BY created_at DESC
+       LIMIT $1 OFFSET $2`</span>,
+      [limit, offset]
+    );
+    <span class="kw">return</span> result.rows;
+  }
+
+  <span class="cmt">// ══ READ ONE by ID ══</span>
+  <span class="kw">async</span> <span class="met">findById</span>(id: <span class="cls">number</span>): <span class="cls">Promise</span>&lt;<span class="cls">Customer</span> | <span class="kw">null</span>&gt; {
+    <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">query</span>(
+      <span class="str">`SELECT * FROM customer WHERE customer_id = $1 AND is_active = true`</span>,
+      [id]
+    );
+    <span class="kw">return</span> result.rows[<span class="num">0</span>] || <span class="kw">null</span>;
+  }
+
+  <span class="cmt">// ══ CREATE ══</span>
+  <span class="kw">async</span> <span class="met">create</span>(data: <span class="cls">Pick</span>&lt;<span class="cls">Customer</span>, <span class="str">'email'</span>|<span class="str">'full_name'</span>|<span class="str">'phone'</span>&gt; & { password_hash: <span class="cls">string</span> }): <span class="cls">Promise</span>&lt;<span class="cls">Customer</span>&gt; {
+    <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">query</span>(
+      <span class="str">`INSERT INTO customer (email, full_name, phone, password_hash)
+       VALUES ($1, $2, $3, $4)
+       RETURNING customer_id, email, full_name, phone`</span>,
+      [data.email, data.full_name, data.phone, data.password_hash]
+    );
+    <span class="kw">return</span> result.rows[<span class="num">0</span>];
+  }
+
+  <span class="cmt">// ══ UPDATE ══</span>
+  <span class="kw">async</span> <span class="met">update</span>(id: <span class="cls">number</span>, data: <span class="cls">Partial</span>&lt;<span class="cls">Pick</span>&lt;<span class="cls">Customer</span>, <span class="str">'full_name'</span>|<span class="str">'phone'</span>&gt;&gt;): <span class="cls">Promise</span>&lt;<span class="cls">Customer</span> | <span class="kw">null</span>&gt; {
+    <span class="kw">const</span> fields: <span class="cls">string</span>[] = [];
+    <span class="kw">const</span> values: <span class="kw">any</span>[] = [];
+    <span class="kw">let</span> idx = <span class="num">1</span>;
+    <span class="kw">if</span> (data.full_name) { fields.push(<span class="str">`full_name = $`</span> + idx++); values.push(data.full_name); }
+    <span class="kw">if</span> (data.phone)     { fields.push(<span class="str">`phone = $`</span> + idx++);     values.push(data.phone); }
+    <span class="kw">if</span> (!fields.length) <span class="kw">return</span> <span class="kw">null</span>;
+    values.push(id);
+    <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">query</span>(
+      <span class="str">`UPDATE customer SET $</span>{fields.join(<span class="str">', '</span>)}<span class="str">, updated_at=NOW()
+       WHERE customer_id = $</span>{idx}<span class="str"> AND is_active=true RETURNING *`</span>,
+      values
+    );
+    <span class="kw">return</span> result.rows[<span class="num">0</span>] || <span class="kw">null</span>;
+  }
+
+  <span class="cmt">// ══ SOFT DELETE ══</span>
+  <span class="kw">async</span> <span class="met">softDelete</span>(id: <span class="cls">number</span>): <span class="cls">Promise</span>&lt;<span class="cls">boolean</span>&gt; {
+    <span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">query</span>(
+      <span class="str">`UPDATE customer SET is_active=false, updated_at=NOW() WHERE customer_id=$1`</span>,
+      [id]
+    );
+    <span class="kw">return</span> result.rowCount! > <span class="num">0</span>;
+  }
+
+  <span class="cmt">// ══ TRANSACTION: تسجيل عميل + إنشاء عنوان في نفس الوقت ══</span>
+  <span class="kw">async</span> <span class="met">registerWithAddress</span>(customerData: <span class="kw">any</span>, addressData: <span class="kw">any</span>): <span class="cls">Promise</span>&lt;<span class="cls">Customer</span>&gt; {
+    <span class="kw">const</span> client = <span class="kw">await</span> <span class="fn">getClient</span>();
+    <span class="kw">try</span> {
+      <span class="kw">await</span> client.<span class="met">query</span>(<span class="str">'BEGIN'</span>);
+
+      <span class="kw">const</span> custResult = <span class="kw">await</span> client.<span class="met">query</span>(
+        <span class="str">`INSERT INTO customer (email, full_name, password_hash)
+         VALUES ($1, $2, $3) RETURNING *`</span>,
+        [customerData.email, customerData.full_name, customerData.password_hash]
+      );
+      <span class="kw">const</span> customer = custResult.rows[<span class="num">0</span>];
+
+      <span class="kw">await</span> client.<span class="met">query</span>(
+        <span class="str">`INSERT INTO address (customer_id, line1, city, is_default)
+         VALUES ($1, $2, $3, true)`</span>,
+        [customer.customer_id, addressData.line1, addressData.city]
+      );
+
+      <span class="kw">await</span> client.<span class="met">query</span>(<span class="str">'COMMIT'</span>);
+      <span class="kw">return</span> customer;
+    } <span class="kw">catch</span> (err) {
+      <span class="kw">await</span> client.<span class="met">query</span>(<span class="str">'ROLLBACK'</span>);
+      <span class="kw">throw</span> err;
+    } <span class="kw">finally</span> {
+      client.<span class="met">release</span>(); <span class="cmt">// دايماً أعد الـ client للـ pool!</span>
+    }
+  }
+}
+        </div>
+    </div>
+</div>
+
+<!-- SQL INJECTION -->
+<div class="section-block" id="security" data-aos="fade-up">
+    <div class="section-title"><span>🛡️</span> SQL Injection — الخطر الأكبر</div>
+    <p class="section-en">Parameterized Queries — The Only Real Defense Against SQL Injection</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">SQL Injection — The Attack and Defense</span></div>
+        <div class="cbody">
+<span class="cmt">// ❌ VULNERABLE — Don't ever do this!</span>
+<span class="kw">const</span> userId = req.params.id; <span class="cmt">// يمكن أن يكون: "1 OR 1=1"</span>
+<span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">query</span>(
+  <span class="str">`SELECT * FROM customer WHERE customer_id = `</span> + userId
+  <span class="cmt">// → SELECT * FROM customer WHERE customer_id = 1 OR 1=1</span>
+  <span class="cmt">// → يعطي كل السجلات! كارثة!</span>
+);
+
+<span class="cmt">// ❌ VULNERABLE — string interpolation</span>
+<span class="kw">const</span> name = req.body.name; <span class="cmt">// يمكن أن يكون: "'; DROP TABLE customer; --"</span>
+<span class="kw">await</span> <span class="fn">query</span>(<span class="str">`SELECT * FROM customer WHERE full_name = '</span>${name}<span class="str">'`</span>);
+
+<span class="cmt">// ✅ SAFE — Parameterized Query دائماً!</span>
+<span class="kw">const</span> result = <span class="kw">await</span> <span class="fn">query</span>(
+  <span class="str">`SELECT * FROM customer WHERE customer_id = $1`</span>,
+  [req.params.id]  <span class="cmt">// pg يُعالجه كـ literal value — ليس كـ SQL code</span>
+);
+
+<span class="cmt">// ✅ SAFE — دايماً استخدم $1, $2... لكل قيمة خارجية</span>
+<span class="kw">await</span> <span class="fn">query</span>(
+  <span class="str">`UPDATE customer SET full_name=$1, phone=$2 WHERE customer_id=$3`</span>,
+  [req.body.name, req.body.phone, req.params.id]
+);
+        </div>
+    </div>
+
+    <div class="callout mistake">
+        <div class="chead">⚠️ القاعدة الذهبية: لا تُدمج أبداً قيمة المستخدم مع SQL كـ string</div>
+        <p>كل قيمة تأتي من المستخدم (params, body, query string, headers) يجب أن تمرّ عبر Parameterized Query — بدون استثناء. الـ Parameterized Queries مضمونة على مستوى Driver — ليس مجرد escape.</p>
+    </div>
+</div>
+
+<!-- REPOSITORY PATTERN -->
+<div class="section-block" id="pattern" data-aos="fade-up">
+    <div class="section-title"><span>🏗️</span> Repository Pattern + Express Routes</div>
+    <p class="section-en">Repository Pattern — Separating Data Access from Business Logic</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">src/routes/customer.routes.ts — Clean REST API</span></div>
+        <div class="cbody">
+<span class="kw">import</span> { Router, Request, Response, NextFunction } <span class="kw">from</span> <span class="str">'express'</span>;
+<span class="kw">import</span> { CustomerRepository } <span class="kw">from</span> <span class="str">'../repositories/customer.repo'</span>;
+
+<span class="kw">const</span> router = <span class="cls">Router</span>();
+<span class="kw">const</span> customerRepo = <span class="kw">new</span> <span class="cls">CustomerRepository</span>();
+
+<span class="cmt">// GET /api/customers?page=1&limit=20</span>
+router.<span class="met">get</span>(<span class="str">'/'</span>, <span class="kw">async</span> (req: <span class="cls">Request</span>, res: <span class="cls">Response</span>, next: <span class="cls">NextFunction</span>) => {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> page  = Number(req.query.page)  || <span class="num">1</span>;
+    <span class="kw">const</span> limit = Number(req.query.limit) || <span class="num">20</span>;
+    <span class="kw">const</span> customers = <span class="kw">await</span> customerRepo.<span class="met">findAll</span>(page, limit);
+    res.<span class="met">json</span>({ data: customers, page, limit });
+  } <span class="kw">catch</span> (err) { next(err); }
+});
+
+<span class="cmt">// GET /api/customers/:id</span>
+router.<span class="met">get</span>(<span class="str">'/:id'</span>, <span class="kw">async</span> (req, res, next) => {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> customer = <span class="kw">await</span> customerRepo.<span class="met">findById</span>(Number(req.params.id));
+    <span class="kw">if</span> (!customer) <span class="kw">return</span> res.<span class="met">status</span>(<span class="num">404</span>).<span class="met">json</span>({ error: <span class="str">'Customer not found'</span> });
+    res.<span class="met">json</span>({ data: customer });
+  } <span class="kw">catch</span> (err) { next(err); }
+});
+
+<span class="cmt">// POST /api/customers</span>
+router.<span class="met">post</span>(<span class="str">'/'</span>, <span class="kw">async</span> (req, res, next) => {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> customer = <span class="kw">await</span> customerRepo.<span class="met">create</span>(req.body);
+    res.<span class="met">status</span>(<span class="num">201</span>).<span class="met">json</span>({ data: customer });
+  } <span class="kw">catch</span> (err: <span class="kw">any</span>) {
+    <span class="kw">if</span> (err.code === <span class="str">'23505'</span>) <span class="cmt">// unique_violation</span>
+      <span class="kw">return</span> res.<span class="met">status</span>(<span class="num">409</span>).<span class="met">json</span>({ error: <span class="str">'Email already exists'</span> });
+    next(err);
+  }
+});
+
+<span class="cmt">// DELETE /api/customers/:id (soft delete)</span>
+router.<span class="met">delete</span>(<span class="str">'/:id'</span>, <span class="kw">async</span> (req, res, next) => {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> deleted = <span class="kw">await</span> customerRepo.<span class="met">softDelete</span>(Number(req.params.id));
+    <span class="kw">if</span> (!deleted) <span class="kw">return</span> res.<span class="met">status</span>(<span class="num">404</span>).<span class="met">json</span>({ error: <span class="str">'Not found'</span> });
+    res.<span class="met">status</span>(<span class="num">204</span>).<span class="met">send</span>();
+  } <span class="kw">catch</span> (err) { next(err); }
+});
+
+<span class="cmt">// Global Error Handler Middleware</span>
+<span class="kw">export const</span> <span class="fn">errorHandler</span> = (err: <span class="kw">any</span>, req: <span class="cls">Request</span>, res: <span class="cls">Response</span>, next: <span class="cls">NextFunction</span>) => {
+  console.error(<span class="str">'DB Error:'</span>, err);
+  <span class="kw">const</span> pgErrors: Record&lt;<span class="cls">string</span>, <span class="cls">number</span>&gt; = {
+    <span class="str">'23502'</span>: <span class="num">400</span>, <span class="cmt">// not_null_violation</span>
+    <span class="str">'23503'</span>: <span class="num">409</span>, <span class="cmt">// foreign_key_violation</span>
+    <span class="str">'23505'</span>: <span class="num">409</span>, <span class="cmt">// unique_violation</span>
+    <span class="str">'23514'</span>: <span class="num">400</span>, <span class="cmt">// check_violation</span>
+  };
+  <span class="kw">const</span> status = pgErrors[err.code] || <span class="num">500</span>;
+  res.<span class="met">status</span>(status).<span class="met">json</span>({ error: err.message || <span class="str">'Internal Server Error'</span> });
+};
+
+<span class="kw">export default</span> router;
+        </div>
+    </div>
+</div>
+
+<!-- PRACTICE -->
+<div class="section-block" id="practice" data-aos="fade-up">
+    <div class="section-title"><span>✍️</span> تمرين عملي</div>
+    <div class="practice-block">
+        <div class="practice-header"><h3>🛒 تمرين: ProductRepository</h3></div>
+        <div class="practice-body">
+            <ul class="task-list">
+                <li><span class="tnum">A</span>اكتب <code style="font-family:'Fira Code',monospace;">ProductRepository</code> مع findAll (مع فلترة category)، findById، create، updatePrice.</li>
+                <li><span class="tnum">B</span>اكتب Route <code style="font-family:'Fira Code',monospace;">POST /api/orders</code> يُنشئ order مع order_items في transaction واحدة.</li>
+                <li><span class="tnum">C</span>اكتب error handler يُميّز PostgreSQL error codes ويُرجع HTTP status مناسب.</li>
+            </ul>
+            <button class="sol-btn" onclick="toggleSol(this)">👁️ اظهر الحل الكامل</button>
+            <div class="sol-content">
+                <div class="code-block">
+                    <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Solution — ProductRepository + Order Transaction</span></div>
+                    <div class="cbody">
+<span class="cmt">// A: ProductRepository</span>
+<span class="kw">export class</span> <span class="cls">ProductRepository</span> {
+  <span class="kw">async</span> <span class="met">findAll</span>(categoryId?: <span class="cls">number</span>, page=<span class="num">1</span>, limit=<span class="num">20</span>) {
+    <span class="kw">const</span> params: <span class="kw">any</span>[] = [limit, (page-<span class="num">1</span>)*limit];
+    <span class="kw">let</span> sql = <span class="str">`SELECT p.*, c.name AS category_name
+               FROM product p JOIN category c USING(category_id)
+               WHERE p.is_active = true`</span>;
+    <span class="kw">if</span> (categoryId) { sql += <span class="str">` AND p.category_id = $3`</span>; params.push(categoryId); }
+    sql += <span class="str">` ORDER BY p.created_at DESC LIMIT $1 OFFSET $2`</span>;
+    <span class="kw">return</span> (<span class="kw">await</span> <span class="fn">query</span>(sql, params)).rows;
+  }
+  <span class="kw">async</span> <span class="met">updatePrice</span>(id: <span class="cls">number</span>, price: <span class="cls">number</span>) {
+    <span class="kw">if</span> (price < <span class="num">0</span>) <span class="kw">throw new</span> <span class="cls">Error</span>(<span class="str">'Price must be non-negative'</span>);
+    <span class="kw">const</span> r = <span class="kw">await</span> <span class="fn">query</span>(
+      <span class="str">`UPDATE product SET price=$1 WHERE product_id=$2 AND is_active=true RETURNING *`</span>,
+      [price, id]
+    );
+    <span class="kw">return</span> r.rows[<span class="num">0</span>] || <span class="kw">null</span>;
+  }
+}
+
+<span class="cmt">// B: POST /api/orders — Transaction</span>
+router.<span class="met">post</span>(<span class="str">'/orders'</span>, <span class="kw">async</span> (req, res, next) => {
+  <span class="kw">const</span> client = <span class="kw">await</span> <span class="fn">getClient</span>();
+  <span class="kw">try</span> {
+    <span class="kw">await</span> client.<span class="met">query</span>(<span class="str">'BEGIN'</span>);
+    <span class="kw">const</span> { customer_id, address_id, items } = req.body;
+    <span class="kw">const</span> total = items.<span class="met">reduce</span>((s: <span class="cls">number</span>, i: <span class="kw">any</span>) => s + i.quantity * i.unit_price, <span class="num">0</span>);
+    <span class="kw">const</span> orderRes = <span class="kw">await</span> client.<span class="met">query</span>(
+      <span class="str">`INSERT INTO orders(customer_id,address_id,total_amount) VALUES($1,$2,$3) RETURNING *`</span>,
+      [customer_id, address_id, total]
+    );
+    <span class="kw">const</span> order = orderRes.rows[<span class="num">0</span>];
+    <span class="kw">for</span> (<span class="kw">const</span> item <span class="kw">of</span> items) {
+      <span class="kw">await</span> client.<span class="met">query</span>(
+        <span class="str">`INSERT INTO order_item(order_id,product_id,quantity,unit_price) VALUES($1,$2,$3,$4)`</span>,
+        [order.order_id, item.product_id, item.quantity, item.unit_price]
+      );
+    }
+    <span class="kw">await</span> client.<span class="met">query</span>(<span class="str">'COMMIT'</span>);
+    res.<span class="met">status</span>(<span class="num">201</span>).<span class="met">json</span>({ data: order });
+  } <span class="kw">catch</span>(err) { <span class="kw">await</span> client.<span class="met">query</span>(<span class="str">'ROLLBACK'</span>); next(err); }
+  <span class="kw">finally</span> { client.<span class="met">release</span>(); }
+});
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QUIZ -->
+<div class="section-block" id="quiz" data-aos="fade-up">
+    <div class="section-title"><span>🧠</span> اختبار الفهم</div>
+    <div class="quiz-card" id="qq1">
+        <div class="quiz-q">١. لماذا نستخدم Connection Pool بدل فتح connection جديد لكل request؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(1,this,false)">لأن الـ Pool أسهل في الكتابة</div>
+            <div class="quiz-opt" onclick="ans(1,this,true)">فتح connection جديد يستغرق 50-200ms. الـ Pool يُعيد استخدام الاتصالات الجاهزة — يقلل وقت الاستجابة بشكل جذري ويمنع استنزاف resources.</div>
+            <div class="quiz-opt" onclick="ans(1,this,false)">الـ Pool أكثر أماناً من SQL Injection</div>
+        </div>
+        <div class="quiz-fb" id="fb1"></div>
+    </div>
+    <div class="quiz-card" id="qq2">
+        <div class="quiz-q">٢. ما الفرق بين <code style="font-family:'Fira Code',monospace;">pool.query()</code> و<code style="font-family:'Fira Code',monospace;">pool.connect()</code>؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(2,this,false)">لا فرق</div>
+            <div class="quiz-opt" onclick="ans(2,this,true)">pool.query(): ينفذ query واحدة ويُعيد الـ connection تلقائياً. pool.connect(): يُعطيك client لعدة queries (Transactions) — يجب release() يدوياً.</div>
+            <div class="quiz-opt" onclick="ans(2,this,false)">pool.connect() أسرع دائماً</div>
+        </div>
+        <div class="quiz-fb" id="fb2"></div>
+    </div>
+    <div class="quiz-card" id="qq3">
+        <div class="quiz-q">٣. ما PostgreSQL error code لـ Unique Violation؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(3,this,false)">23502</div>
+            <div class="quiz-opt" onclick="ans(3,this,true)">23505 — unique_violation. 23502=not_null, 23503=foreign_key, 23514=check_violation.</div>
+            <div class="quiz-opt" onclick="ans(3,this,false)">23503</div>
+        </div>
+        <div class="quiz-fb" id="fb3"></div>
+    </div>
+    <div class="quiz-card" id="qq4">
+        <div class="quiz-q">٤. لماذا يجب استدعاء client.release() في finally؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(4,this,false)">لحذف البيانات</div>
+            <div class="quiz-opt" onclick="ans(4,this,true)">لإعادة الـ client للـ Pool — بدون release() الـ Pool ينفد من الاتصالات وتتوقف الـ App كلها.</div>
+            <div class="quiz-opt" onclick="ans(4,this,false)">لإغلاق قاعدة البيانات</div>
+        </div>
+        <div class="quiz-fb" id="fb4"></div>
+    </div>
+    <div class="quiz-score-box" id="score-box">
+        <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+        <p id="score-msg" style="color:#94A3B8;"></p>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <a href="../Unit5/design_workshop.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: Design Workshop</a>
+    <a href="prisma_intro.html" class="bnav-btn" style="color:#9AE6B4;">التالي: Prisma ORM <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 6: Express + PostgreSQL</footer>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+AOS.init({duration:700,once:true,offset:80});
+window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+function toggleSol(btn){const sc=btn.nextElementSibling;sc.classList.toggle('open');btn.textContent=sc.classList.contains('open')?'🙈 إخفاء الحل':'👁️ اظهر الحل الكامل';}
+const fbs={
+    1:{c:'✅ Connection pooling: يُوفّر الاتصالات المُعدّة مسبقاً. إنشاء connection جديد يستغرق عشرات المللي ثانية، مما يقتل الأداء في High-traffic apps.',w:'❌ Pool وpool.query لهما نفس واجهة البرمجة — لكن الفرق الجوهري في إدارة الاتصالات.'},
+    2:{c:'✅ pool.query() = single query + auto release. pool.connect() = manual client للـ Transactions (BEGIN/COMMIT/ROLLBACK). دائماً استخدم finally { client.release() }.',w:'❌ pool.connect() يُعطيك client مباشرة — تحتاج release() يدوياً. pool.query() يديرها تلقائياً.'},
+    3:{c:'✅ PostgreSQL Error Codes: 23505=unique, 23502=not_null, 23503=foreign_key, 23514=check. مهمة جداً لـ Error Handling في الـ API.',w:'❌ 23502=not_null_violation. 23505=unique_violation. 23503=foreign_key_violation.'},
+    4:{c:'✅ client.release() يُعيد الاتصال للـ Pool. بدونها، الـ connection يبقى "مشغول" إلى الأبد → الـ Pool ينفد → الـ App تُصبح Unresponsive للـ clients الجدد.',w:'❌ release() لا تُغلق الاتصال — تُعيده فقط للـ Pool ليُعاد استخدامه. هي خطوة حيوية جداً.'}
+};
+let answered=0,score=0;
+function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';document.getElementById('score-text').textContent=`نتيجتك: ${score} / 4`;document.getElementById('score-msg').textContent=score===4?'🎉 Backend Expert!':score>=3?'👏 كويس!':'💪 راجع الدرس.';document.getElementById('score-text').style.color=score===4?'#34D399':score>=3?'#FBBF24':'#F87171';}}
+</script>
+</body>
+</html>
