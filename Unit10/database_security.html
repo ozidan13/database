@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Security — أمان قواعد البيانات | Database Mastery</title>
+    <meta name="description" content="دليل شامل لأمان قواعد البيانات: SQL Injection، Row-Level Security، Encryption at Rest/Transit، Roles & Privileges، Audit Logging، Backup Strategy — PostgreSQL Security Best Practices.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global-db.css">
+    <style>
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;text-decoration:none;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#DC2626,#7F1D1D);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#FCA5A5;}
+        .nav-toc{display:flex;gap:1rem;font-size:.78rem;}
+        .nav-toc a{color:#64748B;text-decoration:none;transition:.2s;}
+        .nav-toc a:hover{color:#FCA5A5;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#DC2626,#7C3AED);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(220,38,38,.1),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#FCA5A5;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#DC2626;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2rem,5vw,3.4rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#F87171,#A78BFA);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:660px;margin:0 auto;font-size:1rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.2);font-size:.78rem;color:#FCA5A5;}
+        .lesson-body{max-width:920px;margin:0 auto;padding:0 1.5rem 4rem;}
+        .section-block{padding:3.5rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.6rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:1.8rem;direction:ltr;}
+        p.body-text{font-size:.98rem;line-height:2.1;color:#CBD5E1;margin-bottom:1rem;}
+        .callout{border-radius:14px;padding:1.2rem 1.5rem;margin:1.2rem 0;}
+        .callout.danger{background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.2);}
+        .callout.danger .chead{color:#F87171;font-weight:800;margin-bottom:.4rem;}
+        .callout.tip{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);}
+        .callout.tip .chead{color:#34D399;font-weight:800;margin-bottom:.4rem;}
+        .callout.realworld{background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.2);}
+        .callout.realworld .chead{color:#A78BFA;font-weight:800;margin-bottom:.4rem;}
+        .callout p{font-size:.93rem;line-height:2;color:#CBD5E1;margin:0;}
+        .code-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:.8rem 0;border:1px solid rgba(255,255,255,.05);}
+        .code-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .cdot{width:9px;height:9px;border-radius:50%;}.cdot.r{background:#FF5F57}.cdot.y{background:#FDBC40}.cdot.g{background:#27C93F}
+        .clabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .cbody{padding:.9rem 1.1rem;font-family:'Fira Code',monospace;font-size:.8rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.fn{color:#22D3EE}.cn{color:#A5B4FC}
+        .injection-demo{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0;}
+        @media(max-width:640px){.injection-demo{grid-template-columns:1fr;}}
+        .demo-bad{background:rgba(220,38,38,.05);border:1px solid rgba(220,38,38,.2);border-radius:12px;padding:1rem;}
+        .demo-good{background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.2);border-radius:12px;padding:1rem;}
+        .demo-label{font-size:.72rem;font-weight:900;margin-bottom:.5rem;}
+        .checklist{list-style:none;padding:0;margin:1rem 0;}
+        .checklist li{display:flex;gap:.6rem;padding:.4rem 0;font-size:.92rem;color:#CBD5E1;align-items:flex-start;}
+        .checklist li .ci{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem;flex-shrink:0;margin-top:.1rem;}
+        .checklist li .ci.ok{background:rgba(16,185,129,.2);color:#34D399;}
+        .checklist li .ci.warn{background:rgba(239,68,68,.2);color:#F87171;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;text-decoration:none;color:#E2E8F0;}
+        .bnav-btn:hover{background:rgba(220,38,38,.1);border-color:rgba(220,38,38,.3);transform:translateY(-2px);}
+    </style>
+</head>
+<body>
+<nav class="lesson-nav-bar">
+    <div class="nav-inner">
+        <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-shield"></i></div>البوابة الرئيسية</a>
+        <div class="nav-toc">
+            <a href="#injection">SQL Injection</a>
+            <a href="#rls">Row-Level Security</a>
+            <a href="#roles">Roles</a>
+            <a href="#encryption">Encryption</a>
+            <a href="#audit">Audit & Backup</a>
+        </div>
+    </div>
+</nav>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
+
+<header class="hero" data-aos="fade-up">
+    <div class="lesson-badge"><span class="pulse"></span>الوحدة 10 — المشروع 3</div>
+    <h1>أمان <span class="grad">قواعد البيانات</span></h1>
+    <p class="en-title">Database Security — SQL Injection, RLS, Roles, Encryption, Audit Logging, Backup</p>
+    <p class="desc">في 2021، Colonial Pipeline اتهاجمت وتوقّفت إمدادات الوقود لأسبوع — السبب: كلمة مرور سرّبت. الـ Database Security مش option، هو ضرورة. هنتعلم كيف تحمي بياناتك من كل الثغرات.</p>
+    <div class="learn-pills">
+        <span class="pill">SQL Injection Prevention</span>
+        <span class="pill">Parameterized Queries</span>
+        <span class="pill">Row-Level Security</span>
+        <span class="pill">Roles & Least Privilege</span>
+        <span class="pill">Encryption at Rest</span>
+        <span class="pill">pgcrypto</span>
+        <span class="pill">Audit Logging</span>
+        <span class="pill">Backup Strategy</span>
+    </div>
+</header>
+
+<div class="lesson-body">
+
+<!-- SQL INJECTION -->
+<div class="section-block" id="injection" data-aos="fade-up">
+    <div class="section-title"><span>💉</span> SQL Injection — أكبر خطر</div>
+    <p class="section-en">SQL Injection — #1 Web Security Risk, How It Works & How to Stop It</p>
+
+    <p class="body-text">SQL Injection = الهجوم الأكثر شيوعاً على قواعد البيانات منذ 20 سنة. المهاجم يُدخل SQL Code في خانة Input العادية ليُنفَّذ كـ Query.</p>
+
+    <div class="injection-demo">
+        <div class="demo-bad">
+            <div class="demo-label" style="color:#F87171;">❌ VULNERABLE — String Concatenation</div>
+            <div style="font-family:'Fira Code',monospace;font-size:.78rem;line-height:1.9;direction:ltr;">
+                <span style="color:#475569;">// User Input:</span><br>
+                <span style="color:#FB923C;">email = "' OR 1=1 --"</span><br><br>
+                <span style="color:#475569;">// Generated Query:</span><br>
+                <span style="color:#F87171;">SELECT * FROM users</span><br>
+                <span style="color:#F87171;">WHERE email = '' OR 1=1 --'</span><br><br>
+                <span style="color:#475569;">// 1=1 دائماً true → كل الـ rows</span><br>
+                <span style="color:#475569;">// -- يُعلّق باقي الـ Query</span>
+            </div>
+        </div>
+        <div class="demo-good">
+            <div class="demo-label" style="color:#34D399;">✅ SAFE — Parameterized Query</div>
+            <div style="font-family:'Fira Code',monospace;font-size:.78rem;line-height:1.9;direction:ltr;">
+                <span style="color:#475569;">// User Input:</span><br>
+                <span style="color:#FB923C;">email = "' OR 1=1 --"</span><br><br>
+                <span style="color:#475569;">// Query معزولة عن الـ Input:</span><br>
+                <span style="color:#34D399;">await pool.query(</span><br>
+                <span style="color:#34D399;">  'SELECT * FROM users WHERE email=$1',</span><br>
+                <span style="color:#34D399;">  [email]  // treated as data, NOT code</span><br>
+                <span style="color:#34D399;">);</span><br>
+                <span style="color:#475569;">// يبحث عن email literal</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Injection Prevention — Node.js مع pg وTypeORM</span></div>
+        <div class="cbody">
+<span class="cmt">// ✅ pg: Parameterized Query ($1, $2, ...)</span>
+<span class="kw">const</span> result = <span class="kw">await</span> pool.<span class="fn">query</span>(
+  <span class="str">'SELECT id, name FROM users WHERE email = $1 AND role = $2'</span>,
+  [email, role]
+);
+
+<span class="cmt">// ✅ TypeORM: Query Builder</span>
+<span class="kw">const</span> user = <span class="kw">await</span> userRepo
+  .<span class="fn">createQueryBuilder</span>(<span class="str">'u'</span>)
+  .<span class="fn">where</span>(<span class="str">'u.email = :email'</span>, { email })  <span class="cmt">// Parameterized</span>
+  .<span class="fn">andWhere</span>(<span class="str">'u.is_active = :active'</span>, { active: <span class="kw">true</span> })
+  .<span class="fn">getOne</span>();
+
+<span class="cmt">// ✅ Drizzle ORM: Type-safe</span>
+<span class="kw">const</span> user = <span class="kw">await</span> db.select()
+  .<span class="fn">from</span>(users)
+  .<span class="fn">where</span>(<span class="fn">eq</span>(users.email, email));  <span class="cmt">// Never raw string</span>
+
+<span class="cmt">// ⚠️ إذا حتجت Dynamic Table/Column name: validate whitelist</span>
+<span class="kw">const</span> ALLOWED_COLS = [<span class="str">'name'</span>, <span class="str">'email'</span>, <span class="str">'created_at'</span>];
+<span class="kw">if</span> (!ALLOWED_COLS.<span class="fn">includes</span>(sortCol)) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'Invalid column'</span>);
+<span class="kw">const</span> query = <span class="str">`SELECT * FROM users ORDER BY "</span>${sortCol}<span class="str">" DESC`</span>;
+        </div>
+    </div>
+</div>
+
+<!-- ROW LEVEL SECURITY -->
+<div class="section-block" id="rls" data-aos="fade-up">
+    <div class="section-title"><span>🔐</span> Row-Level Security — Multi-Tenant Protection</div>
+    <p class="section-en">PostgreSQL RLS — Each User Sees Only Their Own Data, Enforced at DB Level</p>
+
+    <p class="body-text">RLS يُضيف Policy على مستوى الـ Database — حتى لو الكود بُه Bug يُرجع بيانات User آخر، الـ Database تمنعها تلقائياً.</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Row-Level Security — E-Commerce Multi-Tenant</span></div>
+        <div class="cbody">
+<span class="cmt">-- 1: Enable RLS</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">orders</span>     <span class="cn">ENABLE ROW LEVEL SECURITY</span>;
+<span class="kw">ALTER TABLE</span> <span class="tb">order_items</span> <span class="cn">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="cmt">-- 2: Create Policies</span>
+<span class="kw">CREATE POLICY</span> orders_isolation <span class="kw">ON</span> <span class="tb">orders</span>
+  <span class="kw">FOR ALL</span>
+  <span class="kw">USING</span> (user_id = <span class="fn">current_setting</span>(<span class="str">'app.current_user_id'</span>)::<span class="fn">BIGINT</span>);
+
+<span class="kw">CREATE POLICY</span> orders_admin <span class="kw">ON</span> <span class="tb">orders</span>
+  <span class="kw">FOR ALL</span>
+  <span class="kw">USING</span> (<span class="fn">current_setting</span>(<span class="str">'app.current_role'</span>) = <span class="str">'admin'</span>);
+
+<span class="cmt">-- 3: في الـ App — set User Context per Request</span>
+<span class="cmt">// Node.js middleware لضبط context</span>
+<span class="kw">async function</span> <span class="fn">withUserContext</span>&lt;T&gt;(
+  userId: <span class="cn">number</span>,
+  role: <span class="cn">string</span>,
+  <span class="fn">fn</span>: (client: PoolClient) => <span class="cn">Promise</span>&lt;T&gt;
+): <span class="cn">Promise</span>&lt;T&gt; {
+  <span class="kw">const</span> client = <span class="kw">await</span> pool.<span class="fn">connect</span>();
+  <span class="kw">try</span> {
+    <span class="kw">await</span> client.<span class="fn">query</span>(<span class="str">`
+      SET LOCAL app.current_user_id = </span>${userId}<span class="str">;
+      SET LOCAL app.current_role = '</span>${role}<span class="str">';
+    `</span>);
+    <span class="kw">return await</span> <span class="fn">fn</span>(client);
+  } <span class="kw">finally</span> { client.<span class="fn">release</span>(); }
+}
+
+<span class="cmt">-- الآن: SELECT * FROM orders يُرجع أوامر هذا الـ User فقط</span>
+<span class="cmt">-- حتى لو قال الكود SELECT * FROM orders بدون WHERE</span>
+        </div>
+    </div>
+</div>
+
+<!-- ROLES -->
+<div class="section-block" id="roles" data-aos="fade-up">
+    <div class="section-title"><span>👥</span> Roles — Least Privilege Principle</div>
+    <p class="section-en">PostgreSQL Roles — App User, Read-Only, Admin, Least Privilege</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Database Roles Setup — Least Privilege</span></div>
+        <div class="cbody">
+<span class="cmt">-- مبدأ أساسي: كل Role يحصل على الحد الأدنى من الـ Permissions</span>
+
+<span class="cmt">-- App Role: INSERT/SELECT/UPDATE (لا DELETE، لا DDL)</span>
+<span class="kw">CREATE ROLE</span> app_user <span class="cn">LOGIN</span> <span class="cn">PASSWORD</span> <span class="str">'strong_app_pass'</span>;
+<span class="kw">GRANT CONNECT ON DATABASE</span> ecommerce <span class="kw">TO</span> app_user;
+<span class="kw">GRANT USAGE ON SCHEMA</span> public <span class="kw">TO</span> app_user;
+<span class="kw">GRANT SELECT</span>, <span class="kw">INSERT</span>, <span class="kw">UPDATE ON ALL TABLES IN SCHEMA</span> public <span class="kw">TO</span> app_user;
+<span class="kw">GRANT USAGE</span>, <span class="kw">SELECT ON ALL SEQUENCES IN SCHEMA</span> public <span class="kw">TO</span> app_user;
+<span class="cmt">-- لا DELETE! حماية من bugs والـ App لا تحذف سجلات مباشرة</span>
+
+<span class="cmt">-- Analytics / BI Role: Read-Only</span>
+<span class="kw">CREATE ROLE</span> analytics_user <span class="cn">LOGIN</span> <span class="cn">PASSWORD</span> <span class="str">'analytics_pass'</span>;
+<span class="kw">GRANT CONNECT ON DATABASE</span> ecommerce <span class="kw">TO</span> analytics_user;
+<span class="kw">GRANT SELECT ON ALL TABLES IN SCHEMA</span> public <span class="kw">TO</span> analytics_user;
+<span class="cmt">-- Read-Only: يرى كل شيء لكن لا يُعدّل شيئاً</span>
+
+<span class="cmt">-- Migration Role: DDL فقط</span>
+<span class="kw">CREATE ROLE</span> migrator <span class="cn">LOGIN</span> <span class="cn">PASSWORD</span> <span class="str">'migrator_pass'</span>;
+<span class="kw">GRANT ALL ON SCHEMA</span> public <span class="kw">TO</span> migrator;
+<span class="cmt">-- يُستخدم فقط وقت الـ deployments، لا في الـ Runtime</span>
+
+<span class="cmt">-- لا تشغّل الـ App بـ superuser!</span>
+<span class="cmt">-- postgresql.conf:</span>
+<span class="cmt">-- ssl = on</span>
+<span class="cmt">-- password_encryption = scram-sha-256</span>
+        </div>
+    </div>
+</div>
+
+<!-- ENCRYPTION -->
+<div class="section-block" id="encryption" data-aos="fade-up">
+    <div class="section-title"><span>🔒</span> Encryption — حماية البيانات الحساسة</div>
+    <p class="section-en">Passwords (bcrypt), Sensitive Fields (pgcrypto), SSL/TLS in Transit</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">pgcrypto — تشفير الحقول الحساسة + bcrypt</span></div>
+        <div class="cbody">
+<span class="cmt">-- تفعيل pgcrypto</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pgcrypto;
+
+<span class="cmt">-- Hashing كلمات المرور بـ bcrypt (work factor 12)</span>
+<span class="kw">INSERT INTO</span> <span class="tb">users</span>(email, password_hash)
+<span class="kw">VALUES</span>(<span class="str">'user@example.com'</span>, <span class="fn">crypt</span>(<span class="str">'my_password'</span>, <span class="fn">gen_salt</span>(<span class="str">'bf'</span>, <span class="num">12</span>)));
+
+<span class="cmt">-- التحقق من كلمة المرور</span>
+<span class="kw">SELECT</span> id <span class="kw">FROM</span> <span class="tb">users</span>
+<span class="kw">WHERE</span> email = <span class="str">'user@example.com'</span>
+  <span class="kw">AND</span> password_hash = <span class="fn">crypt</span>(<span class="str">'my_password'</span>, password_hash);
+
+<span class="cmt">-- تشفير حقول حساسة (NID، Credit Card Partial)</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">user_sensitive</span> (
+  user_id    <span class="fn">BIGINT</span>  <span class="cn">REFERENCES</span> <span class="tb">users</span>(id),
+  nid_enc    <span class="fn">BYTEA</span>,   <span class="cmt">-- encrypted with pgp_sym_encrypt</span>
+  phone      <span class="fn">TEXT</span>
+);
+
+<span class="cmt">-- تشفير قبل الإدخال</span>
+<span class="kw">INSERT INTO</span> <span class="tb">user_sensitive</span>(user_id, nid_enc)
+<span class="kw">VALUES</span>(<span class="num">1</span>, <span class="fn">pgp_sym_encrypt</span>(<span class="str">'29001012345678'</span>, <span class="str">'SECRET_AES_KEY_FROM_ENV'</span>));
+
+<span class="cmt">-- فك التشفير (في App Level فقط، لا في DB Logs)</span>
+<span class="kw">SELECT</span> <span class="fn">pgp_sym_decrypt</span>(nid_enc, <span class="str">'SECRET_AES_KEY_FROM_ENV'</span>) AS nid
+<span class="kw">FROM</span> <span class="tb">user_sensitive</span>
+<span class="kw">WHERE</span> user_id = <span class="num">1</span>;
+
+<span class="cmt">// Node.js: Always hash passwords before sending to DB</span>
+<span class="kw">import</span> bcrypt <span class="kw">from</span> <span class="str">'bcrypt'</span>;
+<span class="kw">const</span> hash = <span class="kw">await</span> bcrypt.<span class="fn">hash</span>(password, <span class="num">12</span>);       <span class="cmt">// Store this</span>
+<span class="kw">const</span> ok   = <span class="kw">await</span> bcrypt.<span class="fn">compare</span>(inputPwd, hash);  <span class="cmt">// Verify this</span>
+        </div>
+    </div>
+</div>
+
+<!-- AUDIT & BACKUP -->
+<div class="section-block" id="audit" data-aos="fade-up">
+    <div class="section-title"><span>📋</span> Audit Logging وBackup Strategy</div>
+    <p class="section-en">Who Did What When — Audit Trail & 3-2-1 Backup Rule</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Audit Trigger — تتبّع كل التعديلات</span></div>
+        <div class="cbody">
+<span class="cmt">-- Audit Log Table</span>
+<span class="kw">CREATE TABLE</span> <span class="tb">audit_log</span> (
+  id          <span class="fn">BIGSERIAL</span>   <span class="cn">PRIMARY KEY</span>,
+  table_name  <span class="fn">TEXT</span>        <span class="cn">NOT NULL</span>,
+  operation   <span class="fn">TEXT</span>        <span class="cn">NOT NULL</span>,  <span class="cmt">-- INSERT/UPDATE/DELETE</span>
+  old_data    <span class="fn">JSONB</span>,
+  new_data    <span class="fn">JSONB</span>,
+  changed_by  <span class="fn">TEXT</span>        <span class="kw">DEFAULT</span> <span class="fn">current_user</span>,
+  app_user_id <span class="fn">BIGINT</span>,
+  changed_at  <span class="fn">TIMESTAMPTZ</span> <span class="kw">DEFAULT</span> <span class="fn">NOW</span>()
+);
+
+<span class="cmt">-- Audit Trigger Function</span>
+<span class="kw">CREATE OR REPLACE FUNCTION</span> <span class="fn">audit_trigger</span>() <span class="kw">RETURNS</span> <span class="fn">TRIGGER</span> <span class="kw">LANGUAGE</span> plpgsql <span class="kw">AS</span> <span class="str">$$</span>
+<span class="kw">BEGIN</span>
+  <span class="kw">INSERT INTO</span> audit_log(table_name, operation, old_data, new_data, app_user_id)
+  <span class="kw">VALUES</span>(
+    TG_TABLE_NAME, TG_OP,
+    <span class="kw">CASE WHEN</span> TG_OP = <span class="str">'INSERT'</span> <span class="kw">THEN NULL ELSE</span> row_to_json(OLD) <span class="kw">END</span>,
+    <span class="kw">CASE WHEN</span> TG_OP = <span class="str">'DELETE'</span> <span class="kw">THEN NULL ELSE</span> row_to_json(NEW) <span class="kw">END</span>,
+    <span class="fn">current_setting</span>(<span class="str">'app.current_user_id'</span>, <span class="kw">true</span>)::<span class="fn">BIGINT</span>
+  );
+  <span class="kw">RETURN NEW</span>;
+<span class="kw">END</span>;
+<span class="str">$$</span>;
+
+<span class="cmt">-- Attach to sensitive tables</span>
+<span class="kw">CREATE TRIGGER</span> audit_orders
+  <span class="kw">AFTER</span> INSERT <span class="kw">OR UPDATE OR DELETE ON</span> <span class="tb">orders</span>
+  <span class="kw">FOR EACH ROW EXECUTE FUNCTION</span> <span class="fn">audit_trigger</span>();
+
+<span class="cmt">-- Backup: 3-2-1 Rule</span>
+<span class="cmt">-- 3 نسخ، 2 وسائط مختلفة، 1 خارج الموقع</span>
+<span class="cmt">-- pg_dump --format=custom --compress=9 -d ecommerce > backup.dump</span>
+<span class="cmt">-- pg_basebackup للـ Physical Backup</span>
+<span class="cmt">-- WAL Archiving للـ Point-in-Time Recovery</span>
+        </div>
+    </div>
+
+    <ul class="checklist">
+        <li><div class="ci ok"><i class="fas fa-check"></i></div>استخدم Parameterized Queries دائماً — لا String Concatenation أبداً</li>
+        <li><div class="ci ok"><i class="fas fa-check"></i></div>فعّل Row-Level Security للـ Multi-Tenant Apps</li>
+        <li><div class="ci ok"><i class="fas fa-check"></i></div>أنشئ Roles منفصلة: App، Analytics، Migration — Least Privilege</li>
+        <li><div class="ci ok"><i class="fas fa-check"></i></div>شغّل SSL/TLS دائماً بين الـ App وقاعدة البيانات</li>
+        <li><div class="ci ok"><i class="fas fa-check"></i></div>Hash الـ Passwords بـ bcrypt (cost ≥ 12) — لا تُخزّن Plain Text أبداً</li>
+        <li><div class="ci ok"><i class="fas fa-check"></i></div>فعّل Audit Logging على الجداول الحساسة</li>
+        <li><div class="ci warn"><i class="fas fa-times"></i></div>لا تشغّل الـ App بـ PostgreSQL superuser</li>
+        <li><div class="ci warn"><i class="fas fa-times"></i></div>لا تضع كلمات المرور في الكود — استخدم Environment Variables</li>
+    </ul>
+</div>
+
+<div class="bottom-nav">
+    <a href="capstone_analytics.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: Analytics</a>
+    <a href="career_guide.html" class="bnav-btn" style="color:#FCA5A5;">التالي: Career Guide <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 10: Database Security</footer>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+AOS.init({duration:700,once:true,offset:80});
+window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+</script>
+</body>
+</html>
