@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Query Optimization — تحسين الاستعلامات | Database Mastery</title>
+    <meta name="description" content="دليل شامل لتحسين الاستعلامات في PostgreSQL: CTEs، Window Functions، Avoiding N+1، Pagination، Materialized Views، Query Rewriting — مع أمثلة E-Commerce كاملة.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global-db.css">
+    <style>
+        :root{--accent:#E879F9;--accent-lt:#F0ABFC;}
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;text-decoration:none;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#A21CAF,#701A75);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#F0ABFC;}
+        .nav-toc{display:flex;gap:1.2rem;font-size:.8rem;}
+        .nav-toc a{color:#64748B;text-decoration:none;transition:.2s;}
+        .nav-toc a:hover{color:#F0ABFC;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#A21CAF,#F59E0B);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(162,28,175,.1),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#F0ABFC;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#A21CAF;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2rem,5vw,3.6rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#E879F9,#F59E0B);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.05rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(162,28,175,.1);border:1px solid rgba(162,28,175,.2);font-size:.78rem;color:#F0ABFC;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.tip{background:rgba(162,28,175,.07);border:1px solid rgba(162,28,175,.2);}
+        .callout.tip .chead{color:#F0ABFC;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);}
+        .callout.realworld .chead{color:#34D399;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
+        .code-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:1rem 0;border:1px solid rgba(255,255,255,.05);}
+        .code-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .cdot{width:9px;height:9px;border-radius:50%;}.cdot.r{background:#FF5F57}.cdot.y{background:#FDBC40}.cdot.g{background:#27C93F}
+        .clabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .cbody{padding:1rem 1.2rem;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.fn{color:#22D3EE}.cn{color:#A5B4FC}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;text-decoration:none;color:#E2E8F0;}
+        .bnav-btn:hover{background:rgba(162,28,175,.1);border-color:rgba(162,28,175,.3);transform:translateY(-2px);}
+    </style>
+</head>
+<body>
+<nav class="lesson-nav-bar">
+    <div class="nav-inner">
+        <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-rocket"></i></div>العودة للبوابة</a>
+        <div class="nav-toc">
+            <a href="#rewrites">Query Rewrites</a>
+            <a href="#pagination">Pagination</a>
+            <a href="#windows">Window Functions</a>
+            <a href="#matviews">Mat. Views</a>
+            <a href="#config">Config Tuning</a>
+            <a href="#quiz">اختبار</a>
+        </div>
+    </div>
+</nav>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
+
+<header class="hero" data-aos="fade-up">
+    <div class="lesson-badge"><span class="pulse"></span>الوحدة 8 — الدرس 3</div>
+    <h1>Query <span class="grad">Optimization</span></h1>
+    <p class="en-title">Query Rewriting, Keyset Pagination, Window Functions, Materialized Views, Config Tuning</p>
+    <p class="desc">Index ضروري لكنه لا يكفي — Query مكتوبة غلط تُبطئ النظام حتى مع أفضل الـ Indexes. الفن هو كتابة Queries تُساعد الـ Planner على اختيار الخطة المثلى.</p>
+    <div class="learn-pills">
+        <span class="pill">EXISTS vs IN vs JOIN</span>
+        <span class="pill">Keyset Pagination</span>
+        <span class="pill">LATERAL JOIN</span>
+        <span class="pill">Window Functions</span>
+        <span class="pill">Materialized Views</span>
+        <span class="pill">work_mem & shared_buffers</span>
+        <span class="pill">VACUUM & ANALYZE</span>
+        <span class="pill">Query Rewrites</span>
+    </div>
+</header>
+
+<div class="lesson-body">
+
+<!-- QUERY REWRITES -->
+<div class="section-block" id="rewrites" data-aos="fade-up">
+    <div class="section-title"><span>✍️</span> Query Rewrites — نفس النتيجة، أداء مختلف</div>
+    <p class="section-en">Writing Queries That Enable the Planner to Choose the Best Plan</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">EXISTS vs IN vs JOIN — Performance Differences</span></div>
+        <div class="cbody">
+<span class="cmt">-- ❌ IN مع Subquery كبيرة — يُنفّذ الـ Subquery لكل صف</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">customers</span>
+<span class="kw">WHERE</span> id <span class="kw">IN</span> (<span class="kw">SELECT</span> customer_id <span class="kw">FROM</span> <span class="tb">orders</span> <span class="kw">WHERE</span> total > <span class="num">5000</span>);
+
+<span class="cmt">-- ✅ EXISTS — يتوقف بمجرد إيجاد أول نتيجة (Short-Circuit)</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">customers</span> c
+<span class="kw">WHERE EXISTS</span> (
+  <span class="kw">SELECT</span> <span class="num">1</span> <span class="kw">FROM</span> <span class="tb">orders</span> o
+  <span class="kw">WHERE</span>  o.customer_id = c.id <span class="kw">AND</span> o.total > <span class="num">5000</span>
+);
+<span class="cmt">-- PostgreSQL غالباً يُحوّل IN → EXISTS تلقائياً (check EXPLAIN)</span>
+
+<span class="cmt">-- ❌ OR على أعمدة مختلفة — يمنع استخدام Index</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">customers</span>
+<span class="kw">WHERE</span> email = <span class="str">'a@b.com'</span> <span class="kw">OR</span> phone = <span class="str">'01000000'</span>;
+
+<span class="cmt">-- ✅ UNION ALL — يُمكّن استخدام Index لكل عمود</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">customers</span> <span class="kw">WHERE</span> email = <span class="str">'a@b.com'</span>
+<span class="kw">UNION ALL</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">customers</span> <span class="kw">WHERE</span> phone = <span class="str">'01000000'</span>;
+
+<span class="cmt">-- ❌ Function على الـ Column يمنع Index</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">orders</span> <span class="kw">WHERE</span> <span class="fn">DATE</span>(order_date) = <span class="str">'2024-01-15'</span>;
+<span class="cmt">-- → Seq Scan لأن DATE() تُحوّل الـ Column</span>
+
+<span class="cmt">-- ✅ Range بدون Function</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">orders</span>
+<span class="kw">WHERE</span> order_date >= <span class="str">'2024-01-15'</span>
+  <span class="kw">AND</span>  order_date <  <span class="str">'2024-01-16'</span>;
+<span class="cmt">-- → Index Scan على order_date ✅</span>
+
+<span class="cmt">-- ❌ Wildcard أول → Seq Scan</span>
+<span class="kw">WHERE</span> name <span class="kw">LIKE</span> <span class="str">'%محمد'</span>   <span class="cmt">-- لا يستخدم Index</span>
+<span class="cmt">-- ✅ Wildcard آخر → Index Scan</span>
+<span class="kw">WHERE</span> name <span class="kw">LIKE</span> <span class="str">'محمد%'</span>   <span class="cmt">-- يستخدم B-Tree Index</span>
+        </div>
+    </div>
+</div>
+
+<!-- PAGINATION -->
+<div class="section-block" id="pagination" data-aos="fade-up">
+    <div class="section-title"><span>📄</span> Pagination — OFFSET مقابل Keyset</div>
+    <p class="section-en">Offset Pagination vs Keyset (Cursor-based) Pagination</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">OFFSET Pagination Problem vs Keyset Solution</span></div>
+        <div class="cbody">
+<span class="cmt">-- ❌ OFFSET Pagination — المشكلة</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">orders</span>
+<span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span>
+<span class="kw">LIMIT</span>  <span class="num">20</span> <span class="kw">OFFSET</span> <span class="num">100000</span>;
+<span class="cmt">-- PostgreSQL يقرأ 100020 صف ثم يرمي أول 100000!</span>
+<span class="cmt">-- الصفحة 5000 (OFFSET=100000) أبطأ بكثير من الصفحة 1</span>
+
+<span class="cmt">-- ✅ Keyset Pagination — الحل الاحترافي</span>
+<span class="cmt">-- الصفحة الأولى:</span>
+<span class="kw">SELECT</span> id, created_at, customer_id, total
+<span class="kw">FROM</span>  <span class="tb">orders</span>
+<span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span>, id <span class="kw">DESC</span>   <span class="cmt">-- id لـ Tiebreaking</span>
+<span class="kw">LIMIT</span>  <span class="num">20</span>;
+<span class="cmt">-- آخر سجل: created_at='2024-03-15 10:00', id=5050</span>
+
+<span class="cmt">-- الصفحة التالية — استخدم آخر قيم من الصفحة السابقة</span>
+<span class="kw">SELECT</span> id, created_at, customer_id, total
+<span class="kw">FROM</span>  <span class="tb">orders</span>
+<span class="kw">WHERE</span> (created_at, id) < (<span class="str">'2024-03-15 10:00'</span>, <span class="num">5050</span>)
+<span class="kw">ORDER BY</span> created_at <span class="kw">DESC</span>, id <span class="kw">DESC</span>
+<span class="kw">LIMIT</span>  <span class="num">20</span>;
+<span class="cmt">-- Index Scan — O(log n) بغض النظر عن رقم الصفحة!</span>
+<span class="cmt">-- Index: CREATE INDEX ON orders(created_at DESC, id DESC);</span>
+
+<span class="cmt">-- ✅ COUNT مع Pagination — تجنّب COUNT(*) الثقيل</span>
+<span class="cmt">-- بدلاً من COUNT(*) الدقيق:</span>
+<span class="kw">SELECT</span> reltuples::bigint AS approximate_count
+<span class="kw">FROM</span>   pg_class
+<span class="kw">WHERE</span>  relname = <span class="str">'orders'</span>;
+<span class="cmt">-- تقريب سريع جداً من pg_class stats</span>
+        </div>
+    </div>
+</div>
+
+<!-- WINDOW FUNCTIONS -->
+<div class="section-block" id="windows" data-aos="fade-up">
+    <div class="section-title"><span>🪟</span> Window Functions — تحليل بدون GROUP BY</div>
+    <p class="section-en">Window Functions — Running Totals, Rankings, Lead/Lag</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Window Functions — E-Commerce Analytics</span></div>
+        <div class="cbody">
+<span class="cmt">-- ══ Running Total للمبيعات الشهرية ══</span>
+<span class="kw">SELECT</span>
+  order_date,
+  daily_revenue,
+  <span class="fn">SUM</span>(daily_revenue) <span class="kw">OVER</span> (
+    <span class="kw">ORDER BY</span> order_date
+    <span class="kw">ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</span>
+  ) AS cumulative_revenue
+<span class="kw">FROM</span> (
+  <span class="kw">SELECT</span> <span class="fn">DATE</span>(order_date) AS order_date, <span class="fn">SUM</span>(total) AS daily_revenue
+  <span class="kw">FROM</span>  <span class="tb">orders</span> <span class="kw">WHERE</span> status = <span class="str">'delivered'</span>
+  <span class="kw">GROUP BY</span> <span class="num">1</span>
+) daily;
+
+<span class="cmt">-- ══ Customer Ranking بإجمالي مشترياتهم ══</span>
+<span class="kw">SELECT</span>
+  c.full_name,
+  <span class="fn">SUM</span>(o.total)                          AS total_spent,
+  <span class="fn">RANK</span>()    <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> <span class="fn">SUM</span>(o.total) <span class="kw">DESC</span>) AS rank,
+  <span class="fn">DENSE_RANK</span>() <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> <span class="fn">SUM</span>(o.total) <span class="kw">DESC</span>) AS dense_rank,
+  <span class="fn">NTILE</span>(<span class="num">10</span>) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> <span class="fn">SUM</span>(o.total) <span class="kw">DESC</span>) AS decile
+<span class="kw">FROM</span>  <span class="tb">customers</span> c
+<span class="kw">JOIN</span>  <span class="tb">orders</span> o <span class="kw">ON</span> o.customer_id = c.id
+<span class="kw">GROUP BY</span> c.id, c.full_name;
+
+<span class="cmt">-- ══ LEAD/LAG — مقارنة بالفترة السابقة ══</span>
+<span class="kw">SELECT</span>
+  month,
+  revenue,
+  <span class="fn">LAG</span>(revenue) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month)    AS prev_month,
+  <span class="fn">ROUND</span>((revenue - <span class="fn">LAG</span>(revenue) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month)) * <span class="num">100.0</span>
+    / <span class="fn">NULLIF</span>(<span class="fn">LAG</span>(revenue) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month), <span class="num">0</span>), <span class="num">1</span>) AS growth_pct
+<span class="kw">FROM</span>  monthly_revenue;
+
+<span class="cmt">-- ══ أفضل منتج لكل Category (PARTITION BY) ══</span>
+<span class="kw">SELECT</span> category_id, product_id, name, sales
+<span class="kw">FROM</span> (
+  <span class="kw">SELECT</span>
+    category_id, product_id, name, sales,
+    <span class="fn">ROW_NUMBER</span>() <span class="kw">OVER</span> (<span class="kw">PARTITION BY</span> category_id <span class="kw">ORDER BY</span> sales <span class="kw">DESC</span>) AS rn
+  <span class="kw">FROM</span> <span class="tb">products</span>
+) ranked
+<span class="kw">WHERE</span> rn = <span class="num">1</span>;  <span class="cmt">-- أفضل منتج فقط لكل Category</span>
+        </div>
+    </div>
+</div>
+
+<!-- MATERIALIZED VIEWS -->
+<div class="section-block" id="matviews" data-aos="fade-up">
+    <div class="section-title"><span>🗄️</span> Materialized Views — تحسين التقارير الثقيلة</div>
+    <p class="section-en">Materialized Views — Pre-compute Heavy Queries</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Materialized View — Monthly Sales Dashboard</span></div>
+        <div class="cbody">
+<span class="cmt">-- Query تستغرق 30 ثانية! → نحوّلها لـ Materialized View</span>
+<span class="kw">CREATE MATERIALIZED VIEW</span> <span class="tb">mv_monthly_sales</span> <span class="kw">AS</span>
+<span class="kw">SELECT</span>
+  <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, o.order_date) AS month,
+  c.country,
+  cat.name                           AS category,
+  <span class="fn">COUNT</span>(DISTINCT o.id)              AS order_count,
+  <span class="fn">SUM</span>(oi.quantity)                   AS units_sold,
+  <span class="fn">SUM</span>(oi.unit_price * oi.quantity)  AS revenue,
+  <span class="fn">AVG</span>(o.total)                       AS avg_order_value
+<span class="kw">FROM</span>  <span class="tb">orders</span> o
+<span class="kw">JOIN</span>  <span class="tb">customers</span>   c   <span class="kw">ON</span> c.id = o.customer_id
+<span class="kw">JOIN</span>  <span class="tb">order_items</span> oi  <span class="kw">ON</span> oi.order_id = o.id
+<span class="kw">JOIN</span>  <span class="tb">products</span>    p   <span class="kw">ON</span> p.id = oi.product_id
+<span class="kw">JOIN</span>  <span class="tb">categories</span>  cat <span class="kw">ON</span> cat.id = p.category_id
+<span class="kw">WHERE</span> o.status = <span class="str">'delivered'</span>
+<span class="kw">GROUP BY</span> <span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>;
+
+<span class="cmt">-- Index على الـ Materialized View</span>
+<span class="kw">CREATE INDEX</span> idx_mv_month <span class="kw">ON</span> <span class="tb">mv_monthly_sales</span>(month);
+<span class="kw">CREATE INDEX</span> idx_mv_country <span class="kw">ON</span> <span class="tb">mv_monthly_sales</span>(country);
+
+<span class="cmt">-- التحديث (Refresh)</span>
+<span class="kw">REFRESH MATERIALIZED VIEW CONCURRENTLY</span> <span class="tb">mv_monthly_sales</span>;
+<span class="cmt">-- CONCURRENTLY: لا يُقفّل عند القراءة — يحتاج UNIQUE index</span>
+<span class="kw">CREATE UNIQUE INDEX</span> ON <span class="tb">mv_monthly_sales</span>(month, country, category);
+
+<span class="cmt">-- جدولة التحديث (باستخدام pg_cron extension)</span>
+<span class="kw">SELECT</span> cron.schedule(
+  <span class="str">'refresh-sales-mv'</span>,
+  <span class="str">'0 * * * *'</span>,  <span class="cmt">-- كل ساعة</span>
+  <span class="str">'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_monthly_sales'</span>
+);
+
+<span class="cmt">-- القراءة من الـ View — كأنها جدول عادي</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">mv_monthly_sales</span>
+<span class="kw">WHERE</span> month = <span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, <span class="fn">NOW</span>())
+<span class="kw">ORDER BY</span> revenue <span class="kw">DESC</span>;
+<span class="cmt">-- 30 ثانية → 2ms ✅</span>
+        </div>
+    </div>
+</div>
+
+<!-- CONFIG TUNING -->
+<div class="section-block" id="config" data-aos="fade-up">
+    <div class="section-title"><span>⚙️</span> PostgreSQL Config Tuning — الإعدادات الحيوية</div>
+    <p class="section-en">postgresql.conf — Key Performance Parameters</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">postgresql.conf — أهم إعدادات الأداء</span></div>
+        <div class="cbody">
+<span class="cmt">-- ══ Memory ══</span>
+shared_buffers = 4GB           <span class="cmt">-- 25% من الـ RAM (الأهم)</span>
+work_mem = 64MB                <span class="cmt">-- لكل Sort/Hash operation — احتاط من Memory bloat</span>
+maintenance_work_mem = 512MB   <span class="cmt">-- للـ VACUUM، CREATE INDEX</span>
+effective_cache_size = 12GB    <span class="cmt">-- الـ RAM المتاحة للـ OS Cache (75% من RAM)</span>
+
+<span class="cmt">-- ══ WAL ══</span>
+wal_buffers = 64MB             <span class="cmt">-- Buffer للـ WAL write (-1 = auto)</span>
+checkpoint_completion_target = <span class="num">0</span>.<span class="num">9</span>  <span class="cmt">-- تمدّد الـ Checkpoint على 90% من الفترة</span>
+max_wal_size = 4GB             <span class="cmt">-- الحد الأقصى للـ WAL قبل Checkpoint</span>
+
+<span class="cmt">-- ══ Planner Costs (تساعد الـ Planner على اختيار الخطة الصحيحة) ══</span>
+random_page_cost = <span class="num">1</span>.<span class="num">1</span>   <span class="cmt">-- للـ SSD (الافتراضي 4.0 للـ HDD)</span>
+effective_io_concurrency = <span class="num">200</span>  <span class="cmt">-- للـ SSD</span>
+
+<span class="cmt">-- ══ Connections ══</span>
+max_connections = <span class="num">100</span>          <span class="cmt">-- استخدم PgBouncer لأكثر من هذا</span>
+
+<span class="cmt">-- ══ Autovacuum ══</span>
+autovacuum_vacuum_scale_factor = <span class="num">0</span>.<span class="num">05</span>   <span class="cmt">-- 5% (الافتراضي 20% — كثير للجداول الكبيرة)</span>
+autovacuum_analyze_scale_factor = <span class="num">0</span>.<span class="num">02</span>  <span class="cmt">-- 2%</span>
+
+<span class="cmt">-- ══ Per-Session Tuning لـ Heavy Reports ══</span>
+<span class="kw">SET</span> work_mem = <span class="str">'256MB'</span>;  <span class="cmt">-- لـ Report Session فقط</span>
+<span class="kw">SET</span> random_page_cost = <span class="num">1</span>.<span class="num">1</span>;
+        </div>
+    </div>
+
+    <div class="callout realworld">
+        <div class="chead">🎯 أهم 5 تحسينات فورية</div>
+        <p>
+        1️⃣ <code style="font-family:'Fira Code',monospace;color:#F0ABFC;">shared_buffers</code> = 25% RAM — الأهم على الإطلاق<br>
+        2️⃣ <code style="font-family:'Fira Code',monospace;color:#F0ABFC;">random_page_cost = 1.1</code> إذا كنت على SSD<br>
+        3️⃣ أضف Indexes على Foreign Keys (PostgreSQL لا يفعل هذا تلقائياً!)<br>
+        4️⃣ <code style="font-family:'Fira Code',monospace;color:#F0ABFC;">ANALYZE</code> بعد Bulk Insert كبير<br>
+        5️⃣ استبدل OFFSET بـ Keyset Pagination في الـ APIs
+        </p>
+    </div>
+</div>
+
+<!-- QUIZ -->
+<div class="section-block" id="quiz" data-aos="fade-up">
+    <div class="section-title"><span>🧠</span> اختبار الفهم</div>
+    <div class="quiz-card" id="qq1">
+        <div class="quiz-q">١. لماذا WHERE DATE(order_date) = '2024-01-15' يُبطئ الـ Query؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(1,this,false)">DATE() دالة بطيئة</div>
+            <div class="quiz-opt" onclick="ans(1,this,true)">DATE() تُطبَّق على كل صف — تمنع استخدام الـ B-Tree Index على order_date. الحل: WHERE order_date >= '2024-01-15' AND order_date < '2024-01-16' → Range Query يستخدم الـ Index.</div>
+            <div class="quiz-opt" onclick="ans(1,this,false)">لأن DATE لا تدعم Timestamp</div>
+        </div>
+        <div class="quiz-fb" id="fb1"></div>
+    </div>
+    <div class="quiz-card" id="qq2">
+        <div class="quiz-q">٢. ما مشكلة OFFSET 100000 في Pagination؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(2,this,false)">يُرجع بيانات غلط</div>
+            <div class="quiz-opt" onclick="ans(2,this,true)">PostgreSQL يقرأ 100020 صف ثم يرمي أول 100000. كلما زاد الـ OFFSET زاد الوقت خطياً. الحل: Keyset Pagination باستخدام WHERE (col, id) < (last_val, last_id) → O(log n).</div>
+            <div class="quiz-opt" onclick="ans(2,this,false)">لا توجد مشكلة</div>
+        </div>
+        <div class="quiz-fb" id="fb2"></div>
+    </div>
+    <div class="quiz-card" id="qq3">
+        <div class="quiz-q">٣. ما الـ Materialized View ومتى تستخدمه؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(3,this,false)">View عادية لكن محفوظة في الـ Cache</div>
+            <div class="quiz-opt" onclick="ans(3,this,true)">نتائج Query مُحسوبة مسبقاً ومُخزّنة على الـ Disk — القراءة فورية. للتحديث تحتاج REFRESH MATERIALIZED VIEW. مثالي للـ Reports الثقيلة التي لا تحتاج real-time data.</div>
+            <div class="quiz-opt" onclick="ans(3,this,false)">View مُقفّلة للكتابة</div>
+        </div>
+        <div class="quiz-fb" id="fb3"></div>
+    </div>
+    <div class="quiz-card" id="qq4">
+        <div class="quiz-q">٤. ما قيمة random_page_cost الموصى بها للـ SSD ولماذا؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(4,this,false)">4.0 (الافتراضي)</div>
+            <div class="quiz-opt" onclick="ans(4,this,true)">1.1 للـ SSD — الافتراضي 4.0 مصمّم للـ HDD (Random I/O ثقيل). SSD: Random I/O ~= Sequential. قيمة 1.1 تُخبر الـ Planner أن Index Scan أرخص → يختاره بدلاً من Seq Scan.</div>
+            <div class="quiz-opt" onclick="ans(4,this,false)">0.5 للـ SSD</div>
+        </div>
+        <div class="quiz-fb" id="fb4"></div>
+    </div>
+    <div class="quiz-score-box" id="score-box">
+        <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+        <p id="score-msg" style="color:#94A3B8;"></p>
+    </div>
+</div>
+<div class="bottom-nav">
+    <a href="indexing_deep_dive.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: Indexing</a>
+    <a href="partitioning_scaling.html" class="bnav-btn" style="color:#F0ABFC;">التالي: Partitioning <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 8: Query Optimization</footer>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+AOS.init({duration:700,once:true,offset:80});
+window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+const fbs={
+    1:{c:'✅ Function على Column يمنع Index Scans — الـ Planner لا يستطيع استخدام Index على order_date لأنه يحتاج تطبيق DATE() على كل صف أولاً. الحل: حوّل الـ Function للثابت → Range على نفس الـ Column مباشرة.',w:'❌ المشكلة ليست بطء الدالة — هي أنها تمنع استخدام الـ Index. PostgreSQL يحتاج Expression Index على DATE(order_date) أو استخدام Range بدون function.'},
+    2:{c:'✅ OFFSET=N → يقرأ N+limit صف ويرمي أول N. O(N) وقت. OFFSET 1,000,000 = كارثة. Keyset: WHERE (col, id) < (X, Y) → Index Scan مباشر من النقطة الصحيحة → O(log n) بغض النظر عن رقم الصفحة.',w:'❌ OFFSET لا يُرجع بيانات غلط — هو صحيح لكن بطيء جداً. المشكلة في الأداء وليس في الصحة.'},
+    3:{c:'✅ Materialized View: نتيجة Query مُخزّنة كجدول على الـ Disk. قراءتها فورية. مثالي للـ Dashboard Reports التي تستغرق ثوانٍ — تُحدَّث بـ REFRESH بشكل دوري (Cron). مختلف عن View عادية التي تُنفَّذ في كل مرة.',w:'❌ View عادية تُنفَّذ الـ Query في كل مرة. Materialized View مُحسوبة مسبقاً ومُخزَّنة — أسرع بكثير لكن البيانات قد تكون متأخرة (stale).'},
+    4:{c:'✅ random_page_cost=1.1 للـ SSD: الـ Default 4.0 يعني Random Read أغلى 4x من Sequential (صحيح للـ HDD). SSD لا فرق كبير. قيمة 1.1 تُخبر الـ Planner أن Random I/O رخيص → يفضّل Index Scan على Seq Scan → أداء أفضل.',w:'❌ الافتراضي 4.0 مُصمَّم للـ HDD. على SSD هذا يُسبب تفضيل Seq Scan عندما Index Scan أفضل. تغيير هذه القيمة منفرداً له تأثير كبير جداً على اختيارات الـ Planner.'}
+};
+let answered=0,score=0;
+function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';document.getElementById('score-text').textContent=`نتيجتك: ${score} / 4`;document.getElementById('score-msg').textContent=score===4?'🎉 Optimizer!':score>=3?'👏 كويس!':'💪 راجع الدرس.';document.getElementById('score-text').style.color=score===4?'#34D399':score>=3?'#FBBF24':'#F87171';}}
+</script>
+</body>
+</html>

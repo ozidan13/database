@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EXPLAIN ANALYZE — قراءة خطة التنفيذ | Database Mastery</title>
+    <meta name="description" content="دليل شامل لـ EXPLAIN ANALYZE في PostgreSQL: قراءة Execution Plans، Seq Scan vs Index Scan، Cost، Actual Rows، Buffers، Query Planning stats — مع أمثلة عملية حقيقية.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global-db.css">
+    <style>
+        :root{--accent:#FBBF24;--accent-lt:#FDE68A;}
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;text-decoration:none;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#D97706,#78350F);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#FDE68A;}
+        .nav-toc{display:flex;gap:1.3rem;font-size:.82rem;}
+        .nav-toc a{color:#64748B;text-decoration:none;transition:.2s;}
+        .nav-toc a:hover{color:#FDE68A;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#D97706,#10B981);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(217,119,6,.1),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#FDE68A;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#D97706;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2rem,5vw,3.6rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#FBBF24,#10B981);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.05rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.2);font-size:.78rem;color:#FDE68A;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.tip{background:rgba(217,119,6,.07);border:1px solid rgba(217,119,6,.2);}
+        .callout.tip .chead{color:#FDE68A;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);}
+        .callout.realworld .chead{color:#34D399;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
+        .code-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:1rem 0;border:1px solid rgba(255,255,255,.05);}
+        .code-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .cdot{width:9px;height:9px;border-radius:50%;}.cdot.r{background:#FF5F57}.cdot.y{background:#FDBC40}.cdot.g{background:#27C93F}
+        .clabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .cbody{padding:1rem 1.2rem;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.fn{color:#22D3EE}.cn{color:#A5B4FC}.hi{color:#FBBF24;font-weight:700}
+        .plan-block{background:#050B18;border:1px solid rgba(217,119,6,.15);border-radius:12px;padding:1.2rem;font-family:'Fira Code',monospace;font-size:.78rem;line-height:2;direction:ltr;overflow-x:auto;margin:1rem 0;}
+        .plan-node{color:#38BDF8;}.plan-cost{color:#FBBF24;}.plan-rows{color:#34D399;}.plan-warn{color:#F87171;font-weight:700;}.plan-ok{color:#34D399;font-weight:700;}
+        .scan-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0;}
+        @media(max-width:640px){.scan-grid{grid-template-columns:1fr;}}
+        .scan-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1.2rem;border-top:4px solid;}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;text-decoration:none;color:#E2E8F0;}
+        .bnav-btn:hover{background:rgba(217,119,6,.1);border-color:rgba(217,119,6,.3);transform:translateY(-2px);}
+    </style>
+</head>
+<body>
+<nav class="lesson-nav-bar">
+    <div class="nav-inner">
+        <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-magnifying-glass-chart"></i></div>العودة للبوابة</a>
+        <div class="nav-toc">
+            <a href="#basics">الأساسيات</a>
+            <a href="#read">قراءة الـ Plan</a>
+            <a href="#nodes">Node Types</a>
+            <a href="#buffers">Buffers</a>
+            <a href="#problems">تشخيص المشاكل</a>
+            <a href="#quiz">اختبار</a>
+        </div>
+    </div>
+</nav>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
+
+<header class="hero" data-aos="fade-up">
+    <div class="lesson-badge"><span class="pulse"></span>الوحدة 8 — الدرس 1</div>
+    <h1><span class="grad">EXPLAIN ANALYZE</span></h1>
+    <p class="en-title">Reading Query Execution Plans — The Most Powerful Debugging Tool in PostgreSQL</p>
+    <p class="desc">EXPLAIN ANALYZE هو X-Ray لـ Query بتاعتك — يُريك بالضبط ماذا PostgreSQL يفعل، كم وقت تستهلك، وأين الـ Bottleneck. بدونه، تحسين الأداء مجرد تخمين.</p>
+    <div class="learn-pills">
+        <span class="pill">EXPLAIN vs EXPLAIN ANALYZE</span>
+        <span class="pill">Cost وRows وWidth</span>
+        <span class="pill">Seq Scan vs Index Scan</span>
+        <span class="pill">Hash Join vs Nested Loop</span>
+        <span class="pill">Actual vs Estimated Rows</span>
+        <span class="pill">Buffers Analysis</span>
+        <span class="pill">pg_stat_statements</span>
+    </div>
+</header>
+
+<div class="lesson-body">
+
+<!-- BASICS -->
+<div class="section-block" id="basics" data-aos="fade-up">
+    <div class="section-title"><span>⚗️</span> EXPLAIN vs EXPLAIN ANALYZE</div>
+    <p class="section-en">Estimation vs Reality — The Critical Difference</p>
+
+    <div class="scan-grid">
+        <div class="scan-card" style="border-top-color:#F87171;">
+            <h3 style="color:#F87171;font-size:.9rem;font-weight:900;">EXPLAIN</h3>
+            <p style="font-size:.83rem;color:#94A3B8;line-height:1.9;">يُقدّر الخطة فقط بدون تنفيذ فعلي. Cost وRows مجرد تقديرات من الـ Planner. سريع لكن غير دقيق للتشخيص.</p>
+        </div>
+        <div class="scan-card" style="border-top-color:#34D399;">
+            <h3 style="color:#34D399;font-size:.9rem;font-weight:900;">EXPLAIN ANALYZE</h3>
+            <p style="font-size:.83rem;color:#94A3B8;line-height:1.9;">يُنفّذ الـ Query فعلاً ويُجمع الإحصائيات الحقيقية. تجد الفرق بين التقدير والواقع. استخدمه دائماً للتشخيص.</p>
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">EXPLAIN ANALYZE — خيارات كاملة</span></div>
+        <div class="cbody">
+<span class="cmt">-- الأساسي</span>
+<span class="kw">EXPLAIN</span> <span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">orders</span> <span class="kw">WHERE</span> customer_id = <span class="num">1</span>;
+
+<span class="cmt">-- الأقوى: تنفيذ حقيقي + كل التفاصيل</span>
+<span class="kw">EXPLAIN</span> (<span class="cn">ANALYZE</span>, <span class="cn">BUFFERS</span>, <span class="cn">VERBOSE</span>, <span class="cn">FORMAT JSON</span>)
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">orders</span> <span class="kw">WHERE</span> customer_id = <span class="num">1</span>;
+
+<span class="cmt">-- الخيارات:</span>
+<span class="cmt">-- ANALYZE:  تنفيذ فعلي وقياس الوقت</span>
+<span class="cmt">-- BUFFERS:  عدد الـ Pages المقروءة من Cache والـ Disk</span>
+<span class="cmt">-- VERBOSE:  مزيد من التفاصيل (Output columns, Schema)</span>
+<span class="cmt">-- COSTS:    يُظهر أو يُخفي الـ Cost (مفعّل افتراضياً)</span>
+<span class="cmt">-- FORMAT:   TEXT (افتراضي)، JSON، XML، YAML</span>
+
+<span class="cmt">-- للـ DML (لا يُطبّق التغييرات)</span>
+<span class="kw">BEGIN</span>;
+<span class="kw">EXPLAIN ANALYZE</span>
+<span class="kw">UPDATE</span> <span class="tb">orders</span> <span class="kw">SET</span> status = <span class="str">'shipped'</span> <span class="kw">WHERE</span> id = <span class="num">1</span>;
+<span class="kw">ROLLBACK</span>;  <span class="cmt">-- يُلغي التغيير لكن الـ Plan ظهر</span>
+        </div>
+    </div>
+</div>
+
+<!-- READING THE PLAN -->
+<div class="section-block" id="read" data-aos="fade-up">
+    <div class="section-title"><span>📖</span> كيف تقرأ الـ Execution Plan؟</div>
+    <p class="section-en">Anatomy of an Execution Plan — Cost, Rows, Width, Actual Time</p>
+
+    <p class="body-text">الـ Plan يُقرأ من أسفل لأعلى — الـ Node الأعمق هو الأول في التنفيذ. كل سطر يحمل معلومات ثمينة.</p>
+
+    <div class="plan-block">
+<span class="plan-node">Hash Join</span>  <span class="plan-cost">(cost=245.50..1823.40 rows=12000 width=64)</span>
+              <span class="plan-warn">(actual time=15.234..180.445 rows=11892 loops=1)</span>
+  Hash Cond: <span class="str">(o.customer_id = c.id)</span>
+  <span class="plan-node">→ Seq Scan on orders o</span>  <span class="plan-cost">(cost=0..890.00 rows=50000 width=48)</span>
+                             <span class="plan-ok">(actual time=0.012..45.123 rows=50000 loops=1)</span>
+  <span class="plan-node">→ Hash</span>  <span class="plan-cost">(cost=150..150 rows=7640 width=16)</span>
+        <span class="plan-warn">Batches: 4  Memory Usage: 512kB  ← تجاوز الـ work_mem!</span>
+      <span class="plan-node">→ Seq Scan on customers c</span>  <span class="plan-cost">(cost=0..150 rows=7640 width=16)</span>
+<span class="cmt">Planning Time: 2.145 ms
+Execution Time: 195.234 ms</span>
+    </div>
+
+    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.82rem;margin:1rem 0;">
+        <thead><tr style="background:rgba(217,119,6,.08);">
+            <th style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.06);color:#FDE68A;text-align:right;">الحقل</th>
+            <th style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.06);color:#FDE68A;text-align:right;">المعنى</th>
+            <th style="padding:.5rem 1rem;border:1px solid rgba(255,255,255,.06);color:#FDE68A;text-align:right;">ملاحظة</th>
+        </tr></thead>
+        <tbody>
+            <tr><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-family:'Fira Code',monospace;color:#FBBF24;">cost=0.00..890.00</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);">تكلفة البدء..تكلفة الانتهاء (وحدات افتراضية)</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);color:#64748B;">ليست ميلي ثانية</td></tr>
+            <tr><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-family:'Fira Code',monospace;color:#34D399;">rows=50000</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);">تقدير عدد الصفوف الناتجة</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);color:#64748B;">قد يختلف عن actual</td></tr>
+            <tr><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-family:'Fira Code',monospace;color:#94A3B8;">width=48</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);">متوسط حجم الصف بالـ Bytes</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);color:#64748B;">مفيد لحساب الذاكرة</td></tr>
+            <tr><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-family:'Fira Code',monospace;color:#F87171;">actual time=0..45ms</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);">الوقت الفعلي للتنفيذ</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);color:#64748B;">من ANALYZE فقط</td></tr>
+            <tr><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);font-family:'Fira Code',monospace;color:#A78BFA;">loops=5</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);">كم مرة نُفِّذ الـ Node (Nested Loop)</td><td style="padding:.4rem 1rem;border:1px solid rgba(255,255,255,.05);color:#64748B;">actual يُضرب × loops</td></tr>
+        </tbody>
+    </table></div>
+
+    <div class="callout mistake">
+        <div class="chead">⚠️ المخيف: rows estimation خاطئ جداً</div>
+        <p>إذا وجدت <strong>rows=10</strong> لكن <strong>actual rows=50000</strong> — الـ Planner يعيش في وهم! سبب؟ الإحصائيات قديمة. الحل: <code style="font-family:'Fira Code',monospace;">ANALYZE table_name;</code> لتحديث الإحصائيات.</p>
+    </div>
+</div>
+
+<!-- NODE TYPES -->
+<div class="section-block" id="nodes" data-aos="fade-up">
+    <div class="section-title"><span>🔍</span> أنواع الـ Scan Nodes</div>
+    <p class="section-en">Scan Types — Sequential, Index, Bitmap, Index-Only</p>
+
+    <div class="scan-grid">
+        <div class="scan-card" style="border-top-color:#F87171;">
+            <h3 style="color:#F87171;font-size:.9rem;font-weight:900;">Seq Scan — المصيبة الكبيرة</h3>
+            <p style="font-size:.83rem;line-height:1.9;color:#94A3B8;">يقرأ كل الجدول من أول لآخر. مقبول للجداول الصغيرة أو عند جلب >10% من الصفوف. <span style="color:#F87171;">مقبول للجداول الصغيرة فقط!</span></p>
+        </div>
+        <div class="scan-card" style="border-top-color:#34D399;">
+            <h3 style="color:#34D399;font-size:.9rem;font-weight:900;">Index Scan — الشاطر</h3>
+            <p style="font-size:.83rem;line-height:1.9;color:#94A3B8;">يستخدم الـ Index للعثور على الصفوف مباشرة. مثالي لـ <strong>Selective Queries</strong> (تُرجع صفوف قليلة).</p>
+        </div>
+        <div class="scan-card" style="border-top-color:#38BDF8;">
+            <h3 style="color:#38BDF8;font-size:.9rem;font-weight:900;">Bitmap Index Scan</h3>
+            <p style="font-size:.83rem;line-height:1.9;color:#94A3B8;">يجمع عدة Index Scans في Bitmap، ثم يقرأ الـ Pages بترتيب فيزيائي. مثالي للـ OR conditions وRange Queries.</p>
+        </div>
+        <div class="scan-card" style="border-top-color:#A78BFA;">
+            <h3 style="color:#A78BFA;font-size:.9rem;font-weight:900;">Index-Only Scan ⭐</h3>
+            <p style="font-size:.83rem;line-height:1.9;color:#94A3B8;">الـ Index يحمل كل البيانات المطلوبة — لا حاجة للرجوع للجدول الأصلي. الأسرع على الإطلاق. يحتاج Covering Index.</p>
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">مثال: Seq Scan → Index Scan → Index-Only</span></div>
+        <div class="cbody">
+<span class="cmt">-- ❌ Seq Scan على 1M record</span>
+<span class="kw">EXPLAIN ANALYZE</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">orders</span> <span class="kw">WHERE</span> customer_id = <span class="num">42</span>;
+<span class="cmt">-- Seq Scan on orders (cost=0..25432 rows=1 width=80)</span>
+<span class="cmt">--            (actual time=12.3..180.4 rows=23 loops=1)</span>
+
+<span class="cmt">-- ✅ إضافة Index</span>
+<span class="kw">CREATE INDEX</span> idx_orders_customer <span class="kw">ON</span> <span class="tb">orders</span>(customer_id);
+
+<span class="kw">EXPLAIN ANALYZE</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> <span class="tb">orders</span> <span class="kw">WHERE</span> customer_id = <span class="num">42</span>;
+<span class="cmt">-- Index Scan using idx_orders_customer</span>
+<span class="cmt">--   (cost=0.43..12.5 rows=23 width=80)</span>
+<span class="cmt">--   (actual time=0.045..0.234 rows=23 loops=1)</span>
+
+<span class="cmt">-- ⭐ Covering Index → Index-Only Scan</span>
+<span class="kw">CREATE INDEX</span> idx_orders_cust_cover
+  <span class="kw">ON</span> <span class="tb">orders</span>(customer_id)
+  <span class="kw">INCLUDE</span> (status, total_amount, order_date);  <span class="cmt">-- تضمين البيانات في الـ Index</span>
+
+<span class="kw">EXPLAIN ANALYZE</span>
+<span class="kw">SELECT</span> status, total_amount, order_date
+<span class="kw">FROM</span>  <span class="tb">orders</span>
+<span class="kw">WHERE</span> customer_id = <span class="num">42</span>;
+<span class="cmt">-- Index Only Scan (cost=0.43..8.1 rows=23 width=24)</span>
+<span class="cmt">--               (actual time=0.023..0.089 rows=23 loops=1)</span>
+<span class="cmt">-- Heap Fetches: 0 ← لا يقرأ الجدول الأصلي أبداً!</span>
+        </div>
+    </div>
+</div>
+
+<!-- BUFFERS -->
+<div class="section-block" id="buffers" data-aos="fade-up">
+    <div class="section-title"><span>💾</span> Buffers Analysis — الـ Cache Performance</div>
+    <p class="section-en">BUFFERS Option — Hit vs Read, Cache Effectiveness</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">EXPLAIN (ANALYZE, BUFFERS) — قراءة الـ Buffer Stats</span></div>
+        <div class="cbody">
+<span class="kw">EXPLAIN</span> (<span class="cn">ANALYZE</span>, <span class="cn">BUFFERS</span>)
+<span class="kw">SELECT</span> o.id, c.email, o.total_amount
+<span class="kw">FROM</span>  <span class="tb">orders</span> o
+<span class="kw">JOIN</span>  <span class="tb">customers</span> c <span class="kw">ON</span> c.id = o.customer_id
+<span class="kw">WHERE</span> o.status = <span class="str">'pending'</span>;
+
+<span class="cmt">-- الناتج (مع تفسير كل سطر):</span>
+<span class="cmt">-- Seq Scan on orders</span>
+<span class="cmt">--   Buffers: shared hit=1240 read=380 ← 1240 من Cache، 380 من الـ Disk</span>
+<span class="cmt">--   Cache Hit Ratio = 1240/(1240+380) = 76.5% ← جيد, الهدف >90%</span>
+
+<span class="cmt">-- hash=X: صفحات مستخدمة لبناء الـ Hash Table في الذاكرة</span>
+<span class="cmt">-- written=X: صفحات كتبها PostgreSQL (Dirty Pages)</span>
+
+<span class="cmt">-- حساب Cache Hit Ratio للـ DB كاملة:</span>
+<span class="kw">SELECT</span>
+  sum(heap_blks_hit)  AS cache_hits,
+  sum(heap_blks_read) AS disk_reads,
+  <span class="fn">ROUND</span>(sum(heap_blks_hit) * <span class="num">100.0</span> / <span class="fn">NULLIF</span>(sum(heap_blks_hit + heap_blks_read), <span class="num">0</span>), <span class="num">2</span>) AS cache_hit_ratio
+<span class="kw">FROM</span> pg_statio_user_tables;
+<span class="cmt">-- هدفك: > 95% — لو أقل زِد shared_buffers في postgresql.conf</span>
+        </div>
+    </div>
+</div>
+
+<!-- PROBLEM DIAGNOSIS -->
+<div class="section-block" id="problems" data-aos="fade-up">
+    <div class="section-title"><span>🔧</span> تشخيص المشاكل الشائعة</div>
+    <p class="section-en">Common Query Plan Problems and Their Solutions</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">pg_stat_statements — إيجاد أبطأ الـ Queries</span></div>
+        <div class="cbody">
+<span class="cmt">-- تفعيل pg_stat_statements (postgresql.conf)</span>
+<span class="cmt">-- shared_preload_libraries = 'pg_stat_statements'</span>
+<span class="kw">CREATE EXTENSION IF NOT EXISTS</span> pg_stat_statements;
+
+<span class="cmt">-- Top 10 أبطأ queries</span>
+<span class="kw">SELECT</span>
+  <span class="fn">ROUND</span>(total_exec_time/<span class="num">1000</span>,<span class="num">2</span>)    AS total_sec,
+  calls,
+  <span class="fn">ROUND</span>(mean_exec_time,<span class="num">2</span>)         AS avg_ms,
+  <span class="fn">ROUND</span>(stddev_exec_time,<span class="num">2</span>)       AS stddev_ms,
+  rows,
+  query
+<span class="kw">FROM</span>  pg_stat_statements
+<span class="kw">ORDER BY</span> total_exec_time <span class="kw">DESC</span>
+<span class="kw">LIMIT</span>  <span class="num">10</span>;
+
+<span class="cmt">-- Queries بأسوأ Cache Hit Ratio</span>
+<span class="kw">SELECT</span>
+  queryid,
+  <span class="fn">ROUND</span>(shared_blks_hit * <span class="num">100.0</span> / <span class="fn">NULLIF</span>(shared_blks_hit + shared_blks_read,<span class="num">0</span>),<span class="num">1</span>) AS hit_pct,
+  shared_blks_read AS disk_reads,
+  query
+<span class="kw">FROM</span>  pg_stat_statements
+<span class="kw">WHERE</span> shared_blks_read > <span class="num">1000</span>
+<span class="kw">ORDER BY</span> shared_blks_read <span class="kw">DESC</span>
+<span class="kw">LIMIT</span>  <span class="num">20</span>;
+
+<span class="cmt">-- إعادة تعيين الإحصائيات:</span>
+<span class="kw">SELECT</span> <span class="fn">pg_stat_statements_reset</span>();
+        </div>
+    </div>
+
+    <div class="callout realworld">
+        <div class="chead">🎯 علامات المشاكل في الـ Plan</div>
+        <p>
+        🔴 <strong>Seq Scan على جدول كبير:</strong> أضف Index<br>
+        🔴 <strong>rows=10 لكن actual=500000:</strong> شغّل ANALYZE لتحديث الإحصائيات<br>
+        🔴 <strong>Hash Batches: 4+:</strong> زِد work_mem في الـ Session<br>
+        🔴 <strong>Nested Loop مع rows كثيرة:</strong> ربما Hash Join أفضل<br>
+        🔴 <strong>Execution Time عالي لكن Planning Time منخفض:</strong> الـ Query تحتاج Index<br>
+        🟢 <strong>Index Only Scan:</strong> ممتاز — Covering Index يعمل!
+        </p>
+    </div>
+</div>
+
+<!-- QUIZ -->
+<div class="section-block" id="quiz" data-aos="fade-up">
+    <div class="section-title"><span>🧠</span> اختبار الفهم</div>
+    <div class="quiz-card" id="qq1">
+        <div class="quiz-q">١. ما الفرق بين EXPLAIN وEXPLAIN ANALYZE؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(1,this,false)">ANALYZE أبطأ بسبب طباعة التفاصيل</div>
+            <div class="quiz-opt" onclick="ans(1,this,true)">EXPLAIN يُقدّر الـ Plan بدون تنفيذ فعلي. EXPLAIN ANALYZE يُنفّذ الـ Query فعلاً ويُظهر الوقت الحقيقي وعدد الصفوف الفعلية — ضروري للتشخيص الدقيق.</div>
+            <div class="quiz-opt" onclick="ans(1,this,false)">EXPLAIN ANALYZE يُعدّل البيانات</div>
+        </div>
+        <div class="quiz-fb" id="fb1"></div>
+    </div>
+    <div class="quiz-card" id="qq2">
+        <div class="quiz-q">٢. رأيت في الـ Plan: rows=5 لكن actual rows=80000. ما السبب والحل؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(2,this,false)">الـ Index مفقود</div>
+            <div class="quiz-opt" onclick="ans(2,this,true)">الإحصائيات قديمة — الـ Planner لا يعرف التوزيع الحقيقي للبيانات. الحل: ANALYZE table_name؛ أو تأكّد أن autovacuum يعمل.</div>
+            <div class="quiz-opt" onclick="ans(2,this,false)">الـ Query مكتوبة غلط</div>
+        </div>
+        <div class="quiz-fb" id="fb2"></div>
+    </div>
+    <div class="quiz-card" id="qq3">
+        <div class="quiz-q">٣. ما الـ Index-Only Scan ولماذا هو الأسرع؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(3,this,false)">Scan يستخدم RAM فقط</div>
+            <div class="quiz-opt" onclick="ans(3,this,true)">الـ Index يحمل كل البيانات المطلوبة (Covering Index بـ INCLUDE) — لا يحتاج للرجوع للجدول الأصلي. Heap Fetches=0! أسرع لأنه يقرأ بيانات أقل.</div>
+            <div class="quiz-opt" onclick="ans(3,this,false)">يستخدم الـ OS Cache مباشرة</div>
+        </div>
+        <div class="quiz-fb" id="fb3"></div>
+    </div>
+    <div class="quiz-card" id="qq4">
+        <div class="quiz-q">٤. في BUFFERS: hit=100, read=900. ما Cache Hit Ratio وماذا يعني؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(4,this,false)">90% — ممتاز</div>
+            <div class="quiz-opt" onclick="ans(4,this,true)">10% فقط — معظم البيانات تُقرأ من الـ Disk. هذا بطيء جداً. الحل: زِد shared_buffers في postgresql.conf أو حسّن الـ Queries لتقليل Disk I/O.</div>
+            <div class="quiz-opt" onclick="ans(4,this,false)">لا يمكن حسابه</div>
+        </div>
+        <div class="quiz-fb" id="fb4"></div>
+    </div>
+    <div class="quiz-score-box" id="score-box">
+        <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+        <p id="score-msg" style="color:#94A3B8;"></p>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <a href="../Unit7/locking_recovery.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: Locks & Recovery</a>
+    <a href="indexing_deep_dive.html" class="bnav-btn" style="color:#FDE68A;">التالي: Indexing Deep Dive <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 8: EXPLAIN ANALYZE</footer>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+AOS.init({duration:700,once:true,offset:80});
+window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+const fbs={
+    1:{c:'✅ EXPLAIN: يُقدّر خطة التنفيذ من الـ Planner بدون تنفيذ فعلي — سريع لكن estimates فقط. EXPLAIN ANALYZE: يُنفّذ Query والقيم actual. دائماً استخدم ANALYZE للتشخيص الحقيقي.',w:'❌ ANALYZE لا يُعدّل البيانات. يُنفّذ الـ Query لكن إدارة الـ side effects (DML) تحتاج BEGIN/ROLLBACK.'},
+    2:{c:'✅ الإحصائيات قديمة: PostgreSQL الـ Planner يعتمد على pg_statistics التي تتحدث بالـ autovacuum. ANALYZE table_name تُحدّثها فوراً. إذا تضاعفت البيانات بسرعة، autovacuum قد يتأخر.',w:'❌ الفرق بين rows و actual rows ليس بسبب الـ Index — بل بسبب الإحصائيات القديمة التي يعتمد عليها الـ Planner لتقدير الصفوف.'},
+    3:{c:'✅ Index-Only Scan يستخدم Covering Index (INCLUDE columns) — الـ Index نفسه يحمل كل القيم المطلوبة. لا حاجة للـ Heap (الجدول الأصلي). Heap Fetches=0. أسرع لأن I/O أقل.',w:'❌ Index-Only Scan لا علاقة له بالـ RAM مباشرة — هو Scan يعمل على الـ Index فقط بدون الرجوع للـ Heap Pages.'},
+    4:{c:'✅ Cache Hit Ratio = 100/(100+900) = 10% — كارثي! 90% من البيانات تأتي من Disk. الهدف >95%. الحل: زِد shared_buffers (مثلاً 25% من RAM)، أو أضف Index لتقليل الـ Pages المقروءة.',w:'❌ hit/(hit+read) = 100/1000 = 10%. ليس 90%. "read" يعني قراءة من الـ Disk وهو بطيء، "hit" يعني من الـ Cache.'}
+};
+let answered=0,score=0;
+function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';document.getElementById('score-text').textContent=`نتيجتك: ${score} / 4`;document.getElementById('score-msg').textContent=score===4?'🎉 Query Analyst!':score>=3?'👏 كويس!':'💪 راجع الدرس.';document.getElementById('score-text').style.color=score===4?'#34D399':score>=3?'#FBBF24':'#F87171';}}
+</script>
+</body>
+</html>

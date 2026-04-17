@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indexing Deep Dive — الفهرسة بالتفصيل | Database Mastery</title>
+    <meta name="description" content="دليل شامل للفهرسة في PostgreSQL: B-Tree، Hash، GIN، GiST، BRIN — Composite Index، Partial Index، Expression Index، Index Bloat، Covering Index — مع أمثلة E-Commerce كاملة.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global-db.css">
+    <style>
+        :root{--accent:#34D399;--accent-lt:#6EE7B7;}
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;text-decoration:none;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#059669,#064E3B);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#6EE7B7;}
+        .nav-toc{display:flex;gap:1.2rem;font-size:.8rem;}
+        .nav-toc a{color:#64748B;text-decoration:none;transition:.2s;}
+        .nav-toc a:hover{color:#6EE7B7;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#059669,#3B82F6);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(5,150,105,.1),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#6EE7B7;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#059669;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2rem,5vw,3.6rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#34D399,#3B82F6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.05rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(5,150,105,.1);border:1px solid rgba(5,150,105,.2);font-size:.78rem;color:#6EE7B7;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.tip{background:rgba(5,150,105,.07);border:1px solid rgba(5,150,105,.2);}
+        .callout.tip .chead{color:#34D399;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);}
+        .callout.realworld .chead{color:#60A5FA;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
+        .code-block{background:#0a0a0f;border-radius:12px;overflow:hidden;margin:1rem 0;border:1px solid rgba(255,255,255,.05);}
+        .code-bar{background:#111118;padding:.5rem 1rem;display:flex;align-items:center;gap:.4rem;border-bottom:1px solid rgba(255,255,255,.04);}
+        .cdot{width:9px;height:9px;border-radius:50%;}.cdot.r{background:#FF5F57}.cdot.y{background:#FDBC40}.cdot.g{background:#27C93F}
+        .clabel{color:#475569;font-size:.7rem;margin-right:auto;font-family:'Fira Code',monospace;}
+        .cbody{padding:1rem 1.2rem;font-family:'Fira Code',monospace;font-size:.82rem;line-height:1.9;direction:ltr;overflow-x:auto;}
+        .kw{color:#C084FC;font-weight:600}.tb{color:#34D399}.str{color:#FB923C}.num{color:#FBBF24}.cmt{color:#475569}.fn{color:#22D3EE}.cn{color:#A5B4FC}
+        .idx-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0;}
+        @media(max-width:640px){.idx-type-grid{grid-template-columns:1fr;}}
+        .idx-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1.2rem;border-right:4px solid;}
+        .idx-card h3{font-size:.88rem;font-weight:900;margin-bottom:.3rem;}
+        .idx-card p{font-size:.82rem;color:#64748B;line-height:1.9;margin:0;}
+        .idx-card .use{font-size:.75rem;color:#34D399;margin-top:.4rem;font-family:'Fira Code',monospace;}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;text-decoration:none;color:#E2E8F0;}
+        .bnav-btn:hover{background:rgba(5,150,105,.1);border-color:rgba(5,150,105,.3);transform:translateY(-2px);}
+    </style>
+</head>
+<body>
+<nav class="lesson-nav-bar">
+    <div class="nav-inner">
+        <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-list-ol"></i></div>العودة للبوابة</a>
+        <div class="nav-toc">
+            <a href="#types">أنواع الـ Indexes</a>
+            <a href="#btree">B-Tree</a>
+            <a href="#advanced">Advanced</a>
+            <a href="#strategies">استراتيجيات</a>
+            <a href="#maintenance">Maintenance</a>
+            <a href="#quiz">اختبار</a>
+        </div>
+    </div>
+</nav>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
+
+<header class="hero" data-aos="fade-up">
+    <div class="lesson-badge"><span class="pulse"></span>الوحدة 8 — الدرس 2</div>
+    <h1><span class="grad">Indexing Deep Dive</span></h1>
+    <p class="en-title">B-Tree, Hash, GIN, GiST, BRIN — Partial, Composite, Expression, Covering Indexes</p>
+    <p class="desc">الـ Index هو القاموس — بدونه تقرأ كل كتاب من أول صفحة. لكن Index خاطئ أبطأ من عدمه. الفن هو معرفة متى وكيف تُنشئ الـ Index المناسب.</p>
+    <div class="learn-pills">
+        <span class="pill">B-Tree Structure</span>
+        <span class="pill">Hash Index</span>
+        <span class="pill">GIN للـ JSONB و Full-Text</span>
+        <span class="pill">BRIN للبيانات المتسلسلة</span>
+        <span class="pill">Composite Index</span>
+        <span class="pill">Partial Index</span>
+        <span class="pill">Expression Index</span>
+        <span class="pill">CONCURRENTLY</span>
+        <span class="pill">Index Bloat</span>
+    </div>
+</header>
+
+<div class="lesson-body">
+
+<!-- INDEX TYPES -->
+<div class="section-block" id="types" data-aos="fade-up">
+    <div class="section-title"><span>🗂️</span> أنواع الـ Indexes في PostgreSQL</div>
+    <p class="section-en">Index Types — Choose the Right One for Each Use Case</p>
+
+    <div class="idx-type-grid">
+        <div class="idx-card" style="border-right-color:#34D399;">
+            <h3 style="color:#34D399;">B-Tree ⭐</h3>
+            <p>الافتراضي والأكثر استخداماً. يدعم =، &lt;، &gt;، BETWEEN، LIKE 'abc%'، ORDER BY.</p>
+            <div class="use">= &lt; &gt; BETWEEN LIKE 'abc%'</div>
+        </div>
+        <div class="idx-card" style="border-right-color:#38BDF8;">
+            <h3 style="color:#38BDF8;">Hash</h3>
+            <p>أسرع من B-Tree للـ = فقط. لا يدعم Range Queries. يُستخدم نادراً (PostgreSQL 10+ reliable).</p>
+            <div class="use">= فقط، لا &lt; &lt; LIKE</div>
+        </div>
+        <div class="idx-card" style="border-right-color:#F472B6;">
+            <h3 style="color:#F472B6;">GIN (Generalized Inverted)</h3>
+            <p>للبيانات المركّبة: JSONB، Arrays، tsvector (Full-Text Search). يُنشئ inverted index لكل عنصر داخل القيمة.</p>
+            <div class="use">JSONB @&gt; || array @&gt; || to_tsvector @@</div>
+        </div>
+        <div class="idx-card" style="border-right-color:#FBBF24;">
+            <h3 style="color:#FBBF24;">GiST (Generalized Search Tree)</h3>
+            <p>للبيانات الهندسية والـ Ranges والـ Full-Text البسيط. يدعم العمليات الفضائية (PostGIS).</p>
+            <div class="use">geometry &&, tsquery, ip4r</div>
+        </div>
+        <div class="idx-card" style="border-right-color:#A78BFA;">
+            <h3 style="color:#A78BFA;">BRIN (Block Range Index)</h3>
+            <p>صغير جداً (أصغر بـ 1000x من B-Tree). مثالي للبيانات المُرتّبة فيزيائياً مثل timestamps وserial IDs.</p>
+            <div class="use">Timestamp، Serial — بيانات متسلسلة</div>
+        </div>
+        <div class="idx-card" style="border-right-color:#FB923C;">
+            <h3 style="color:#FB923C;">SP-GiST</h3>
+            <p>للبيانات ذات التوزيع غير المنتظم كالنقاط الهندسية والـ IP Addresses والـ Tries.</p>
+            <div class="use">inet ops, text patterns, box ops</div>
+        </div>
+    </div>
+</div>
+
+<!-- B-TREE DEEP DIVE -->
+<div class="section-block" id="btree" data-aos="fade-up">
+    <div class="section-title"><span>🌳</span> B-Tree — كيف يعمل من الداخل؟</div>
+    <p class="section-en">B-Tree Internal Structure — Why It's O(log n)</p>
+
+    <p class="body-text">B-Tree (Balanced Tree) = شجرة متوازنة. كل عمليات البحث O(log n). بيانات مُرتّبة في الـ Leaf Nodes مع pointers للـ Heap Pages.</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Composite Index — الترتيب مهم جداً (ESR Rule)</span></div>
+        <div class="cbody">
+<span class="cmt">-- ESR Rule: Equality → Sort → Range</span>
+<span class="cmt">-- الحقول التي تُفلتر بـ = تأتي أولاً، ثم ORDER BY، ثم BETWEEN/&lt;/&gt;</span>
+
+<span class="cmt">-- Query: WHERE status = 'active' AND category_id = 3 ORDER BY price</span>
+<span class="cmt">-- Index الصحيح:</span>
+<span class="kw">CREATE INDEX</span> idx_products_composite
+  <span class="kw">ON</span> <span class="tb">products</span>(status, category_id, price);
+<span class="cmt">-- ✅ status (Equality) → category_id (Equality) → price (Sort/Range)</span>
+
+<span class="cmt">-- ❌ الترتيب الخاطئ: price أولاً</span>
+<span class="kw">CREATE INDEX</span> idx_wrong <span class="kw">ON</span> <span class="tb">products</span>(price, status, category_id);
+<span class="cmt">-- لن يُستخدم بكفاءة! PostgreSQL لا يستطيع Skip الأعمدة الأولى</span>
+
+<span class="cmt">-- ══ Column Prefix Rule: يستخدم الـ Index من اليسار ══</span>
+<span class="cmt">-- Index: (a, b, c)</span>
+<span class="cmt">-- ✅ WHERE a = 1                      → يستخدم (a)</span>
+<span class="cmt">-- ✅ WHERE a = 1 AND b = 2            → يستخدم (a, b)</span>
+<span class="cmt">-- ✅ WHERE a = 1 AND b = 2 AND c = 3  → يستخدم (a, b, c)</span>
+<span class="cmt">-- ❌ WHERE b = 2                      → لن يستخدم Index! (تجاوز a)</span>
+<span class="cmt">-- ❌ WHERE c = 3                      → لن يستخدم Index!</span>
+
+<span class="cmt">-- ══ NULL values في الـ B-Tree ══</span>
+<span class="cmt">-- B-Tree يفهرس NULL — يدعم IS NULL وIS NOT NULL</span>
+<span class="kw">CREATE INDEX</span> idx_null_safe <span class="kw">ON</span> <span class="tb">orders</span>(shipped_at <span class="cn">NULLS FIRST</span>);
+        </div>
+    </div>
+</div>
+
+<!-- ADVANCED INDEXES -->
+<div class="section-block" id="advanced" data-aos="fade-up">
+    <div class="section-title"><span>🎯</span> Advanced Indexes — الأسلحة الخفية</div>
+    <p class="section-en">Partial, Expression, Covering, and GIN Indexes</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Partial Index — يفهرس جزءاً من الجدول فقط</span></div>
+        <div class="cbody">
+<span class="cmt">-- مثال E-Commerce: 90% من الـ orders بحالة 'delivered' لا نبحث فيها</span>
+<span class="cmt">-- نريد Index للـ active orders فقط</span>
+
+<span class="cmt">-- ❌ Index عادي: يفهرس 1M record (معظمها غير مفيد)</span>
+<span class="kw">CREATE INDEX</span> idx_orders_all <span class="kw">ON</span> <span class="tb">orders</span>(status);
+
+<span class="cmt">-- ✅ Partial Index: يفهرس 50K فقط (pending + shipped)</span>
+<span class="kw">CREATE INDEX</span> idx_orders_active
+  <span class="kw">ON</span> <span class="tb">orders</span>(customer_id, order_date)
+  <span class="kw">WHERE</span> status <span class="kw">IN</span> (<span class="str">'pending'</span>, <span class="str">'shipped'</span>);
+<span class="cmt">-- أصغر بـ 20x، أسرع بـ 10x، يشغل ذاكرة أقل</span>
+
+<span class="cmt">-- Partial Unique: Email ليس NULL فقط</span>
+<span class="kw">CREATE UNIQUE INDEX</span> idx_user_email_unique
+  <span class="kw">ON</span> <span class="tb">users</span>(email)
+  <span class="kw">WHERE</span> email <span class="kw">IS NOT NULL</span>;
+<span class="cmt">-- يسمح بـ NULL متعددة لكن يمنع تكرار email</span>
+        </div>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">Expression Index و GIN Index</span></div>
+        <div class="cbody">
+<span class="cmt">-- Expression Index: يفهرس نتيجة دالة</span>
+<span class="cmt">-- Query: WHERE LOWER(email) = 'ahmed@test.com'</span>
+
+<span class="cmt">-- ❌ بدون Expression Index → Seq Scan (LOWER() تمنع استخدام الـ Index)</span>
+<span class="kw">CREATE INDEX</span> idx_email_lower
+  <span class="kw">ON</span> <span class="tb">customers</span>(<span class="fn">LOWER</span>(email));
+<span class="cmt">-- الآن: WHERE LOWER(email) = 'ahmed@...' → يستخدم Index</span>
+
+<span class="cmt">-- Expression Index لـ Date Parts</span>
+<span class="kw">CREATE INDEX</span> idx_orders_month
+  <span class="kw">ON</span> <span class="tb">orders</span>(<span class="fn">DATE_TRUNC</span>(<span class="str">'month'</span>, order_date));
+
+<span class="cmt">-- ══ GIN Index للـ JSONB ══</span>
+<span class="cmt">-- Query: WHERE metadata @> '{"color": "red"}'</span>
+<span class="kw">CREATE INDEX</span> idx_products_meta_gin
+  <span class="kw">ON</span> <span class="tb">products</span> <span class="kw">USING</span> gin(metadata);
+<span class="cmt">-- يدعم: @> (contains), ? (key exists), ?| (any key), ?& (all keys)</span>
+
+<span class="cmt">-- GIN للـ Full-Text Search</span>
+<span class="kw">ALTER TABLE</span> <span class="tb">products</span> <span class="kw">ADD COLUMN</span>
+  search_vector <span class="fn">tsvector</span>
+    <span class="kw">GENERATED ALWAYS AS</span>
+    (<span class="fn">to_tsvector</span>(<span class="str">'arabic'</span>, name || <span class="str">' '</span> || <span class="fn">COALESCE</span>(description, <span class="str">''</span>)))
+    <span class="kw">STORED</span>;
+
+<span class="kw">CREATE INDEX</span> idx_products_fts <span class="kw">ON</span> <span class="tb">products</span> <span class="kw">USING</span> gin(search_vector);
+
+<span class="cmt">-- البحث:</span>
+<span class="kw">SELECT</span> name, <span class="fn">ts_rank</span>(search_vector, query) <span class="kw">AS</span> rank
+<span class="kw">FROM</span>  <span class="tb">products</span>,
+      <span class="fn">to_tsquery</span>(<span class="str">'arabic'</span>, <span class="str">'لابتوب & ألعاب'</span>) query
+<span class="kw">WHERE</span> search_vector @@ query
+<span class="kw">ORDER BY</span> rank <span class="kw">DESC LIMIT</span> <span class="num">20</span>;
+
+<span class="cmt">-- ══ BRIN Index للـ Timestamp (أصغر بـ 1000x) ══</span>
+<span class="kw">CREATE INDEX</span> idx_orders_date_brin
+  <span class="kw">ON</span> <span class="tb">orders</span> <span class="kw">USING</span> brin(order_date)
+  <span class="kw">WITH</span> (pages_per_range = <span class="num">64</span>);
+<span class="cmt">-- مثالي إذا الـ orders مُدرجة بترتيب زمني (correlated)</span>
+        </div>
+    </div>
+</div>
+
+<!-- STRATEGIES -->
+<div class="section-block" id="strategies" data-aos="fade-up">
+    <div class="section-title"><span>🧠</span> استراتيجيات الفهرسة الصحيحة</div>
+    <p class="section-en">Indexing Strategy — What to Index, What to Avoid</p>
+
+    <div class="callout tip">
+        <div class="chead">✅ متى تُضيف Index؟</div>
+        <p>
+        • أعمدة في WHERE، JOIN ON، ORDER BY، GROUP BY<br>
+        • Foreign Keys (PostgreSQL لا يُنشئها تلقائياً!)<br>
+        • أعمدة ذات Cardinality عالية (email, phone → أفيد من gender)<br>
+        • Queries تُرجع &lt;10% من الصفوف (Selective)
+        </p>
+    </div>
+
+    <div class="callout mistake">
+        <div class="chead">❌ متى لا تُضيف Index؟</div>
+        <p>
+        • جداول صغيرة (&lt;1000 صف) — Seq Scan أسرع!<br>
+        • أعمدة boolean أو low-cardinality (gender, is_active) — أضف Partial Index بدلاً<br>
+        • Heavy-Write Tables — كل INSERT/UPDATE/DELETE يُحدّث الـ Index<br>
+        • Indexes غير مُستخدمة → تثقل الـ Write بدون فائدة
+        </p>
+    </div>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">فحص الـ Indexes غير المُستخدمة</span></div>
+        <div class="cbody">
+<span class="cmt">-- Indexes لم تُستخدم منذ آخر reset</span>
+<span class="kw">SELECT</span>
+  schemaname,
+  tablename,
+  indexname,
+  idx_scan          AS times_used,
+  idx_tup_read      AS tuples_read,
+  idx_tup_fetch     AS tuples_fetched,
+  <span class="fn">pg_size_pretty</span>(<span class="fn">pg_relation_size</span>(indexrelid)) AS index_size
+<span class="kw">FROM</span>  pg_stat_user_indexes
+<span class="kw">WHERE</span> idx_scan = <span class="num">0</span>            <span class="cmt">-- لم يُستخدم أبداً</span>
+  <span class="kw">AND</span> relid <span class="kw">NOT IN</span> (          <span class="cmt">-- ليس PK أو Unique</span>
+    <span class="kw">SELECT</span> conindid <span class="kw">FROM</span> pg_constraint
+    <span class="kw">WHERE</span> contype <span class="kw">IN</span> (<span class="str">'p'</span>, <span class="str">'u'</span>)
+  )
+<span class="kw">ORDER BY</span> <span class="fn">pg_relation_size</span>(indexrelid) <span class="kw">DESC</span>;
+
+<span class="cmt">-- حجم كل Index:</span>
+<span class="kw">SELECT</span>
+  indexname,
+  <span class="fn">pg_size_pretty</span>(<span class="fn">pg_relation_size</span>(indexrelid)) AS size
+<span class="kw">FROM</span>  pg_stat_user_indexes
+<span class="kw">ORDER BY</span> <span class="fn">pg_relation_size</span>(indexrelid) <span class="kw">DESC</span>;
+        </div>
+    </div>
+</div>
+
+<!-- MAINTENANCE -->
+<div class="section-block" id="maintenance" data-aos="fade-up">
+    <div class="section-title"><span>🔧</span> Index Maintenance — CONCURRENTLY وBloat</div>
+    <p class="section-en">Index Creation, Rebuilding, and Bloat Management</p>
+
+    <div class="code-block">
+        <div class="code-bar"><span class="cdot r"></span><span class="cdot y"></span><span class="cdot g"></span><span class="clabel">CONCURRENTLY — إنشاء Index بدون Lock</span></div>
+        <div class="cbody">
+<span class="cmt">-- ❌ بدون CONCURRENTLY: يُقفّل الجدول للكتابة!</span>
+<span class="kw">CREATE INDEX</span> idx_orders_status <span class="kw">ON</span> <span class="tb">orders</span>(status);
+<span class="cmt">-- يمنع INSERT/UPDATE/DELETE أثناء البناء — مشكلة في Production</span>
+
+<span class="cmt">-- ✅ CONCURRENTLY: لا lock على الجدول</span>
+<span class="kw">CREATE INDEX CONCURRENTLY</span> idx_orders_status <span class="kw">ON</span> <span class="tb">orders</span>(status);
+<span class="cmt">-- يأخذ وقتاً أطول لكن لا يمنع العمليات الأخرى</span>
+<span class="cmt">-- لا يعمل داخل Transaction Block</span>
+
+<span class="cmt">-- إعادة بناء Index (لعلاج الـ Bloat)</span>
+<span class="kw">REINDEX INDEX CONCURRENTLY</span> idx_orders_status;
+<span class="kw">REINDEX TABLE CONCURRENTLY</span> <span class="tb">orders</span>;  <span class="cmt">-- كل Indexes الجدول</span>
+
+<span class="cmt">-- حذف Index:</span>
+<span class="kw">DROP INDEX CONCURRENTLY</span> idx_orders_status;
+
+<span class="cmt">-- ══ Index Bloat — تشخيص ══</span>
+<span class="kw">SELECT</span>
+  indexname,
+  <span class="fn">pg_size_pretty</span>(<span class="fn">pg_relation_size</span>(indexrelid)) AS current_size,
+  <span class="fn">ROUND</span>((<span class="num">1</span> - avg_leaf_density/<span class="num">100</span>) * <span class="num">100</span>, <span class="num">1</span>) AS bloat_pct
+<span class="kw">FROM</span>  pg_stat_user_indexes
+<span class="kw">JOIN</span>  pgstatindex(<span class="fn">indexrelid</span>::regclass::text) <span class="kw">USING</span> (...)
+<span class="cmt">-- (نستخدم pgstattuple extension للتفاصيل الدقيقة)</span>
+
+<span class="cmt">-- علاج بسيط: REINDEX</span>
+<span class="kw">REINDEX INDEX CONCURRENTLY</span> idx_heavy_bloat;
+        </div>
+    </div>
+
+    <div class="callout realworld">
+        <div class="chead">🏭 E-Commerce Index Strategy</div>
+        <p>
+        <code style="font-family:'Fira Code',monospace;color:#6EE7B7;">orders(customer_id, status, order_date)</code> — Composite للـ customer history<br>
+        <code style="font-family:'Fira Code',monospace;color:#6EE7B7;">orders(status) WHERE status IN ('pending','shipped')</code> — Partial للـ active orders<br>
+        <code style="font-family:'Fira Code',monospace;color:#6EE7B7;">products USING gin(metadata)</code> — GIN للـ JSONB attributes<br>
+        <code style="font-family:'Fira Code',monospace;color:#6EE7B7;">products USING gin(search_vector)</code> — Full-Text Search<br>
+        <code style="font-family:'Fira Code',monospace;color:#6EE7B7;">order_items(order_id) INCLUDE (product_id, quantity, price)</code> — Covering لجلب الـ Items
+        </p>
+    </div>
+</div>
+
+<!-- QUIZ -->
+<div class="section-block" id="quiz" data-aos="fade-up">
+    <div class="section-title"><span>🧠</span> اختبار الفهم</div>
+    <div class="quiz-card" id="qq1">
+        <div class="quiz-q">١. عندك Index على (a, b, c). هل الـ Query WHERE b=2 AND c=3 ستستخدمه؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(1,this,false)">نعم دائماً</div>
+            <div class="quiz-opt" onclick="ans(1,this,true)">لا — الـ B-Tree Index يُستخدم من اليسار (Column Prefix Rule). يجب أن يبدأ بـ a. بدون a في الـ WHERE، لن يستخدم الـ Index. الحل: أنشئ Index منفصل على (b, c).</div>
+            <div class="quiz-opt" onclick="ans(1,this,false)">نعم لكن جزئياً فقط على c</div>
+        </div>
+        <div class="quiz-fb" id="fb1"></div>
+    </div>
+    <div class="quiz-card" id="qq2">
+        <div class="quiz-q">٢. متى تستخدم GIN Index بدلاً من B-Tree؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(2,this,false)">للـ Integer columns</div>
+            <div class="quiz-opt" onclick="ans(2,this,true)">للبيانات المركّبة: JSONB @> (contains)، Arrays، tsvector (Full-Text). GIN ينشئ inverted index لكل عنصر داخل الـ Value — B-Tree يعامل القيمة كوحدة واحدة.</div>
+            <div class="quiz-opt" onclick="ans(2,this,false)">للـ Range Queries فقط</div>
+        </div>
+        <div class="quiz-fb" id="fb2"></div>
+    </div>
+    <div class="quiz-card" id="qq3">
+        <div class="quiz-q">٣. لماذا يجب استخدام CREATE INDEX CONCURRENTLY في Production؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(3,this,false)">لأنه أسرع</div>
+            <div class="quiz-opt" onclick="ans(3,this,true)">CREATE INDEX بدون CONCURRENTLY يُقفّل الجدول للكتابة أثناء البناء. في Production هذا يمنع كل INSERT/UPDATE/DELETE ويُعطّل التطبيق. CONCURRENTLY: لا lock، يعمل بالتوازي.</div>
+            <div class="quiz-opt" onclick="ans(3,this,false)">CONCURRENTLY الوحيد الذي يعمل على PostgreSQL 15</div>
+        </div>
+        <div class="quiz-fb" id="fb3"></div>
+    </div>
+    <div class="quiz-card" id="qq4">
+        <div class="quiz-q">٤. ما الـ Partial Index وما فائدته على جدول orders؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(4,this,false)">Index على نصف الأعمدة</div>
+            <div class="quiz-opt" onclick="ans(4,this,true)">Partial Index يُفهرس صفوفاً محددة فقط (بـ WHERE clause). مثال: INDEX ON orders(customer_id) WHERE status='pending' — يُفهرس 50K بدلاً من 1M. أصغر وأسرع لأن معظم Queries تهتم بالـ active orders فقط.</div>
+            <div class="quiz-opt" onclick="ans(4,this,false)">Index يستخدم BRIN type</div>
+        </div>
+        <div class="quiz-fb" id="fb4"></div>
+    </div>
+    <div class="quiz-score-box" id="score-box">
+        <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+        <p id="score-msg" style="color:#94A3B8;"></p>
+    </div>
+</div>
+<div class="bottom-nav">
+    <a href="explain_analyze.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: EXPLAIN ANALYZE</a>
+    <a href="query_optimization.html" class="bnav-btn" style="color:#6EE7B7;">التالي: Query Optimization <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 8: Indexing Deep Dive</footer>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+AOS.init({duration:700,once:true,offset:80});
+window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+const fbs={
+    1:{c:'✅ Column Prefix Rule: B-Tree Index يُستخدم فقط إذا بدأت الـ Query بالعمود الأول في الـ Index (أو الأعمدة الأولى). WHERE b=2 AND c=3 بدون a: لن يُستخدم الـ Index (a,b,c). أنشئ Index على (b,c) أو أضف a في الـ WHERE.',w:'❌ B-Tree Index لا يدعم Skip للأعمدة. يجب الاستخدام من اليسار — هذا الـ Column Prefix Rule وهو أهم مفهوم في الـ Composite Indexes.'},
+    2:{c:'✅ GIN للبيانات المركّبة: يُنشئ Inverted Index — لكل قيمة فرعية (JSON key, array element, lexeme) pointer لكل صف يحتويها. B-Tree يعامل القيمة كـ Atomic unit — لا يستطيع البحث داخل JSONB أو Array.',w:'❌ GIN ليس للـ Integer. B-Tree أفضل للأرقام. GIN للـ JSONB، Arrays، tsvector — البيانات ذات عناصر متعددة داخل قيمة واحدة.'},
+    3:{c:'✅ CREATE INDEX (بدون CONCURRENTLY): يأخذ ShareLock — يمنع كل الكتابات. على جدول 100M row يمكن أن يستغرق دقائق! في Production هذا = downtime. CONCURRENTLY: يبني الـ Index بالتوازي مع الـ Writes — أبطأ لكن آمن.',w:'❌ CONCURRENTLY ليس أسرع بالعكس — أبطأ قليلاً. لكن لا يُقفّل. المشكلة هي الـ Lock وليس السرعة.'},
+    4:{c:'✅ Partial Index: يُفهرس صفوفاً محددة فقط (WHERE في الـ INDEX Definition). على orders: INDEX WHERE status IN (\'pending\',\'shipped\') → يُفهرس 5% من الجدول. أصغر في الحجم، يتناسب في الـ RAM أكثر، أسرع في البحث.',w:'❌ Partial Index ليس على نصف الأعمدة — هو على نصف (أو جزء) من الصفوف. الاختلاف: COLUMN SUBSET vs ROW SUBSET.'}
+};
+let answered=0,score=0;
+function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';document.getElementById('score-text').textContent=`نتيجتك: ${score} / 4`;document.getElementById('score-msg').textContent=score===4?'🎉 Index Expert!':score>=3?'👏 كويس!':'💪 راجع الدرس.';document.getElementById('score-text').style.color=score===4?'#34D399':score>=3?'#FBBF24':'#F87171';}}
+</script>
+</body>
+</html>
