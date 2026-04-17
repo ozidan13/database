@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Functional Dependencies — الاعتمادات الوظيفية | Database Mastery</title>
+    <meta name="description" content="دليل شامل للـ Functional Dependencies: التعريف، Armstrong's Axioms، Closure، إيجاد Candidate Keys، Minimal Cover — مع أمثلة HR و E-Commerce كاملة.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global-db.css">
+    <style>
+        :root{--accent:#7C3AED;--accent-lt:#A78BFA;}
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;text-decoration:none;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#7C3AED,#4C1D95);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#A78BFA;}
+        .nav-toc{display:flex;gap:1.3rem;font-size:.82rem;}
+        .nav-toc a{color:#64748B;text-decoration:none;transition:.2s;}
+        .nav-toc a:hover{color:#A78BFA;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#7C3AED,#EC4899);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(124,58,237,.12),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#A78BFA;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#7C3AED;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2rem,5vw,3.6rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#7C3AED,#EC4899);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.05rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);font-size:.78rem;color:#C4B5FD;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.why{background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);}
+        .callout.why .chead{color:#22D3EE;font-weight:800;margin-bottom:.5rem;}
+        .callout.tip{background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.2);}
+        .callout.tip .chead{color:#A78BFA;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);}
+        .callout.realworld .chead{color:#34D399;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
+        /* FD notation */
+        .fd-box{background:rgba(15,23,42,.8);border:1px solid rgba(124,58,237,.25);border-radius:14px;padding:1.4rem 1.6rem;margin:1.2rem 0;direction:ltr;font-family:'Fira Code',monospace;}
+        .fd-box .fd-row{font-size:.95rem;color:#E2E8F0;margin:.3rem 0;}
+        .fd-box .fd-row .lhs{color:#A78BFA;font-weight:700;}
+        .fd-box .fd-row .arrow{color:#64748B;margin:0 .5rem;}
+        .fd-box .fd-row .rhs{color:#34D399;font-weight:600;}
+        .fd-box .fd-row .cmt{color:#475569;font-size:.8rem;margin-right:1rem;}
+        /* axioms */
+        .axiom-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:1.5rem 0;}
+        @media(max-width:640px){.axiom-grid{grid-template-columns:1fr;}}
+        .axiom-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:1.3rem;}
+        .axiom-card h3{font-size:.92rem;font-weight:800;margin-bottom:.4rem;}
+        .axiom-card .formula{font-family:'Fira Code',monospace;font-size:.82rem;background:rgba(0,0,0,.3);padding:.5rem .8rem;border-radius:8px;direction:ltr;margin:.6rem 0;color:#C4B5FD;}
+        .axiom-card p{font-size:.85rem;line-height:1.9;color:#94A3B8;}
+        /* closure steps */
+        .closure-steps{display:flex;flex-direction:column;gap:.5rem;margin:1.2rem 0;}
+        .cs{display:flex;gap:.8rem;padding:.8rem 1rem;background:rgba(124,58,237,.05);border:1px solid rgba(124,58,237,.12);border-radius:10px;align-items:flex-start;}
+        .csn{font-family:'Inter',sans-serif;font-weight:900;color:#A78BFA;font-size:.85rem;flex-shrink:0;}
+        .cs p{font-size:.9rem;color:#CBD5E1;margin:0;line-height:1.9;}
+        /* data table */
+        .rel-table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:.83rem;}
+        .rel-table th{padding:.55rem 1rem;background:rgba(124,58,237,.1);border:1px solid rgba(255,255,255,.06);color:#A78BFA;font-weight:700;text-align:center;}
+        .rel-table td{padding:.5rem 1rem;border:1px solid rgba(255,255,255,.05);color:#CBD5E1;text-align:center;font-family:'Fira Code',monospace;}
+        .rel-table .hl{background:rgba(124,58,237,.06);}
+        /* practice/quiz */
+        .practice-block{background:rgba(15,23,42,.8);border:1px solid rgba(255,255,255,.07);border-radius:18px;overflow:hidden;margin:2rem 0;}
+        .practice-header{background:rgba(124,58,237,.1);padding:1.2rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.06);}
+        .practice-header h3{font-size:1.1rem;font-weight:800;color:#A78BFA;margin:0;}
+        .practice-body{padding:1.8rem;}
+        .task-list{list-style:none;padding:0;margin-bottom:1.5rem;}
+        .task-list li{padding:.5rem 0;font-size:.93rem;color:#CBD5E1;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:.5rem;align-items:flex-start;}
+        .tnum{background:rgba(124,58,237,.15);color:#A78BFA;font-weight:800;font-size:.78rem;padding:.1rem .5rem;border-radius:5px;flex-shrink:0;font-family:'Inter',sans-serif;margin-top:.2rem;}
+        .sol-btn{width:100%;padding:.9rem;border-radius:10px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);color:#A78BFA;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:.3s;}
+        .sol-btn:hover{background:rgba(124,58,237,.2);}
+        .sol-content{display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.05);}
+        .sol-content.open{display:block;}
+        .sol-content p{font-size:.92rem;color:#CBD5E1;line-height:2;}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;text-decoration:none;color:#E2E8F0;}
+        .bnav-btn:hover{background:rgba(124,58,237,.1);border-color:rgba(124,58,237,.3);transform:translateY(-2px);}
+    </style>
+</head>
+<body>
+<nav class="lesson-nav-bar">
+    <div class="nav-inner">
+        <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-arrow-right"></i></div>العودة للبوابة</a>
+        <div class="nav-toc">
+            <a href="#definition">التعريف</a>
+            <a href="#types">الأنواع</a>
+            <a href="#axioms">Armstrong's Axioms</a>
+            <a href="#closure">Closure</a>
+            <a href="#keys">Candidate Keys</a>
+            <a href="#minimal">Minimal Cover</a>
+            <a href="#quiz">اختبار</a>
+        </div>
+    </div>
+</nav>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
+
+<header class="hero" data-aos="fade-up">
+    <div class="lesson-badge"><span class="pulse"></span>الوحدة 5 — الدرس 1</div>
+    <h1>الـ <span class="grad">Functional Dependencies</span></h1>
+    <p class="en-title">Functional Dependencies — The Mathematical Foundation of Database Design</p>
+    <p class="desc">قبل ما تعرف تطبّع قاعدة البيانات، لازم تفهم الاعتمادات الوظيفية — هي اللي بتقولك: "العمود ده بيحدد العمود ده". ده الأساس الأكاديمي لكل تصميم سليم.</p>
+    <div class="learn-pills">
+        <span class="pill">FD Definition</span>
+        <span class="pill">Trivial vs Non-trivial</span>
+        <span class="pill">Full vs Partial vs Transitive</span>
+        <span class="pill">Armstrong's Axioms</span>
+        <span class="pill">Attribute Closure X⁺</span>
+        <span class="pill">Candidate Keys</span>
+        <span class="pill">Minimal Cover</span>
+    </div>
+</header>
+
+<div class="lesson-body">
+
+<!-- DEFINITION -->
+<div class="section-block" id="definition" data-aos="fade-up">
+    <div class="section-title"><span>🔗</span> ما هو الـ Functional Dependency؟</div>
+    <p class="section-en">Functional Dependency — When One Attribute Determines Another</p>
+
+    <p class="body-text">لو عندنا علاقة R، وقلنا إن <strong>X → Y</strong> ، ده معناه: "لكل قيمتين من صفوف R، لو اتفقوا في قيمة X، لازم يتفقوا في قيمة Y".<br>
+    بالعربي: X بيحدد Y — لما تعرف X مش ممكن تبقى مش عارف Y.</p>
+
+    <div class="callout realworld">
+        <div class="chead">🏢 أمثلة واقعية</div>
+        <p>
+        <strong>emp_id → full_name</strong> — رقم الموظف يحدد اسمه<br>
+        <strong>emp_id → dept_id</strong> — رقم الموظف يحدد قسمه<br>
+        <strong>dept_id → dept_manager</strong> — كل قسم عنده مدير واحد<br>
+        <strong>order_id, product_id → quantity</strong> — تحتاج الأوردر والمنتج معاً عشان تعرف الكمية<br>
+        <strong>zip_code → city</strong> — الرمز البريدي يحدد المدينة (في معظم الحالات)
+        </p>
+    </div>
+
+    <div class="fd-box">
+        <div class="fd-row"><span class="lhs">emp_id</span><span class="arrow">→</span><span class="rhs">full_name, salary, dept_id</span><span class="cmt">-- رقم الموظف يحدد كل بياناته</span></div>
+        <div class="fd-row"><span class="lhs">{order_id, product_id}</span><span class="arrow">→</span><span class="rhs">quantity, unit_price</span><span class="cmt">-- مفتاح مركّب</span></div>
+        <div class="fd-row"><span class="lhs">dept_id</span><span class="arrow">→</span><span class="rhs">dept_name, manager_id</span><span class="cmt">-- رقم القسم يحدد اسمه ومديره</span></div>
+    </div>
+
+    <p class="body-text">الـ FD مش مجرد observation من البيانات الحالية — هو <strong>قيد دلالي (semantic constraint)</strong> بتحدده أنت كمصمّم بناءً على طبيعة الأعمال. لو في الجدول الحالي مش في تعارض، ده مش معناه إن الـ FD صحيحة — الـ FD بتنطبق على كل حالة محتملة.</p>
+
+    <div class="callout mistake">
+        <div class="chead">⚠️ خطأ شائع: استنتاج الـ FD من البيانات فقط</div>
+        <p>مش كل تطابق في البيانات = FD حقيقية. مثلاً: لو كل موظفين في نفس القسم عندهم نفس الراتب بالصدفة، ده مش معناه <br><code style="font-family:'Fira Code',monospace;color:#A78BFA;">dept_id → salary</code>. الـ FD لازم تكون صحيحة دايماً بحسب قواعد الأعمال.</p>
+    </div>
+</div>
+
+<!-- TYPES -->
+<div class="section-block" id="types" data-aos="fade-up">
+    <div class="section-title"><span>🏷️</span> أنواع الـ Functional Dependencies</div>
+    <p class="section-en">Trivial, Non-trivial, Full, Partial, Transitive</p>
+
+    <h3 style="color:#A78BFA;margin:1.5rem 0 .8rem;">١. Trivial vs Non-trivial</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0;">
+        <div style="background:rgba(15,23,42,.6);border-radius:12px;padding:1.2rem;border:1px solid rgba(255,255,255,.05);">
+            <strong style="color:#64748B;">Trivial FD</strong>
+            <p style="font-size:.88rem;color:#94A3B8;margin:.5rem 0;">Y ⊆ X (Y جزء من X). دايماً صحيحة، لكن ما بتقول حاجة مفيدة.<br>مثال: <code style="font-family:'Fira Code',monospace;color:#C084FC;">{A, B} → A</code></p>
+        </div>
+        <div style="background:rgba(15,23,42,.6);border-radius:12px;padding:1.2rem;border:1px solid rgba(124,58,237,.15);">
+            <strong style="color:#A78BFA;">Non-trivial FD</strong>
+            <p style="font-size:.88rem;color:#94A3B8;margin:.5rem 0;">Y ⊄ X. هذه المفيدة في التصميم.<br>مثال: <code style="font-family:'Fira Code',monospace;color:#C084FC;">emp_id → salary</code></p>
+        </div>
+    </div>
+
+    <h3 style="color:#A78BFA;margin:1.5rem 0 .8rem;">٢. Full vs Partial Dependency (مهمان للـ 2NF)</h3>
+    <div class="fd-box">
+        <div style="margin-bottom:.8rem;color:#94A3B8;font-size:.82rem;">Order_Item(order_id, product_id, quantity, product_name)</div>
+        <div class="fd-row"><span class="lhs">{order_id, product_id}</span><span class="arrow">→</span><span class="rhs">quantity</span><span class="cmt">-- FULL: تحتاج المفتاح كاملاً</span></div>
+        <div class="fd-row"><span class="lhs">product_id</span><span class="arrow">→</span><span class="rhs">product_name</span><span class="cmt">-- PARTIAL: جزء من المفتاح يكفي ❌</span></div>
+    </div>
+
+    <h3 style="color:#A78BFA;margin:1.5rem 0 .8rem;">٣. Transitive Dependency (مهم للـ 3NF)</h3>
+    <div class="fd-box">
+        <div style="margin-bottom:.8rem;color:#94A3B8;font-size:.82rem;">Employee(emp_id, dept_id, dept_name)</div>
+        <div class="fd-row"><span class="lhs">emp_id</span><span class="arrow">→</span><span class="rhs">dept_id</span><span class="cmt">-- مباشرة</span></div>
+        <div class="fd-row"><span class="lhs">dept_id</span><span class="arrow">→</span><span class="rhs">dept_name</span><span class="cmt">-- مباشرة</span></div>
+        <div class="fd-row"><span class="lhs">emp_id</span><span class="arrow">→</span><span class="rhs">dept_name</span><span class="cmt">-- Transitive (عن طريق dept_id) ❌</span></div>
+    </div>
+</div>
+
+<!-- ARMSTRONG'S AXIOMS -->
+<div class="section-block" id="axioms" data-aos="fade-up">
+    <div class="section-title"><span>⚗️</span> Armstrong's Axioms — قواعد الاستنتاج</div>
+    <p class="section-en">Armstrong's Axioms — Sound and Complete Rules for FD Inference</p>
+
+    <p class="body-text">قواعد Armstrong هي مجموعة قواعد كاملة ومتسقة لاستنتاج كل الـ FDs الممكنة من مجموعة معطاة. 3 قواعد أساسية + 3 مشتقة.</p>
+
+    <div class="axiom-grid">
+        <div class="axiom-card" style="border-top:3px solid #34D399;">
+            <h3 style="color:#34D399;">① Reflexivity</h3>
+            <div class="formula">If Y ⊆ X, then X → Y</div>
+            <p>لو Y جزء من X، فـ X يحدد Y تلقائياً (Trivial FD). {A,B} → A دايماً صحيحة.</p>
+        </div>
+        <div class="axiom-card" style="border-top:3px solid #60A5FA;">
+            <h3 style="color:#60A5FA;">② Augmentation</h3>
+            <div class="formula">If X → Y, then XZ → YZ</div>
+            <p>إضافة نفس الأعمدة للطرفين لا تغيّر صحة الـ FD. إذا emp→dept إذن emp,name→dept,name.</p>
+        </div>
+        <div class="axiom-card" style="border-top:3px solid #FBBF24;">
+            <h3 style="color:#FBBF24;">③ Transitivity</h3>
+            <div class="formula">If X→Y and Y→Z, then X→Z</div>
+            <p>لو X يحدد Y ،وY يحدد Z، إذن X يحدد Z. أساس الـ Transitive Dependency.</p>
+        </div>
+    </div>
+
+    <h3 style="color:#A78BFA;margin:1.5rem 0 .8rem;">القواعد المشتقة (Derived Rules)</h3>
+    <div class="axiom-grid">
+        <div class="axiom-card" style="border-top:3px solid #A78BFA;">
+            <h3 style="color:#A78BFA;">④ Union</h3>
+            <div class="formula">X→Y and X→Z → X→YZ</div>
+            <p>لو X يحدد Y وZ كل على حدة، فهو يحددهم معاً.</p>
+        </div>
+        <div class="axiom-card" style="border-top:3px solid #F472B6;">
+            <h3 style="color:#F472B6;">⑤ Decomposition</h3>
+            <div class="formula">X→YZ → X→Y and X→Z</div>
+            <p>العكس: لو X يحدد YZ، ممكن تفصلهم.</p>
+        </div>
+        <div class="axiom-card" style="border-top:3px solid #FB923C;">
+            <h3 style="color:#FB923C;">⑥ Pseudo-transitivity</h3>
+            <div class="formula">X→Y and WY→Z → WX→Z</div>
+            <p>تعميم للـ Transitivity مع إضافة عوامل.</p>
+        </div>
+    </div>
+</div>
+
+<!-- CLOSURE -->
+<div class="section-block" id="closure" data-aos="fade-up">
+    <div class="section-title"><span>🔒</span> Attribute Closure — X⁺</div>
+    <p class="section-en">Closure of Attribute Set — What X Can Determine</p>
+
+    <p class="body-text">إغلاق مجموعة الأعمدة <strong>X⁺</strong> هو مجموعة كل الأعمدة اللي ممكن تُستَنتج من X باستخدام مجموعة الـ FDs. بتستخدمه لـ: اختبار FDs، إيجاد الـ Candidate Keys، تحقق من الـ Normal Forms.</p>
+
+    <h3 style="color:#A78BFA;margin:1.5rem 0 .8rem;">خوارزمية حساب X⁺</h3>
+    <div class="closure-steps">
+        <div class="cs"><div class="csn">①</div><p>ابدأ بـ X⁺ = X (نفس المجموعة)</p></div>
+        <div class="cs"><div class="csn">②</div><p>لكل FD في المجموعة: إذا كان LHS ⊆ X⁺، أضف RHS لـ X⁺</p></div>
+        <div class="cs"><div class="csn">③</div><p>كرر الخطوة ② حتى تتوقف X⁺ عن التغيّر (Fixed Point)</p></div>
+    </div>
+
+    <div class="callout why">
+        <div class="chead">📐 مثال محلول: حساب {emp_id}⁺</div>
+        <p>
+        FDs: <code style="font-family:'Fira Code',monospace;color:#A78BFA;">emp_id → dept_id, salary, full_name</code><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family:'Fira Code',monospace;color:#A78BFA;">dept_id → dept_name, manager_id</code><br><br>
+        ① X⁺ = {emp_id}<br>
+        ② emp_id → dept_id, salary, full_name → X⁺ = {emp_id, dept_id, salary, full_name}<br>
+        ② dept_id ⊆ X⁺ → أضف dept_name, manager_id → X⁺ = {emp_id, dept_id, salary, full_name, dept_name, manager_id}<br>
+        ③ لا جديد → انتهى<br><br>
+        <strong>النتيجة: {emp_id}⁺ = كل الأعمدة → emp_id يصلح Candidate Key!</strong>
+        </p>
+    </div>
+
+    <div class="callout tip">
+        <div class="chead">💡 متى X يكون Candidate Key؟</div>
+        <p>X هو Candidate Key إذا وفقط إذا: <strong>X⁺ = كل أعمدة العلاقة</strong> (يحدد كل شيء) — وليس هناك مجموعة فرعية من X تحقق نفس الشرط (Minimality).</p>
+    </div>
+</div>
+
+<!-- CANDIDATE KEYS -->
+<div class="section-block" id="keys" data-aos="fade-up">
+    <div class="section-title"><span>🗝️</span> إيجاد Candidate Keys خطوة بخطوة</div>
+    <p class="section-en">Finding All Candidate Keys Using FD Closure</p>
+
+    <div class="callout realworld">
+        <div class="chead">📋 مثال: جدول Order_Invoice</div>
+        <p>الأعمدة: <code style="font-family:'Fira Code',monospace;color:#A78BFA;">A, B, C, D, E</code><br>
+        FDs:
+        A → B,C<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C → D<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;B,C → A<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E → A
+        </p>
+    </div>
+
+    <div class="closure-steps">
+        <div class="cs"><div class="csn">①</div><p><strong>حدد الأعمدة اللي ما تظهرش على اليمين (RHS) أبداً</strong> — هذه لازم تكون في كل Key.<br>E لا تظهر في RHS أبداً → E لازم في كل Candidate Key.</p></div>
+        <div class="cs"><div class="csn">②</div><p>احسب {E}⁺: E→A, A→{B,C}, C→D → {E}⁺ = {E,A,B,C,D} = كل الأعمدة ✅<br>→ <strong>E هو Candidate Key!</strong></p></div>
+        <div class="cs"><div class="csn">③</div><p>جرب E مع إضافات: {E,A}⁺ = كل الأعمدة لكن {E} كافي → ليست Minimal → مش Candidate Key.</p></div>
+        <div class="cs"><div class="csn">④</div><p>جرب A: {A}⁺ = {A,B,C,D} ≠ كل الأعمدة (E ناقصة) → A وحده مش كافي.</p></div>
+        <div class="cs"><div class="csn">⑤</div><p>جرب {B,C}: {B,C}⁺ = {B,C,A,D} ≠ كل الأعمدة (E ناقصة) → ليس Key.<br>جرب {B,C,E}: {B,C,E}⁺ = كل الأعمدة لكن {E} كافي → ليست Minimal.</p></div>
+        <div class="cs"><div class="csn">✅</div><p><strong>Candidate Keys الوحيدة: {E}</strong> — لأن E دايماً لازمة وبتقفل كل الأعمدة.</p></div>
+    </div>
+</div>
+
+<!-- MINIMAL COVER -->
+<div class="section-block" id="minimal" data-aos="fade-up">
+    <div class="section-title"><span>✂️</span> Minimal Cover — الغطاء الأدنى</div>
+    <p class="section-en">Minimal Cover (Canonical Cover) — The Smallest Equivalent Set of FDs</p>
+
+    <p class="body-text">الـ Minimal Cover هو أصغر مجموعة FDs مكافئة للمجموعة الأصلية — بدون تكرار أو FDs زائدة. بتحتاجه لـ 3NF synthesis.</p>
+
+    <div class="closure-steps">
+        <div class="cs"><div class="csn">①</div><p><strong>Simplify RHS:</strong> حوّل كل FD لـ single attribute على اليمين.<br>A → {B,C} بيبقى: A→B و A→C</p></div>
+        <div class="cs"><div class="csn">②</div><p><strong>Simplify LHS:</strong> لكل FD، اختبر إزالة عمود من LHS — لو الـ Closure ما تغيّرش، احذفه.<br>مثال: {A,B}→C وكان {A}→C → A كافي، احذف B</p></div>
+        <div class="cs"><div class="csn">③</div><p><strong>Remove Redundant FDs:</strong> احذف أي FD ممكن استنتاجها من البقية.<br>إذا A→B, B→C, وعندنا A→C → احذف A→C (مستنتجة بالـ Transitivity)</p></div>
+    </div>
+
+    <div class="callout tip">
+        <div class="chead">📐 مثال: Minimal Cover</div>
+        <p>
+        المجموعة الأصلية:<br>
+        <code style="font-family:'Fira Code',monospace;color:#A78BFA;">A → BC, B → C, AB → C</code><br><br>
+        ① Split RHS: <code style="font-family:'Fira Code',monospace;color:#34D399;">A→B, A→C, B→C, AB→C</code><br>
+        ② Simplify LHS: AB→C: هل A→C بدون B؟ نعم (A→C موجودة) → احذف B: A→C مكرر → ابقى معها<br>
+        ③ Remove Redundant: A→C: منتجة من A→B, B→C → احذفها<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AB→C: مع إزالة B من LHS → A→C لكن هي مكررة من A→B, B→C أيضاً → احذف<br><br>
+        <strong>Minimal Cover: A→B, B→C</strong>
+        </p>
+    </div>
+</div>
+
+<!-- PRACTICE -->
+<div class="section-block" id="practice" data-aos="fade-up">
+    <div class="section-title"><span>✍️</span> تمرين عملي</div>
+    <div class="practice-block">
+        <div class="practice-header"><h3>📦 تمرين: جدول Shipment</h3></div>
+        <div class="practice-body">
+            <div class="callout tip">
+                <div class="chead">الجدول والـ FDs</div>
+                <p>Shipment(<strong>S, P, W, Q</strong>) — Supplier, Part, Warehouse, Quantity<br>
+                FDs: S,P → Q &nbsp;|&nbsp; S,W → P &nbsp;|&nbsp; P,W → S</p>
+            </div>
+            <ul class="task-list">
+                <li><span class="tnum">A</span>احسب {S,P}⁺ و{S,W}⁺ و{P,W}⁺.</li>
+                <li><span class="tnum">B</span>اذكر كل الـ Candidate Keys وبرّر.</li>
+                <li><span class="tnum">C</span>هل S,P,W,Q → Q صحيحة؟ لماذا؟</li>
+            </ul>
+            <button class="sol-btn" onclick="toggleSol(this)">👁️ اظهر الحل الكامل</button>
+            <div class="sol-content">
+                <p><strong>A — حساب الـ Closures:</strong></p>
+                <p>
+                <code style="font-family:'Fira Code',monospace;color:#A78BFA;">{S,P}⁺</code>: S,P→Q → {S,P,Q}. لا جديد → <strong>{S,P,Q}</strong> ≠ كل الأعمدة<br>
+                <code style="font-family:'Fira Code',monospace;color:#A78BFA;">{S,W}⁺</code>: S,W→P → {S,W,P}. الآن S,P→Q → {S,W,P,Q} = كل الأعمدة ✅<br>
+                <code style="font-family:'Fira Code',monospace;color:#A78BFA;">{P,W}⁺</code>: P,W→S → {P,W,S}. الآن S,W→P موجودة, S,P→Q → {P,W,S,Q} = كل الأعمدة ✅<br>
+                كمان تجرب {S,P,W}⁺ = كل الأعمدة لكن {S,W} و{P,W} كافيين.
+                </p>
+                <p><strong>B — Candidate Keys:</strong></p>
+                <p>{S,W} ✅ و {P,W} ✅ — كلاهما Candidate Keys لأن كل منهما يحدد كل الأعمدة وهو Minimal (لا توجد مجموعة فرعية تحقق نفس الشرط).<br>
+                {S,P,W} ليس Candidate Key لأنها غير Minimal — {S,W} وحده يكفي.</p>
+                <p><strong>C — S,P,W,Q → Q:</strong></p>
+                <p>نعم، صحيحة — لأنها <strong>Trivial FD</strong>: Q ⊆ {S,P,W,Q} بحكم قاعدة Reflexivity في Armstrong's Axioms. لكنها لا تضيف معلومة مفيدة.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QUIZ -->
+<div class="section-block" id="quiz" data-aos="fade-up">
+    <div class="section-title"><span>🧠</span> اختبار الفهم</div>
+    <div class="quiz-card" id="qq1">
+        <div class="quiz-q">١. معنى X → Y بالضبط؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(1,this,false)">لكل صفين مختلفين في X، القيمة في Y تختلف</div>
+            <div class="quiz-opt" onclick="ans(1,this,true)">لكل صفين متساويين في X، لازم يتساووا في Y أيضاً — X يحدد Y تحديداً وظيفياً</div>
+            <div class="quiz-opt" onclick="ans(1,this,false)">X وY دايماً بيكونوا مختلفين</div>
+        </div>
+        <div class="quiz-fb" id="fb1"></div>
+    </div>
+    <div class="quiz-card" id="qq2">
+        <div class="quiz-q">٢. {A,B}→A — هذه الـ FD تُسمى؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(2,this,false)">Partial Dependency</div>
+            <div class="quiz-opt" onclick="ans(2,this,true)">Trivial FD — لأن A ⊆ {A,B} وبالتالي دايماً صحيحة بقاعدة Reflexivity</div>
+            <div class="quiz-opt" onclick="ans(2,this,false)">Transitive Dependency</div>
+        </div>
+        <div class="quiz-fb" id="fb2"></div>
+    </div>
+    <div class="quiz-card" id="qq3">
+        <div class="quiz-q">٣. {X}⁺ = كل أعمدة العلاقة — ماذا نستنتج؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(3,this,false)">X هو Primary Key بالضرورة</div>
+            <div class="quiz-opt" onclick="ans(3,this,true)">X هو Superkey — وإذا كان Minimal فهو Candidate Key</div>
+            <div class="quiz-opt" onclick="ans(3,this,false)">X يجب إزالته</div>
+        </div>
+        <div class="quiz-fb" id="fb3"></div>
+    </div>
+    <div class="quiz-card" id="qq4">
+        <div class="quiz-q">٤. ما خطوات بناء الـ Minimal Cover؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(4,this,false)">إضافة أكبر عدد من الـ FDs الممكنة</div>
+            <div class="quiz-opt" onclick="ans(4,this,true)">① Simplify RHS (مفردة) ② Simplify LHS (احذف أعمدة زائدة) ③ Remove redundant FDs</div>
+            <div class="quiz-opt" onclick="ans(4,this,false)">نسخ الـ FDs بدون تغيير</div>
+        </div>
+        <div class="quiz-fb" id="fb4"></div>
+    </div>
+    <div class="quiz-score-box" id="score-box">
+        <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+        <p id="score-msg" style="color:#94A3B8;"></p>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <a href="../Unit4/functions_triggers.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: Functions & Triggers</a>
+    <a href="normalization.html" class="bnav-btn" style="color:#A78BFA;">التالي: Normalization <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+
+<footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 5: Functional Dependencies</footer>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+AOS.init({duration:700,once:true,offset:80});
+window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+function toggleSol(btn){const sc=btn.nextElementSibling;sc.classList.toggle('open');btn.textContent=sc.classList.contains('open')?'🙈 إخفاء الحل':'👁️ اظهر الحل الكامل';}
+const fbs={
+    1:{c:'✅ X→Y يعني: في كل مثيلَي صفين r1,r2 بنفس X، قيمة Y واحدة. هو constraint على كل الحالات المحتملة — مش مجرد البيانات الحالية.',w:'❌ الـ FD مش بتقول Y مختلفة — بتقول Y متطابقة لو X متطابقة.'},
+    2:{c:'✅ Trivial FD: A ⊆ {A,B} → بقاعدة Reflexivity دايماً صحيحة. ما بتقول حاجة مفيدة في التصميم.',w:'❌ ليست Partial — الـ Partial لما جزء من المفتاح المركّب يكفي لتحديد non-key attribute.'},
+    3:{c:'✅ X⁺ = كل الأعمدة → X هو Superkey (يحدد كل شيء). لو Minimal (لا مجموعة فرعية منه تحقق نفس الشرط) فهو Candidate Key.',w:'❌ Primary Key هو Candidate Key اختاره المصمم. كل Primary Key هو Candidate Key لكن ليس العكس دائماً.'},
+    4:{c:'✅ خطوات Minimal Cover: ① RHS مفردة ② LHS بسيط (احذف زوائد اللي الـ Closure ما بيتغيّرش) ③ احذف FDs مستنتجة من البقية.',w:'❌ Minimal Cover هو تقليل — مش زيادة. الهدف: أصغر مجموعة FDs مكافئة للأصلية.'}
+};
+let answered=0,score=0;
+function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';document.getElementById('score-text').textContent=`نتيجتك: ${score} / 4`;document.getElementById('score-msg').textContent=score===4?'🎉 FD Expert!':score>=3?'👏 كويس!':'💪 راجع الدرس.';document.getElementById('score-text').style.color=score===4?'#34D399':score>=3?'#FBBF24':'#F87171';}}
+</script>
+</body>
+</html>

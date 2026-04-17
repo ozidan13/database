@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Normalization — التطبيع 1NF→BCNF | Database Mastery</title>
+    <meta name="description" content="دليل شامل للتطبيع: 1NF, 2NF, 3NF, BCNF — التعريف، الانتهاكات، طريقة التحلّل، الأمثلة الكاملة، ومتى تتوقف عن التطبيع.">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/global-db.css">
+    <style>
+        :root{--accent:#0EA5E9;--accent-lt:#38BDF8;}
+        body{background:#020617;color:#E2E8F0;font-family:'Cairo',sans-serif;direction:rtl;}
+        .lesson-nav-bar{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(2,6,23,.9);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.07);height:64px;display:flex;align-items:center;padding:0 1.5rem;}
+        .nav-inner{max-width:1100px;margin:0 auto;width:100%;display:flex;align-items:center;justify-content:space-between;}
+        .back-btn{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:.9rem;color:#E2E8F0;text-decoration:none;transition:.3s;}
+        .back-btn .icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#0EA5E9,#0369A1);display:flex;align-items:center;justify-content:center;font-size:.8rem;}
+        .back-btn:hover{color:#38BDF8;}
+        .nav-toc{display:flex;gap:1.3rem;font-size:.82rem;}
+        .nav-toc a{color:#64748B;text-decoration:none;transition:.2s;}
+        .nav-toc a:hover{color:#38BDF8;}
+        @media(max-width:768px){.nav-toc{display:none;}}
+        .progress-bar-container{position:fixed;top:64px;left:0;right:0;height:3px;background:rgba(255,255,255,.05);z-index:99;}
+        .progress-bar-fill{height:100%;background:linear-gradient(90deg,#0EA5E9,#7C3AED);width:0%;transition:width .1s ease-out;}
+        .hero{padding:8rem 1.5rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(14,165,233,.1),transparent);pointer-events:none;}
+        .lesson-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.3rem .9rem;border-radius:50px;background:rgba(30,41,59,.7);border:1px solid rgba(255,255,255,.08);font-family:'Fira Code',monospace;font-size:.75rem;color:#38BDF8;margin-bottom:1.5rem;}
+        .lesson-badge .pulse{width:6px;height:6px;border-radius:50%;background:#0EA5E9;animation:pulse 2s infinite;}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+        .hero h1{font-size:clamp(2rem,5vw,3.6rem);font-weight:800;margin-bottom:.8rem;line-height:1.2;}
+        .grad{background:linear-gradient(135deg,#0EA5E9,#7C3AED);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+        .hero .en-title{font-family:'Inter',sans-serif;font-size:1.05rem;color:#64748B;margin-bottom:1rem;direction:ltr;}
+        .hero .desc{max-width:650px;margin:0 auto;font-size:1rem;color:#94A3B8;line-height:2;}
+        .learn-pills{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;margin-top:1.5rem;}
+        .pill{padding:.3rem .8rem;border-radius:8px;background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);font-size:.78rem;color:#7DD3FC;}
+        .lesson-body{max-width:900px;margin:0 auto;padding:0 1.5rem 4rem;}
+        .section-block{padding:4rem 0;border-bottom:1px solid rgba(255,255,255,.05);}
+        .section-block:last-child{border-bottom:none;}
+        .section-title{font-size:1.7rem;font-weight:800;margin-bottom:.4rem;display:flex;align-items:center;gap:.6rem;}
+        .section-en{font-family:'Inter',sans-serif;font-size:.85rem;color:#475569;margin-bottom:2rem;direction:ltr;}
+        p.body-text{font-size:1rem;line-height:2.1;color:#CBD5E1;margin-bottom:1.2rem;}
+        .callout{border-radius:14px;padding:1.3rem 1.5rem;margin:1.5rem 0;}
+        .callout.why{background:rgba(6,182,212,.07);border:1px solid rgba(6,182,212,.2);}
+        .callout.why .chead{color:#22D3EE;font-weight:800;margin-bottom:.5rem;}
+        .callout.tip{background:rgba(14,165,233,.07);border:1px solid rgba(14,165,233,.2);}
+        .callout.tip .chead{color:#38BDF8;font-weight:800;margin-bottom:.5rem;}
+        .callout.mistake{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);}
+        .callout.mistake .chead{color:#F87171;font-weight:800;margin-bottom:.5rem;}
+        .callout.realworld{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.2);}
+        .callout.realworld .chead{color:#34D399;font-weight:800;margin-bottom:.5rem;}
+        .callout p{font-size:.95rem;line-height:2;color:#CBD5E1;margin:0;}
+        /* NF Card */
+        .nf-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;}
+        .nf-badge{width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.4rem;flex-shrink:0;}
+        .nf-info h2{font-size:1.4rem;font-weight:800;margin:0 0 .2rem;}
+        .nf-info p{font-size:.88rem;color:#64748B;margin:0;}
+        /* anomaly grid */
+        .anomaly-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:1.2rem 0;}
+        @media(max-width:640px){.anomaly-grid{grid-template-columns:1fr;}}
+        .anomaly-card{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:12px;padding:1rem;}
+        .anomaly-card h4{font-size:.88rem;font-weight:800;color:#F87171;margin-bottom:.4rem;}
+        .anomaly-card p{font-size:.82rem;color:#94A3B8;line-height:1.9;}
+        /* rel table */
+        .rel-table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:.82rem;overflow-x:auto;display:block;}
+        .rel-table th{padding:.5rem .8rem;background:rgba(14,165,233,.08);border:1px solid rgba(255,255,255,.06);color:#38BDF8;font-weight:700;text-align:center;white-space:nowrap;}
+        .rel-table td{padding:.45rem .8rem;border:1px solid rgba(255,255,255,.05);color:#CBD5E1;text-align:center;font-family:'Fira Code',monospace;white-space:nowrap;}
+        .rel-table .pk{color:#F472B6;font-weight:700;}
+        .rel-table .bad{background:rgba(239,68,68,.08);color:#F87171;}
+        .decomp-arrow{text-align:center;font-size:1.4rem;color:#38BDF8;margin:1rem 0;}
+        /* steps */
+        .step-flow{display:flex;flex-direction:column;gap:.5rem;margin:1.2rem 0;}
+        .step{display:flex;gap:.8rem;padding:.8rem 1rem;background:rgba(14,165,233,.04);border:1px solid rgba(14,165,233,.1);border-radius:10px;align-items:flex-start;}
+        .stn{font-family:'Inter',sans-serif;font-weight:900;color:#38BDF8;font-size:.85rem;flex-shrink:0;}
+        .step p{font-size:.9rem;color:#CBD5E1;margin:0;line-height:1.9;}
+        /* practice/quiz */
+        .practice-block{background:rgba(15,23,42,.8);border:1px solid rgba(255,255,255,.07);border-radius:18px;overflow:hidden;margin:2rem 0;}
+        .practice-header{background:rgba(14,165,233,.1);padding:1.2rem 1.8rem;border-bottom:1px solid rgba(255,255,255,.06);}
+        .practice-header h3{font-size:1.1rem;font-weight:800;color:#38BDF8;margin:0;}
+        .practice-body{padding:1.8rem;}
+        .task-list{list-style:none;padding:0;margin-bottom:1.5rem;}
+        .task-list li{padding:.5rem 0;font-size:.93rem;color:#CBD5E1;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:.5rem;align-items:flex-start;}
+        .tnum{background:rgba(14,165,233,.15);color:#38BDF8;font-weight:800;font-size:.78rem;padding:.1rem .5rem;border-radius:5px;flex-shrink:0;font-family:'Inter',sans-serif;margin-top:.2rem;}
+        .sol-btn{width:100%;padding:.9rem;border-radius:10px;background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.2);color:#38BDF8;font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:.3s;}
+        .sol-btn:hover{background:rgba(14,165,233,.2);}
+        .sol-content{display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.05);}
+        .sol-content.open{display:block;}
+        .sol-content p{font-size:.92rem;color:#CBD5E1;line-height:2;}
+        .quiz-card{background:rgba(15,23,42,.7);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:2rem;margin-bottom:1.2rem;}
+        .quiz-q{font-size:1rem;font-weight:700;margin-bottom:1.2rem;color:#E2E8F0;line-height:1.9;}
+        .quiz-opts{display:flex;flex-direction:column;gap:.6rem;}
+        .quiz-opt{padding:.8rem 1.1rem;border-radius:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);cursor:pointer;font-size:.93rem;color:#CBD5E1;transition:.3s;text-align:right;}
+        .quiz-opt:hover{background:rgba(255,255,255,.05);}
+        .quiz-opt.correct{background:rgba(16,185,129,.12);border-color:#10B981;color:#34D399;}
+        .quiz-opt.wrong{background:rgba(239,68,68,.12);border-color:#EF4444;color:#F87171;}
+        .quiz-fb{margin-top:.8rem;padding:.9rem 1.1rem;border-radius:10px;font-size:.9rem;line-height:1.9;display:none;}
+        .quiz-fb.show{display:block;}
+        .quiz-fb.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);color:#34D399;}
+        .quiz-fb.bad{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);color:#F87171;}
+        .quiz-score-box{text-align:center;padding:2rem;background:rgba(15,23,42,.7);border-radius:16px;display:none;margin-top:1.5rem;}
+        .bottom-nav{display:flex;justify-content:space-between;align-items:center;padding:3rem 0;border-top:1px solid rgba(255,255,255,.06);margin-top:1rem;}
+        .bnav-btn{display:flex;align-items:center;gap:.5rem;padding:.75rem 1.4rem;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);font-weight:700;font-size:.88rem;transition:.3s;text-decoration:none;color:#E2E8F0;}
+        .bnav-btn:hover{background:rgba(14,165,233,.1);border-color:rgba(14,165,233,.3);transform:translateY(-2px);}
+    </style>
+</head>
+<body>
+<nav class="lesson-nav-bar">
+    <div class="nav-inner">
+        <a href="../index.html" class="back-btn"><div class="icon"><i class="fas fa-arrow-right"></i></div>العودة للبوابة</a>
+        <div class="nav-toc">
+            <a href="#why">لماذا نطبّع؟</a>
+            <a href="#1nf">1NF</a>
+            <a href="#2nf">2NF</a>
+            <a href="#3nf">3NF</a>
+            <a href="#bcnf">BCNF</a>
+            <a href="#quiz">اختبار</a>
+        </div>
+    </div>
+</nav>
+<div class="progress-bar-container"><div class="progress-bar-fill" id="prog"></div></div>
+
+<header class="hero" data-aos="fade-up">
+    <div class="lesson-badge"><span class="pulse"></span>الوحدة 5 — الدرس 2</div>
+    <h1>الـ <span class="grad">Normalization</span></h1>
+    <p class="en-title">1NF → 2NF → 3NF → BCNF — Systematic Database Design</p>
+    <p class="desc">التطبيع هو العملية اللي بتحوّل جدول بيه anomalies ومشاكل لعدة جداول سليمة — بدون فقدان بيانات وبدون تناقضات.</p>
+    <div class="learn-pills">
+        <span class="pill">لماذا التطبيع؟ Anomalies</span>
+        <span class="pill">1NF — Atomic Values</span>
+        <span class="pill">2NF — Full Dependency</span>
+        <span class="pill">3NF — No Transitivity</span>
+        <span class="pill">BCNF — Strict 3NF</span>
+        <span class="pill">Lossless Decomposition</span>
+        <span class="pill">Dependency Preservation</span>
+    </div>
+</header>
+
+<div class="lesson-body">
+
+<!-- WHY NORMALIZE -->
+<div class="section-block" id="why" data-aos="fade-up">
+    <div class="section-title"><span>⚠️</span> لماذا نطبّع؟ — الـ Update Anomalies</div>
+    <p class="section-en">Why Normalize — Update, Insert, Delete Anomalies</p>
+    <p class="body-text">التطبيع بيحمي من ثلاثة مشاكل رئيسية — تحدث عندما يكون في تكرار غير ضروري (Redundancy) في قاعدة البيانات:</p>
+    <div class="anomaly-grid">
+        <div class="anomaly-card">
+            <h4>🔄 Update Anomaly</h4>
+            <p>لو اسم القسم اتكرر في 100 صف وأردت تغييره، لازم تعدّل 100 صف — لو نسيت واحدة → تناقض في البيانات.</p>
+        </div>
+        <div class="anomaly-card">
+            <h4>➕ Insert Anomaly</h4>
+            <p>مش تقدر تضيف معلومات القسم إلا لو عندك موظف. لو القسم جديد ومفيش موظف بعد → مش قادر تحفظ بياناته.</p>
+        </div>
+        <div class="anomaly-card">
+            <h4>🗑️ Delete Anomaly</h4>
+            <p>لو حذفت الموظف الوحيد في قسم، بتحذف معاه بيانات القسم كلها — حتى لو مش مقصودك كده.</p>
+        </div>
+    </div>
+
+    <div style="overflow-x:auto;"><table class="rel-table">
+        <caption style="color:#64748B;font-size:.78rem;margin-bottom:.5rem;text-align:right;">❌ جدول بمشاكل — Employee_Dept قبل التطبيع</caption>
+        <thead><tr><th class="pk">emp_id</th><th>emp_name</th><th class="pk">dept_id</th><th class="bad">dept_name</th><th class="bad">dept_phone</th></tr></thead>
+        <tbody>
+            <tr><td class="pk">1</td><td>أحمد</td><td class="pk">10</td><td class="bad">IT</td><td class="bad">01001</td></tr>
+            <tr><td class="pk">2</td><td>فاطمة</td><td class="pk">10</td><td class="bad">IT</td><td class="bad">01001</td></tr>
+            <tr><td class="pk">3</td><td>خالد</td><td class="pk">20</td><td class="bad">HR</td><td class="bad">01002</td></tr>
+        </tbody>
+    </table></div>
+    <p class="body-text" style="color:#F87171;font-size:.88rem;">⚠️ dept_name وdept_phone متكررتان — تغيير اسم IT يحتاج تحديث كل الصفوف. حذف الموظفين الوحيدين في قسم يحذف بيانات القسم.</p>
+</div>
+
+<!-- 1NF -->
+<div class="section-block" id="1nf" data-aos="fade-up">
+    <div class="nf-header">
+        <div class="nf-badge" style="background:rgba(14,165,233,.15);color:#38BDF8;">1NF</div>
+        <div class="nf-info">
+            <h2>First Normal Form</h2>
+            <p>Atomic Values — كل خلية قيمة واحدة لا تتجزأ</p>
+        </div>
+    </div>
+
+    <p class="body-text">الجدول في 1NF إذا:</p>
+    <div class="step-flow">
+        <div class="step"><div class="stn">①</div><p>كل عمود يحتوي على قيم <strong>Atomic</strong> — لا مجموعات، لا arrays، لا قائمة منفصلة بفاصلة</p></div>
+        <div class="step"><div class="stn">②</div><p>لا أعمدة متكررة (repeating groups) مثل phone1, phone2, phone3</p></div>
+        <div class="step"><div class="stn">③</div><p>لكل صف خاصية تعريف فريدة (Primary Key)</p></div>
+    </div>
+
+    <div style="overflow-x:auto;"><table class="rel-table">
+        <caption style="color:#F87171;font-size:.78rem;margin-bottom:.3rem;text-align:right;">❌ قبل 1NF — قيم غير Atomic</caption>
+        <thead><tr><th>order_id</th><th>products</th><th>customer</th></tr></thead>
+        <tbody>
+            <tr><td>1</td><td class="bad">P1,P2,P3</td><td>أحمد</td></tr>
+            <tr><td>2</td><td class="bad">P1,P4</td><td>فاطمة</td></tr>
+        </tbody>
+    </table></div>
+    <div class="decomp-arrow">⬇️ تحويل لـ 1NF</div>
+    <div style="overflow-x:auto;"><table class="rel-table">
+        <caption style="color:#34D399;font-size:.78rem;margin-bottom:.3rem;text-align:right;">✅ بعد 1NF — Atomic + Composite Key</caption>
+        <thead><tr><th class="pk">order_id</th><th class="pk">product_id</th><th>customer</th></tr></thead>
+        <tbody>
+            <tr><td class="pk">1</td><td class="pk">P1</td><td>أحمد</td></tr>
+            <tr><td class="pk">1</td><td class="pk">P2</td><td>أحمد</td></tr>
+            <tr><td class="pk">1</td><td class="pk">P3</td><td>أحمد</td></tr>
+            <tr><td class="pk">2</td><td class="pk">P1</td><td>فاطمة</td></tr>
+        </tbody>
+    </table></div>
+    <div class="callout mistake">
+        <div class="chead">⚠️ مشكلة ما زالت موجودة</div>
+        <p>اسم العميل "أحمد" مكرر 3 مرات — هذا الـ Partial Dependency (customer يعتمد على order_id فقط وليس {order_id, product_id}) → نحتاج 2NF.</p>
+    </div>
+</div>
+
+<!-- 2NF -->
+<div class="section-block" id="2nf" data-aos="fade-up">
+    <div class="nf-header">
+        <div class="nf-badge" style="background:rgba(124,58,237,.15);color:#A78BFA;">2NF</div>
+        <div class="nf-info">
+            <h2>Second Normal Form</h2>
+            <p>Full Dependency — حذف الـ Partial Dependencies</p>
+        </div>
+    </div>
+
+    <p class="body-text">الجدول في 2NF إذا كان في 1NF + كل الأعمدة غير الـ Key تعتمد على <strong>المفتاح الكامل</strong> — لا على جزء منه (No Partial Dependencies).</p>
+
+    <div class="callout why">
+        <div class="chead">📌 ينطبق فقط على جداول بمفتاح مركّب</div>
+        <p>لو المفتاح عمود واحد → الجدول في 2NF تلقائياً (لا يوجد جزء من مفتاح بعمود واحد).</p>
+    </div>
+
+    <div style="overflow-x:auto;"><table class="rel-table">
+        <caption style="color:#F87171;font-size:.78rem;margin-bottom:.3rem;text-align:right;">❌ Order_Item في 1NF فقط — Partial Dependency</caption>
+        <thead><tr><th class="pk">order_id</th><th class="pk">product_id</th><th>quantity</th><th class="bad">product_name</th><th class="bad">product_price</th><th class="bad">customer_name</th></tr></thead>
+        <tbody>
+            <tr><td class="pk">1</td><td class="pk">P1</td><td>2</td><td class="bad">iPhone</td><td class="bad">5000</td><td class="bad">أحمد</td></tr>
+            <tr><td class="pk">1</td><td class="pk">P2</td><td>1</td><td class="bad">iPad</td><td class="bad">8000</td><td class="bad">أحمد</td></tr>
+            <tr><td class="pk">2</td><td class="pk">P1</td><td>3</td><td class="bad">iPhone</td><td class="bad">5000</td><td class="bad">فاطمة</td></tr>
+        </tbody>
+    </table></div>
+    <p class="body-text" style="font-size:.88rem;color:#94A3B8;">
+    product_name, product_price → تعتمد على product_id فقط (Partial)<br>
+    customer_name → يعتمد على order_id فقط (Partial)<br>
+    quantity → يعتمد على {order_id, product_id} كاملاً (Full ✅)
+    </p>
+    <div class="decomp-arrow">⬇️ تحليل لـ 2NF</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem;margin:.5rem 0;">
+        <div>
+            <div style="overflow-x:auto;"><table class="rel-table">
+                <caption style="color:#34D399;font-size:.75rem;margin-bottom:.3rem;text-align:center;">Order_Item ✅</caption>
+                <thead><tr><th class="pk">order_id</th><th class="pk">product_id</th><th>quantity</th></tr></thead>
+                <tbody><tr><td class="pk">1</td><td class="pk">P1</td><td>2</td></tr><tr><td class="pk">1</td><td class="pk">P2</td><td>1</td></tr></tbody>
+            </table></div>
+        </div>
+        <div>
+            <div style="overflow-x:auto;"><table class="rel-table">
+                <caption style="color:#34D399;font-size:.75rem;margin-bottom:.3rem;text-align:center;">Product ✅</caption>
+                <thead><tr><th class="pk">product_id</th><th>name</th><th>price</th></tr></thead>
+                <tbody><tr><td class="pk">P1</td><td>iPhone</td><td>5000</td></tr><tr><td class="pk">P2</td><td>iPad</td><td>8000</td></tr></tbody>
+            </table></div>
+        </div>
+        <div>
+            <div style="overflow-x:auto;"><table class="rel-table">
+                <caption style="color:#34D399;font-size:.75rem;margin-bottom:.3rem;text-align:center;">Orders ✅</caption>
+                <thead><tr><th class="pk">order_id</th><th>customer</th></tr></thead>
+                <tbody><tr><td class="pk">1</td><td>أحمد</td></tr><tr><td class="pk">2</td><td>فاطمة</td></tr></tbody>
+            </table></div>
+        </div>
+    </div>
+</div>
+
+<!-- 3NF -->
+<div class="section-block" id="3nf" data-aos="fade-up">
+    <div class="nf-header">
+        <div class="nf-badge" style="background:rgba(16,185,129,.12);color:#34D399;">3NF</div>
+        <div class="nf-info">
+            <h2>Third Normal Form</h2>
+            <p>No Transitivity — حذف الـ Transitive Dependencies</p>
+        </div>
+    </div>
+
+    <p class="body-text">الجدول في 3NF إذا كان في 2NF + لا يوجد عمود غير Key يحدد عمودًا آخر غير Key. بمعنى: كل الأعمدة تعتمد مباشرة على الـ Primary Key — ليس عبر عمود وسيط.</p>
+
+    <div style="overflow-x:auto;"><table class="rel-table">
+        <caption style="color:#F87171;font-size:.78rem;margin-bottom:.3rem;text-align:right;">❌ Employee في 2NF — Transitive Dependency</caption>
+        <thead><tr><th class="pk">emp_id</th><th>emp_name</th><th>dept_id</th><th class="bad">dept_name</th><th class="bad">dept_phone</th></tr></thead>
+        <tbody>
+            <tr><td class="pk">1</td><td>أحمد</td><td>10</td><td class="bad">IT</td><td class="bad">01001</td></tr>
+            <tr><td class="pk">2</td><td>فاطمة</td><td>10</td><td class="bad">IT</td><td class="bad">01001</td></tr>
+            <tr><td class="pk">3</td><td>خالد</td><td>20</td><td class="bad">HR</td><td class="bad">01002</td></tr>
+        </tbody>
+    </table></div>
+    <p class="body-text" style="font-size:.88rem;color:#94A3B8;">
+    emp_id → dept_id (مباشرة ✅)<br>
+    dept_id → dept_name, dept_phone (هذه Transitive ❌ — dept_name مش مرتبط برقم الموظف مباشرة)
+    </p>
+    <div class="decomp-arrow">⬇️ تحليل لـ 3NF</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin:.5rem 0;">
+        <div style="overflow-x:auto;"><table class="rel-table">
+            <caption style="color:#34D399;font-size:.75rem;margin-bottom:.3rem;text-align:center;">Employee ✅</caption>
+            <thead><tr><th class="pk">emp_id</th><th>emp_name</th><th>dept_id</th></tr></thead>
+            <tbody><tr><td class="pk">1</td><td>أحمد</td><td>10</td></tr><tr><td class="pk">2</td><td>فاطمة</td><td>10</td></tr></tbody>
+        </table></div>
+        <div style="overflow-x:auto;"><table class="rel-table">
+            <caption style="color:#34D399;font-size:.75rem;margin-bottom:.3rem;text-align:center;">Department ✅</caption>
+            <thead><tr><th class="pk">dept_id</th><th>dept_name</th><th>dept_phone</th></tr></thead>
+            <tbody><tr><td class="pk">10</td><td>IT</td><td>01001</td></tr><tr><td class="pk">20</td><td>HR</td><td>01002</td></tr></tbody>
+        </table></div>
+    </div>
+
+    <div class="callout tip">
+        <div class="chead">📐 القاعدة الرسمية لـ 3NF</div>
+        <p>لكل FD غير Trivial X → A في العلاقة R في 3NF:<br>
+        ① X هو Superkey لـ R &nbsp;&nbsp;<strong>OR</strong>&nbsp;&nbsp; ② A هو Prime Attribute (جزء من Candidate Key)<br><br>
+        الشرط الثاني هو الفرق بين 3NF وBCNF — BCNF يحذف الشرط الثاني.</p>
+    </div>
+</div>
+
+<!-- BCNF -->
+<div class="section-block" id="bcnf" data-aos="fade-up">
+    <div class="nf-header">
+        <div class="nf-badge" style="background:rgba(245,158,11,.12);color:#FBBF24;">BCNF</div>
+        <div class="nf-info">
+            <h2>Boyce-Codd Normal Form</h2>
+            <p>أقوى من 3NF — Every Determinant is a Superkey</p>
+        </div>
+    </div>
+
+    <p class="body-text">BCNF أصرم من 3NF: لكل FD غير Trivial X → Y، يجب أن يكون X هو Superkey — بغض النظر عن Prime Attributes. معظم العلاقات في 3NF هي في BCNF أيضاً — الاستثناءات عند وجود Candidate Keys متداخلة.</p>
+
+    <div class="callout realworld">
+        <div class="chead">📋 مثال: جدول Student_Course التعليمي</div>
+        <p>
+        Enrollment(<strong>student_id, course_id, instructor_id, grade</strong>)<br>
+        FDs: {student_id, course_id} → instructor_id, grade<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;instructor_id → course_id (كل مدرس بيدرّس كورس واحد فقط)<br><br>
+        <strong>الـ Candidate Keys:</strong> {student_id, course_id} و {student_id, instructor_id}<br>
+        <strong>هل هي في 3NF؟</strong> نعم — instructor_id → course_id لكن course_id هو Prime Attribute ✅<br>
+        <strong>هل هي في BCNF؟</strong> لا — instructor_id ليس Superkey ❌
+        </p>
+    </div>
+
+    <div class="decomp-arrow">⬇️ تحليل لـ BCNF</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin:.5rem 0;">
+        <div style="overflow-x:auto;"><table class="rel-table">
+            <caption style="color:#34D399;font-size:.75rem;margin-bottom:.3rem;text-align:center;">Instructor_Course ✅</caption>
+            <thead><tr><th class="pk">instructor_id</th><th>course_id</th></tr></thead>
+            <tbody><tr><td class="pk">I1</td><td>DB</td></tr><tr><td class="pk">I2</td><td>OS</td></tr></tbody>
+        </table></div>
+        <div style="overflow-x:auto;"><table class="rel-table">
+            <caption style="color:#34D399;font-size:.75rem;margin-bottom:.3rem;text-align:center;">Enrollment ✅</caption>
+            <thead><tr><th class="pk">student_id</th><th class="pk">instructor_id</th><th>grade</th></tr></thead>
+            <tbody><tr><td class="pk">S1</td><td class="pk">I1</td><td>A</td></tr><tr><td class="pk">S1</td><td class="pk">I2</td><td>B+</td></tr></tbody>
+        </table></div>
+    </div>
+
+    <div class="callout mistake">
+        <div class="chead">⚠️ BCNF قد تخسر بعض الـ FDs!</div>
+        <p>التحلّل لـ BCNF دايماً Lossless (لا فقدان بيانات). لكن مش دايماً Dependency-Preserving. في هذا الحال، 3NF هو التوازن الأمثل — يضمن Lossless وDependency Preservation.</p>
+    </div>
+
+    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:.84rem;margin:1rem 0;">
+        <thead><tr style="background:rgba(14,165,233,.08);">
+            <th style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.06);color:#38BDF8;text-align:right;">المقارنة</th>
+            <th style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.06);color:#38BDF8;text-align:center;">1NF</th>
+            <th style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.06);color:#38BDF8;text-align:center;">2NF</th>
+            <th style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.06);color:#38BDF8;text-align:center;">3NF</th>
+            <th style="padding:.6rem 1rem;border:1px solid rgba(255,255,255,.06);color:#38BDF8;text-align:center;">BCNF</th>
+        </tr></thead>
+        <tbody>
+            <tr><td style="padding:.55rem 1rem;border:1px solid rgba(255,255,255,.05);font-weight:700;">Atomic Values</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#34D399;">✅</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#34D399;">✅</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#34D399;">✅</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#34D399;">✅</td></tr>
+            <tr><td style="padding:.55rem 1rem;border:1px solid rgba(255,255,255,.05);font-weight:700;">No Partial Dep</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#F87171;">❌</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#34D399;">✅</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#34D399;">✅</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#34D399;">✅</td></tr>
+            <tr><td style="padding:.55rem 1rem;border:1px solid rgba(255,255,255,.05);font-weight:700;">No Transitive Dep</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#F87171;">❌</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#F87171;">❌</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#34D399;">✅</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#34D399;">✅</td></tr>
+            <tr><td style="padding:.55rem 1rem;border:1px solid rgba(255,255,255,.05);font-weight:700;">Every Determinant=Superkey</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#F87171;">❌</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#F87171;">❌</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#F87171;">⚡ Partial</td><td style="text-align:center;border:1px solid rgba(255,255,255,.05);color:#34D399;">✅</td></tr>
+        </tbody>
+    </table></div>
+</div>
+
+<!-- PRACTICE -->
+<div class="section-block" id="practice" data-aos="fade-up">
+    <div class="section-title"><span>✍️</span> تمرين عملي</div>
+    <div class="practice-block">
+        <div class="practice-header"><h3>🏥 تمرين: جدول المستشفى</h3></div>
+        <div class="practice-body">
+            <div class="callout tip">
+                <div class="chead">الجدول والـ FDs</div>
+                <p>Hospital_Visit(<strong>patient_id, doctor_id, visit_date, diagnosis, doctor_specialty, patient_name, patient_phone</strong>)<br>
+                FDs: {patient_id, doctor_id, visit_date} → diagnosis<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;doctor_id → doctor_specialty<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;patient_id → patient_name, patient_phone</p>
+            </div>
+            <ul class="task-list">
+                <li><span class="tnum">A</span>هل الجدول في 1NF؟ وضّح.</li>
+                <li><span class="tnum">B</span>ما انتهاكات 2NF؟ وما التحلّل الصحيح؟</li>
+                <li><span class="tnum">C</span>هل النتيجة في 3NF وBCNF؟ لماذا؟</li>
+            </ul>
+            <button class="sol-btn" onclick="toggleSol(this)">👁️ اظهر الحل الكامل</button>
+            <div class="sol-content">
+                <p><strong>A — 1NF:</strong> نعم في 1NF — كل الأعمدة Atomic ولا acols متكررة.</p>
+                <p><strong>B — انتهاكات 2NF:</strong><br>
+                doctor_id → doctor_specialty: جزء من المفتاح يحدد non-key attribute (Partial ❌)<br>
+                patient_id → patient_name, patient_phone: جزء من المفتاح (Partial ❌)<br>
+                <br>التحلّل:</p>
+                <p>
+                ① <strong>Visit</strong>(patient_id, doctor_id, visit_date, diagnosis) — PK: {patient_id,doctor_id,visit_date}<br>
+                ② <strong>Doctor</strong>(doctor_id, doctor_specialty) — PK: doctor_id<br>
+                ③ <strong>Patient</strong>(patient_id, patient_name, patient_phone) — PK: patient_id
+                </p>
+                <p><strong>C — 3NF وBCNF:</strong><br>
+                الجداول الثلاثة في 3NF وBCNF — في كل جدول، الـ Determinant (المفتاح) هو Superkey. لا توجد Transitive dependencies.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QUIZ -->
+<div class="section-block" id="quiz" data-aos="fade-up">
+    <div class="section-title"><span>🧠</span> اختبار الفهم</div>
+    <div class="quiz-card" id="qq1">
+        <div class="quiz-q">١. جدول بمفتاح عمود واحد — هل يمكن أن يكون فيه Partial Dependency؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(1,this,false)">نعم — دايماً ممكن</div>
+            <div class="quiz-opt" onclick="ans(1,this,true)">لا — Partial Dependency تتطلب مفتاح مركّب. عمود واحد = دايماً في 2NF تلقائياً.</div>
+            <div class="quiz-opt" onclick="ans(1,this,false)">يعتمد على البيانات</div>
+        </div>
+        <div class="quiz-fb" id="fb1"></div>
+    </div>
+    <div class="quiz-card" id="qq2">
+        <div class="quiz-q">٢. الفرق الرئيسي بين 3NF وBCNF؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(2,this,false)">BCNF يسمح بـ Partial Dependencies</div>
+            <div class="quiz-opt" onclick="ans(2,this,true)">3NF يسمح بـ X→A لو A هو Prime Attribute حتى لو X ليس Superkey. BCNF لا يسمح — كل Determinant يجب أن يكون Superkey.</div>
+            <div class="quiz-opt" onclick="ans(2,this,false)">لا فرق عملياً</div>
+        </div>
+        <div class="quiz-fb" id="fb2"></div>
+    </div>
+    <div class="quiz-card" id="qq3">
+        <div class="quiz-q">٣. ما الـ Update Anomaly؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(3,this,false)">عدم قدرة إضافة بيانات بدون بيانات أخرى</div>
+            <div class="quiz-opt" onclick="ans(3,this,true)">لو تغيّرت قيمة مكررة، لازم تحدّث أكثر من صف — لو نسيت بعضها → تناقض في البيانات</div>
+            <div class="quiz-opt" onclick="ans(3,this,false)">حذف بيانات غير مقصود</div>
+        </div>
+        <div class="quiz-fb" id="fb3"></div>
+    </div>
+    <div class="quiz-card" id="qq4">
+        <div class="quiz-q">٤. ميزة 3NF على BCNF؟</div>
+        <div class="quiz-opts">
+            <div class="quiz-opt" onclick="ans(4,this,false)">3NF أسرع دايماً</div>
+            <div class="quiz-opt" onclick="ans(4,this,true)">3NF يضمن Lossless Decomposition + Dependency Preservation. BCNF يضمن Lossless فقط — يمكن فقدان بعض الـ FDs.</div>
+            <div class="quiz-opt" onclick="ans(4,this,false)">3NF أحدث من BCNF</div>
+        </div>
+        <div class="quiz-fb" id="fb4"></div>
+    </div>
+    <div class="quiz-score-box" id="score-box">
+        <h3 id="score-text" style="font-size:1.4rem;margin-bottom:.5rem;"></h3>
+        <p id="score-msg" style="color:#94A3B8;"></p>
+    </div>
+</div>
+
+<div class="bottom-nav">
+    <a href="functional_dependencies.html" class="bnav-btn"><i class="fas fa-arrow-right"></i> السابق: FDs</a>
+    <a href="denormalization.html" class="bnav-btn" style="color:#38BDF8;">التالي: Denormalization <i class="fas fa-arrow-left"></i></a>
+</div>
+</div>
+<footer style="text-align:center;padding:2rem;color:#334155;font-size:.82rem;border-top:1px solid rgba(255,255,255,.04);">Database Mastery — الوحدة 5: Normalization</footer>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+AOS.init({duration:700,once:true,offset:80});
+window.addEventListener('scroll',()=>{const p=(document.documentElement.scrollTop/(document.documentElement.scrollHeight-window.innerHeight))*100;document.getElementById('prog').style.width=Math.min(p,100)+'%';});
+function toggleSol(btn){const sc=btn.nextElementSibling;sc.classList.toggle('open');btn.textContent=sc.classList.contains('open')?'🙈 إخفاء الحل':'👁️ اظهر الحل الكامل';}
+const fbs={
+    1:{c:'✅ Partial Dependency تتطلب مفتاحاً مركباً — جزء من المفتاح يحدد Non-key attribute. مع مفتاح عمود واحد، لا يمكن أن يكون جزء منه → 2NF تلقائياً.',w:'❌ Partial Dependency تعني جزء من المفتاح المركب. مفتاح عمود واحد لا ينقسم.'},
+    2:{c:'✅ 3NF يسمح بـ FD X→A لو A Prime Attribute. BCNF يرفض ذلك — كل Determinant يجب أن يكون Superkey. الفرق يظهر عند وجود Candidate Keys متداخلة.',w:'❌ العكس هو الصحيح. BCNF هو الأصرم من 3NF.'},
+    3:{c:'✅ Update Anomaly: تكرار البيانات يجعل التحديث يحتاج تعديل أكثر من صف — خطر التناقض. Insert Anomaly: لا تستطيع إدخال البيانات بدون بيانات أخرى. Delete Anomaly: الحذف يضيع بيانات غير مقصودة.',w:'❌ هذا هو الـ Insert Anomaly وليس الـ Update Anomaly.'},
+    4:{c:'✅ 3NF يوازن بين التطبيع الجيد والـ Dependency Preservation. أحياناً تحلّل BCNF يُضيّع FDs مهمة — فيفضّل المصممون 3NF في هذه الحالة.',w:'❌ 3NF مش دايماً أسرع — في الغالب نفس الأداء تقريباً. الميزة الحقيقية هي Dependency Preservation.'}
+};
+let answered=0,score=0;
+function ans(q,el,correct){const qEl=document.getElementById('qq'+q);if(qEl.classList.contains('done'))return;qEl.classList.add('done');answered++;qEl.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none');const fb=document.getElementById('fb'+q);if(correct){el.classList.add('correct');fb.className='quiz-fb show ok';fb.innerHTML=fbs[q].c;score++;}else{el.classList.add('wrong');fb.className='quiz-fb show bad';fb.innerHTML=fbs[q].w;qEl.querySelectorAll('.quiz-opt').forEach(o=>{if(o.getAttribute('onclick').includes(',true,'))o.classList.add('correct');});}if(answered===4){const sb=document.getElementById('score-box');sb.style.display='block';document.getElementById('score-text').textContent=`نتيجتك: ${score} / 4`;document.getElementById('score-msg').textContent=score===4?'🎉 Normalization Expert!':score>=3?'👏 كويس!':'💪 راجع الدرس.';document.getElementById('score-text').style.color=score===4?'#34D399':score>=3?'#FBBF24':'#F87171';}}
+</script>
+</body>
+</html>
